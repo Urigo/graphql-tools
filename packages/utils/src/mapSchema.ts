@@ -44,6 +44,7 @@ import {
 
 import { rewireTypes } from './rewire';
 import { serializeInputValue, parseInputValue } from './transformInputValue';
+import { copyCustomFields } from './copy-custom-type-fields';
 
 export function mapSchema(schema: GraphQLSchema, schemaMapper: SchemaMapper = {}): GraphQLSchema {
   const originalTypeMap = schema.getTypeMap();
@@ -350,10 +351,10 @@ function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMap
       });
 
       if (isObjectType(originalType)) {
-        newTypeMap[typeName] = new GraphQLObjectType({
+        newTypeMap[typeName] = copyCustomFields(originalType, new GraphQLObjectType({
           ...((config as unknown) as GraphQLObjectTypeConfig<any, any>),
           fields: newFieldConfigMap,
-        });
+        }));
       } else if (isInterfaceType(originalType)) {
         newTypeMap[typeName] = new GraphQLInterfaceType({
           ...((config as unknown) as GraphQLInterfaceTypeConfig<any, any>),
