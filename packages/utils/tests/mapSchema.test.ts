@@ -78,9 +78,17 @@ describe('mapSchema', () => {
     expect(s._typeMap.TestType.resolveReference).toBeTruthy()
     expect(s._typeMap.TestType.resolveObject).toBeTruthy()
 
-    const mappedSchema = mapSchema(schema) as any
+    // ... retained through a noop mapping
+    let mappedSchema = mapSchema(schema) as any;
+    expect(mappedSchema._typeMap.TestType.resolveReference).toBeTruthy()
+    expect(mappedSchema._typeMap.TestType.resolveObject).toBeTruthy()
+
+    // ... retained through a simple objecttype copy mapping
+    mappedSchema = mapSchema(schema, {
+      [MapperKind.OBJECT_TYPE]: (type) => new GraphQLObjectType(type.toConfig())
+    });
 
     expect(mappedSchema._typeMap.TestType.resolveReference).toBeTruthy()
     expect(mappedSchema._typeMap.TestType.resolveObject).toBeTruthy()
-  })
+  });
 });

@@ -123,7 +123,7 @@ function mapTypes(
         return;
       }
 
-      newTypeMap[typeName] = maybeNewType;
+      newTypeMap[typeName] = copyCustomFields(originalType, maybeNewType);
     }
   });
 
