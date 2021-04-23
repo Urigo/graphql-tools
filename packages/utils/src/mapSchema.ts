@@ -87,7 +87,9 @@ export function mapSchema(schema: GraphQLSchema, schemaMapper: SchemaMapper = {}
     query: newQueryTypeName ? (typeMap[newQueryTypeName] as GraphQLObjectType) : undefined,
     mutation: newMutationTypeName ? (typeMap[newMutationTypeName] as GraphQLObjectType) : undefined,
     subscription: newSubscriptionTypeName != null ? (typeMap[newSubscriptionTypeName] as GraphQLObjectType) : undefined,
-    types: Object.keys(typeMap).map(typeName => typeMap[typeName]),
+    types: Object.keys(typeMap).map(
+      typeName => copyCustomFields(schema, newTypeMap[typeName], typeMap[typeName])
+    ),
     directives,
   });
 }
@@ -123,7 +125,8 @@ function mapTypes(
         return;
       }
 
-      newTypeMap[typeName] = copyCustomFields(originalType, maybeNewType);
+      newTypeMap[typeName] =
+        copyCustomFields(schema, originalType, maybeNewType);
     }
   });
 
@@ -351,10 +354,14 @@ function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMap
       });
 
       if (isObjectType(originalType)) {
-        newTypeMap[typeName] = copyCustomFields(originalType, new GraphQLObjectType({
-          ...((config as unknown) as GraphQLObjectTypeConfig<any, any>),
-          fields: newFieldConfigMap,
-        }));
+        newTypeMap[typeName] = copyCustomFields(
+          schema,
+          originalType,
+          new GraphQLObjectType({
+            ...((config as unknown) as GraphQLObjectTypeConfig<any, any>),
+            fields: newFieldConfigMap,
+          })
+        );
       } else if (isInterfaceType(originalType)) {
         newTypeMap[typeName] = new GraphQLInterfaceType({
           ...((config as unknown) as GraphQLInterfaceTypeConfig<any, any>),
