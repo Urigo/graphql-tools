@@ -1,4 +1,5 @@
 import { IRoutes, GenerateRoutes } from '@guild-docs/server';
+import apiSidebar from './api-sidebar.json';
 
 export function getRoutes(): IRoutes {
   const Routes: IRoutes = {
@@ -30,6 +31,7 @@ export function getRoutes(): IRoutes {
               '$migration',
             ],
           },
+          api: apiSidebar,
         },
       },
     },
