@@ -99,21 +99,32 @@ describe('delegateToSchema', () => {
   test('should work even when there are variables', async () => {
     const innerSchema = makeExecutableSchema({
       typeDefs: `
+        type Parameters {
+          input: String
+          source: Boolean
+        }
         type Query {
-          test(input: String): String
+          test(input: String): Parameters
         }
       `,
       resolvers: {
         Query: {
-          test: (_root, args) => args.input
+          test: (source, args) => ({
+            source: source !== undefined,
+            ... args,
+          }),
         },
       },
     });
 
     const outerSchema = makeExecutableSchema({
       typeDefs: `
+        type Parameters {
+          input: String
+          source: Boolean
+        }
         type Query {
-          delegateToSchema(input: String): String
+          delegateToSchema(input: String): Parameters
         }
       `,
       resolvers: {
@@ -134,7 +145,10 @@ describe('delegateToSchema', () => {
       outerSchema,
       `
         query($input: String) {
-          delegateToSchema(input: $input)
+          delegateToSchema(input: $input) {
+            input
+            source
+          }
         }
       `,
       undefined,
@@ -144,6 +158,9 @@ describe('delegateToSchema', () => {
       },
     );
 
-    expect(result.data.delegateToSchema).toEqual('test');
+    expect(result.data.delegateToSchema).toEqual({
+      input: "test",
+      source: false,
+    });
   });
 });
