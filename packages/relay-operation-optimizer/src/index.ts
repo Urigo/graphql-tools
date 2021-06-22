@@ -2,7 +2,7 @@ import { printSchemaWithDirectives, SchemaPrintOptions } from '@graphql-tools/ut
 import { parse, GraphQLSchema, DefinitionNode, DocumentNode, ParseOptions, concatAST } from 'graphql';
 
 import { transform as skipRedundantNodesTransform } from 'relay-compiler/lib/transforms/SkipRedundantNodesTransform';
-import { transform as inlineFragmentsTransform } from 'relay-compiler/lib/transforms/InlineFragmentsTransform';
+import { transformWithOptions as inlineFragmentsTransformWithOptions } from 'relay-compiler/lib/transforms/InlineFragmentsTransform';
 import { transform as applyFragmentArgumentTransform } from 'relay-compiler/lib/transforms/ApplyFragmentArgumentTransform';
 import { transformWithOptions as flattenTransformWithOptions } from 'relay-compiler/lib/transforms/FlattenTransform';
 import CompilerContext from 'relay-compiler/lib/core/CompilerContext';
@@ -35,28 +35,11 @@ export function optimizeDocuments(
 
   const result: DocumentNode[] = [];
 
-  if (options.includeFragments) {
-    const fragmentCompilerContext = new CompilerContext(adjustedSchema)
-      .addAll(relayDocuments)
-      .applyTransforms([
-        applyFragmentArgumentTransform,
-        flattenTransformWithOptions({ flattenAbstractTypes: false }),
-        skipRedundantNodesTransform,
-      ]);
-
-    result.push(
-      ...fragmentCompilerContext
-        .documents()
-        .filter(doc => doc.kind === 'Fragment')
-        .map(doc => parse(relayPrint(adjustedSchema, doc), options))
-    );
-  }
-
   const queryCompilerContext = new CompilerContext(adjustedSchema)
     .addAll(relayDocuments)
     .applyTransforms([
       applyFragmentArgumentTransform,
-      inlineFragmentsTransform,
+      inlineFragmentsTransformWithOptions({ includeFragments: options.includeFragments }),
       flattenTransformWithOptions({ flattenAbstractTypes: false }),
       skipRedundantNodesTransform,
     ]);
