@@ -175,7 +175,7 @@ This fabricated record fulfills the not-null requirement of the `posts:[Post]!` 
 
 To better understand the flow of merged object calls, let's break down the [basic example](#basic-example) above:
 
-![Schema Stitching flow](../static/img/stitching-flow.png)
+![Schema Stitching flow](/assets/stitching-flow.png)
 
 1. A request is submitted to the gateway schema that selects fields from multiple subschemas.
 2. The gateway fetches the resource that was **explicitly** requested (`userById`), known as the _original object_. This subquery is filtered to match its subschema, and adds the `selectionSet` of other subschemas that must **implicitly** provide data for the request.

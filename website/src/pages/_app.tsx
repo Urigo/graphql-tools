@@ -7,7 +7,7 @@ import { appWithTranslation } from 'next-i18next';
 import { extendTheme, theme as chakraTheme } from '@chakra-ui/react';
 import { mode } from '@chakra-ui/theme-tools';
 import { ExtendComponents, handlePushRoute, CombinedThemeProvider, DocsPage, AppSeoProps } from '@guild-docs/client';
-import { Header, Subheader, Footer } from '@theguild/components';
+import { Header, Subheader, FooterExtended } from '@theguild/components';
 
 import type { AppProps } from 'next/app';
 
@@ -84,8 +84,8 @@ function AppContent(appProps: AppProps) {
           },
           {
             children: 'API & Doc',
-            title: 'Learn more about Envelop',
-            href: '/docs/introduction',
+            title: 'Learn more about GraphQL Tools',
+            href: '/docs',
             onClick: e => handlePushRoute('/docs/introduction', e),
           },
           {
@@ -98,7 +98,7 @@ function AppContent(appProps: AppProps) {
         ]}
         cta={{
           children: 'Get Started',
-          title: 'Learn more about GraphQL Tools',
+          title: 'Begin your journey with GraphQL Tools',
           href: '/docs/introduction',
           onClick: e => handlePushRoute('/docs/introduction', e),
         }}
@@ -108,7 +108,46 @@ function AppContent(appProps: AppProps) {
       ) : (
         <Component {...pageProps} />
       )}
-      <Footer />
+      <FooterExtended
+        resources={[
+          {
+            children: 'Get Started',
+            title: 'Begin your journey with GraphQL Tools',
+            href: '/docs/introduction',
+            onClick: e => handlePushRoute('/docs/introduction', e),
+          },
+          {
+            children: 'Guides',
+            title: 'Read about the Guides',
+            href: '/docs/guides/generate-schema',
+            onClick: e => handlePushRoute('/docs/guides/generate-schema', e),
+          },
+          {
+            children: 'Modules (API)',
+            title: 'Read about the Modules',
+            href: '/docs/api/modules/batch_delegate_src',
+            onClick: e => handlePushRoute('/docs/api/modules/batch_delegate_src', e),
+          },
+          {
+            children: 'Classes (API)',
+            title: 'Read about the Classes',
+            href: '/docs/api/classes/delegate_src.addargumentsasvariables',
+            onClick: e => handlePushRoute('/docs/api/classes/delegate_src.addargumentsasvariables', e),
+          },
+          {
+            children: 'Interfaces (API)',
+            title: 'Read about the Interfaces',
+            href: '/docs/api/interfaces/loaders_apollo_engine_src.apolloengineoptions',
+            onClick: e => handlePushRoute('/docs/api/interfaces/loaders_apollo_engine_src.apolloengineoptions', e),
+          },
+          {
+            children: 'Enums (API)',
+            title: 'Read about the Enums',
+            href: '/docs/api/enums/merge_src.compareval',
+            onClick: e => handlePushRoute('/docs/api/enums/merge_src.compareval', e),
+          },
+        ]}
+      />
     </>
   );
 }
@@ -118,11 +157,11 @@ const AppContentWrapper = appWithTranslation(function TranslatedApp(appProps) {
 });
 
 const defaultSeo: AppSeoProps = {
-  title: 'Guild Docs',
-  description: 'Guild Docs Example',
+  title: 'GraphQL Tools',
+  description: 'A set of utilities for faster GraphQL development',
   logo: {
-    url: 'https://the-guild-docs.vercel.app/assets/subheader-logo.png',
-    width: 50,
+    url: 'https://the-guild.dev/static/shared-logos/products/tools.svg',
+    width: 54,
     height: 54,
   },
 };

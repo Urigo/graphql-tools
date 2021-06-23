@@ -12,7 +12,7 @@ export default function Index() {
           children: 'Get Started',
           title: 'Learn more about GraphQL Tools',
           href: '/docs/introduction',
-          onClick: e => handlePushRoute('/docs', e),
+          onClick: e => handlePushRoute('/docs/introduction', e),
         }}
         version="v 7.0.5"
         colors={['#000246', '#184BE6']}

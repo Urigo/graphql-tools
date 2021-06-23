@@ -1,27 +1,44 @@
 {
   "scripts": {
     "build": "next build",
-    "dev": "concurrently -r \"next-remote-watch ./docs\" \"wait-on -s 1 http://localhost:3000 && open-cli http://localhost:3000\"",
+    "dev": "concurrently -r \"next-remote-watch ./docs ./src/pages/_app.tsx ./src/pages/_document.tsx\" \"wait-on -s 1 http://localhost:3000 && open-cli http://localhost:3000\"",
     "next": "next",
-    "start": "next start"
+    "start": "next start",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "pnpm": { "overrides": { "esbuild": "^0.12.8" } },
   "resolutions": { "esbuild": "^0.12.8" },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^11.0.1",
+    "@types/concurrently": "^6.2.0",
+    "@types/mdx-js__react": "^1.5.3",
+    "@types/node": "^15.12.4",
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.8",
+    "concurrently": "^6.2.0",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.12.9",
+    "esbuild-register": "^2.6.0",
+    "next-remote-watch": "^1.0.0",
+    "open-cli": "^7.0.0",
+    "typescript": "^4.3.4",
+    "wait-on": "^5.3.0"
+  },
   "dependencies": {
     "@chakra-ui/icons": "^1.0.13",
-    "@chakra-ui/react": "^1.6.3",
+    "@chakra-ui/react": "^1.6.4",
     "@chakra-ui/theme-tools": "^1.1.7",
     "@chakra-ui/utils": "^1.8.0",
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
-    "@guild-docs/client": "^0.2.12",
-    "@guild-docs/server": "^0.2.12",
+    "@guild-docs/client": "^0.2.13",
+    "@guild-docs/server": "^0.2.13",
     "@mdx-js/react": "^1.6.22",
-    "@theguild/components": "^1.3.1",
+    "@theguild/components": "^1.4.0",
     "framer-motion": "^4.1.17",
-    "next": "^10.2.3",
-    "next-i18next": "^8.5.0",
-    "next-seo": "^4.24.0",
+    "next": "^11.0.1",
+    "next-i18next": "^8.5.1",
+    "next-seo": "^4.26.0",
     "prism-themes": "^1.7.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -29,19 +46,5 @@
     "react-use": "^17.2.4",
     "remark-admonitions": "^1.2.1",
     "remark-prism": "^1.3.6"
-  },
-  "devDependencies": {
-    "@types/concurrently": "^6.2.0",
-    "@types/mdx-js__react": "^1.5.3",
-    "@types/node": "^15.12.2",
-    "@types/react": "^17.0.11",
-    "@types/react-dom": "^17.0.7",
-    "concurrently": "^6.2.0",
-    "esbuild": "^0.12.8",
-    "esbuild-register": "^2.6.0",
-    "next-remote-watch": "^1.0.0",
-    "open-cli": "^6.0.1",
-    "typescript": "^4.3.2",
-    "wait-on": "^5.3.0"
   }
 }

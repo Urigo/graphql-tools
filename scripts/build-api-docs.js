@@ -117,8 +117,8 @@ ${match}`;
     })
   );
 
-  // Remove the generated "index.md" file
-  // fs.unlinkSync(path.join(outputDir, 'index.md'));
+  // Remove the generated "README.md" file
+  fs.unlinkSync(path.join(outputDir, 'README.md'));
 
   // Update each module 's frontmatter and title
   await Promise.all(
