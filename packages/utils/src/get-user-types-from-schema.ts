@@ -12,19 +12,22 @@ export function getUserTypesFromSchema(schema: GraphQLSchema): GraphQLObjectType
   const allTypesMap = schema.getTypeMap();
 
   // tslint:disable-next-line: no-unnecessary-local-variable
-  const modelTypes = Object.values(allTypesMap).filter((graphqlType: GraphQLObjectType) => {
+  const modelTypes = Object.values(allTypesMap).filter((graphqlType): graphqlType is GraphQLObjectType => {
     if (isObjectType(graphqlType)) {
       // Filter out private types
       if (graphqlType.name.startsWith('__')) {
         return false;
       }
-      if (schema.getMutationType() && graphqlType.name === schema.getMutationType().name) {
+      const schemaMutationType = schema.getMutationType();
+      if (schemaMutationType && graphqlType.name === schemaMutationType.name) {
         return false;
       }
-      if (schema.getQueryType() && graphqlType.name === schema.getQueryType().name) {
+      const schemaQueryType = schema.getMutationType();
+      if (schemaQueryType && graphqlType.name === schemaQueryType.name) {
         return false;
       }
-      if (schema.getSubscriptionType() && graphqlType.name === schema.getSubscriptionType().name) {
+      const schemaSubscriptionType = schema.getMutationType();
+      if (schemaSubscriptionType && graphqlType.name === schemaSubscriptionType.name) {
         return false;
       }
 
@@ -34,5 +37,5 @@ export function getUserTypesFromSchema(schema: GraphQLSchema): GraphQLObjectType
     return false;
   });
 
-  return modelTypes as GraphQLObjectType[];
+  return modelTypes;
 }

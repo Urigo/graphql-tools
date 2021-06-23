@@ -15,7 +15,8 @@ interface ISubschema<K = any, V = any, C = K, TContext = Record<string, any>>
 }
 
 export class Subschema<K = any, V = any, C = K, TContext = Record<string, any>>
-  implements ISubschema<K, V, C, TContext> {
+  implements ISubschema<K, V, C, TContext>
+{
   public schema: GraphQLSchema;
 
   public rootValue?: Record<string, any>;
@@ -25,7 +26,7 @@ export class Subschema<K = any, V = any, C = K, TContext = Record<string, any>>
   public batchingOptions?: BatchingOptions<K, V, C>;
 
   public createProxyingResolver?: CreateProxyingResolverFn<TContext>;
-  public transforms: Array<Transform>;
+  public transforms: Array<Transform<any, TContext>>;
   public transformedSchema: GraphQLSchema;
 
   public merge?: Record<string, MergedTypeConfig<any, any, TContext>>;

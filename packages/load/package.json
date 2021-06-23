@@ -41,7 +41,7 @@
     "import-from": "4.0.0",
     "is-glob": "4.0.1",
     "p-limit": "3.1.0",
-    "tslib": "~2.2.0",
+    "tslib": "~2.3.0",
     "valid-url": "1.0.9"
   },
   "publishConfig": {

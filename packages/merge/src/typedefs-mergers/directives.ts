@@ -1,5 +1,6 @@
 import { ArgumentNode, DirectiveNode, DirectiveDefinitionNode, ListValueNode, NameNode, print } from 'graphql';
 import { Config } from './merge-typedefs';
+import { isSome } from '@graphql-tools/utils';
 
 function directiveAlreadyExists(directivesArr: ReadonlyArray<DirectiveNode>, otherDirective: DirectiveNode): boolean {
   return !!directivesArr.find(directive => directive.name.value === otherDirective.name.value);
@@ -52,7 +53,7 @@ function deduplicateDirectives(directives: ReadonlyArray<DirectiveNode>): Direct
 
       return directive;
     })
-    .filter(d => d);
+    .filter(isSome);
 }
 
 export function mergeDirectives(
@@ -60,7 +61,7 @@ export function mergeDirectives(
   d2: ReadonlyArray<DirectiveNode> = [],
   config?: Config
 ): DirectiveNode[] {
-  const reverseOrder: boolean = config && config.reverseDirectives;
+  const reverseOrder: boolean | undefined = config && config.reverseDirectives;
   const asNext = reverseOrder ? d1 : d2;
   const asFirst = reverseOrder ? d2 : d1;
   const result = deduplicateDirectives([...asNext]);

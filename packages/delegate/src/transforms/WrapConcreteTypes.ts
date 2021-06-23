@@ -63,7 +63,8 @@ function wrapConcreteTypes(
         }
       },
       [Kind.FIELD]: (node: FieldNode) => {
-        if (isAbstractType(getNamedType(typeInfo.getType()))) {
+        const type = typeInfo.getType();
+        if (type != null && isAbstractType(getNamedType(type))) {
           return {
             ...node,
             selectionSet: {

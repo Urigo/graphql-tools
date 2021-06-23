@@ -9,11 +9,11 @@ interface Transformation {
   context: Record<string, any>;
 }
 
-export class Transformer {
+export class Transformer<TContext = Record<string, any>> {
   private transformations: Array<Transformation> = [];
-  private delegationContext: DelegationContext;
+  private delegationContext: DelegationContext<any>;
 
-  constructor(context: DelegationContext, binding: DelegationBinding = defaultDelegationBinding) {
+  constructor(context: DelegationContext<TContext>, binding: DelegationBinding<TContext> = defaultDelegationBinding) {
     this.delegationContext = context;
     const delegationTransforms: Array<Transform> = binding(this.delegationContext);
     delegationTransforms.forEach(transform => this.addTransform(transform, {}));

@@ -1,6 +1,7 @@
 import { wrapSchema, MapLeafValues } from '@graphql-tools/wrap';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('MapLeafValues', () => {
   test('works', async () => {
@@ -48,6 +49,7 @@ describe('MapLeafValues', () => {
     }`;
 
     const result = await graphql(transformedSchema, query);
+    assertSome(result.data)
     expect(result.data.testEnum).toBe('THREE');
     expect(result.data.testScalar).toBe(15);
   });

@@ -15,7 +15,7 @@ import { Kind, ObjectFieldNode, ValueNode } from 'graphql';
  * | null          | NullValue            |
  *
  */
-export function astFromValueUntyped(value: any): ValueNode {
+export function astFromValueUntyped(value: any): ValueNode | null {
   // only explicit null, not undefined, NaN
   if (value === null) {
     return { kind: Kind.NULL };

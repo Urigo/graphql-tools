@@ -7,7 +7,7 @@ import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/de
 import WrapFields from './WrapFields';
 
 export default class WrapType implements Transform {
-  private readonly transformer: Transform;
+  private readonly transformer: WrapFields<any>;
 
   constructor(outerTypeName: string, innerTypeName: string, fieldName: string) {
     this.transformer = new WrapFields(outerTypeName, [fieldName], [innerTypeName]);
@@ -26,7 +26,7 @@ export default class WrapType implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): Request {
-    return this.transformer.transformRequest(originalRequest, delegationContext, transformationContext);
+    return this.transformer.transformRequest(originalRequest, delegationContext, transformationContext as any);
   }
 
   public transformResult(
@@ -34,6 +34,6 @@ export default class WrapType implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): ExecutionResult {
-    return this.transformer.transformResult(originalResult, delegationContext, transformationContext);
+    return this.transformer.transformResult(originalResult, delegationContext, transformationContext as any);
   }
 }

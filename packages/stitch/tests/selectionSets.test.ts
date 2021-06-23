@@ -3,7 +3,7 @@ import { graphql } from 'graphql';
 import { delegateToSchema } from '@graphql-tools/delegate';
 import { batchDelegateToSchema } from '@graphql-tools/batch-delegate';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { IResolvers } from '@graphql-tools/utils';
+import { assertSome, IResolvers } from '@graphql-tools/utils';
 
 import { stitchSchemas } from '../src/stitchSchemas';
 
@@ -61,7 +61,7 @@ describe('delegateToSchema ', () => {
           selectionSet: '{ name }',
           resolve: (location) => {
             const name = location.name;
-            return findPropertyByLocationName(sampleData.Property, name).location
+            return findPropertyByLocationName(sampleData.Property, name)?.location
               .coordinates;
           },
         },
@@ -213,6 +213,7 @@ describe('delegateToSchema ', () => {
         `,
       );
 
+      assertSome(data)
       expect(data.posts).toEqual(expectedData);
     });
 
@@ -237,7 +238,7 @@ describe('delegateToSchema ', () => {
           }
         `,
       );
-
+      assertSome(data)
       expect(data.posts).toEqual(expectedData);
     });
 
@@ -262,7 +263,7 @@ describe('delegateToSchema ', () => {
           }
         `,
       );
-
+      assertSome(data)
       expect(data.posts).toEqual(expectedData);
     });
 
@@ -291,7 +292,7 @@ describe('delegateToSchema ', () => {
           }
         `,
       )
-
+      assertSome(data)
       expect(data.posts).toEqual(expectedData);
     });
   });

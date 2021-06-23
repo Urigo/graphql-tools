@@ -70,12 +70,14 @@ export function processImport(
   const set = visitFile(filePath, join(cwd + '/root.graphql'), visitedFiles, predefinedImports);
   const definitionStrSet = new Set<string>();
   let definitionsStr = '';
-  for (const defs of set.values()) {
-    for (const def of defs) {
-      const defStr = print(def);
-      if (!definitionStrSet.has(defStr)) {
-        definitionStrSet.add(defStr);
-        definitionsStr += defStr + '\n';
+  if (set != null) {
+    for (const defs of set.values()) {
+      for (const def of defs) {
+        const defStr = print(def);
+        if (!definitionStrSet.has(defStr)) {
+          definitionStrSet.add(defStr);
+          definitionsStr += defStr + '\n';
+        }
       }
     }
   }
@@ -120,16 +122,18 @@ function visitFile(
       });
       for (const definition of document.definitions) {
         if ('name' in definition || definition.kind === Kind.SCHEMA_DEFINITION) {
-          const definitionName = 'name' in definition ? definition.name.value : 'schema';
+          const definitionName = 'name' in definition && definition.name ? definition.name.value : 'schema';
           if (!definitionsByName.has(definitionName)) {
             definitionsByName.set(definitionName, new Set());
           }
           const definitionsSet = definitionsByName.get(definitionName);
-          definitionsSet.add(definition);
-          if (!dependenciesByDefinitionName.has(definitionName)) {
-            dependenciesByDefinitionName.set(definitionName, new Set());
+          definitionsSet?.add(definition);
+
+          let dependencySet = dependenciesByDefinitionName.get(definitionName);
+          if (!dependencySet) {
+            dependencySet = new Set();
+            dependenciesByDefinitionName.set(definitionName, dependencySet);
           }
-          const dependencySet = dependenciesByDefinitionName.get(definitionName);
           switch (definition.kind) {
             case Kind.OPERATION_DEFINITION:
               visitOperationDefinitionNode(definition, dependencySet);
@@ -180,21 +184,22 @@ function visitFile(
               visitScalarExtensionNode(definition, dependencySet);
               break;
           }
-          if ('fields' in definition) {
+          if ('fields' in definition && definition.fields) {
             for (const field of definition.fields) {
               const definitionName = definition.name.value + '.' + field.name.value;
               if (!definitionsByName.has(definitionName)) {
                 definitionsByName.set(definitionName, new Set());
               }
-              const definitionsSet = definitionsByName.get(definitionName);
-              definitionsSet.add({
+              definitionsByName.get(definitionName)?.add({
                 ...definition,
                 fields: [field as any],
               });
-              if (!dependenciesByDefinitionName.has(definitionName)) {
-                dependenciesByDefinitionName.set(definitionName, new Set());
+
+              let dependencySet = dependenciesByDefinitionName.get(definitionName);
+              if (!dependencySet) {
+                dependencySet = new Set();
+                dependenciesByDefinitionName.set(definitionName, dependencySet);
               }
-              const dependencySet = dependenciesByDefinitionName.get(definitionName);
               switch (field.kind) {
                 case Kind.FIELD_DEFINITION:
                   visitFieldDefinitionNode(field, dependencySet, dependenciesByDefinitionName);
@@ -208,19 +213,24 @@ function visitFile(
         }
       }
       for (const [definitionName, definitions] of definitionsByName) {
-        if (!fileDefinitionMap.has(definitionName)) {
-          fileDefinitionMap.set(definitionName, new Set());
+        let definitionsWithDependencies = fileDefinitionMap.get(definitionName);
+        if (definitionsWithDependencies == null) {
+          definitionsWithDependencies = new Set();
+          fileDefinitionMap.set(definitionName, definitionsWithDependencies);
         }
-        const definitionsWithDependencies = fileDefinitionMap.get(definitionName);
         for (const definition of definitions) {
           definitionsWithDependencies.add(definition);
         }
         const dependenciesOfDefinition = dependenciesByDefinitionName.get(definitionName);
-        for (const dependencyName of dependenciesOfDefinition) {
-          const dependencyDefinitions = definitionsByName.get(dependencyName);
-          dependencyDefinitions?.forEach(dependencyDefinition => {
-            definitionsWithDependencies.add(dependencyDefinition);
-          });
+        if (dependenciesOfDefinition) {
+          for (const dependencyName of dependenciesOfDefinition) {
+            const dependencyDefinitions = definitionsByName.get(dependencyName);
+            if (dependencyDefinitions != null) {
+              for (const dependencyDefinition of dependencyDefinitions) {
+                definitionsWithDependencies.add(dependencyDefinition);
+              }
+            }
+          }
         }
       }
     }
@@ -228,34 +238,40 @@ function visitFile(
     for (const line of importLines) {
       const { imports, from } = parseImportLine(line.replace('#', '').trim());
       const importFileDefinitionMap = visitFile(from, filePath, visitedFiles, predefinedImports);
-      if (imports.includes('*')) {
-        for (const [importedDefinitionName, importedDefinitions] of importFileDefinitionMap) {
-          const [importedDefinitionTypeName] = importedDefinitionName.split('.');
-          if (!allImportedDefinitionsMap.has(importedDefinitionTypeName)) {
-            allImportedDefinitionsMap.set(importedDefinitionTypeName, new Set());
+      if (importFileDefinitionMap != null) {
+        if (imports.includes('*')) {
+          for (const [importedDefinitionName, importedDefinitions] of importFileDefinitionMap) {
+            const [importedDefinitionTypeName] = importedDefinitionName.split('.');
+            if (!allImportedDefinitionsMap.has(importedDefinitionTypeName)) {
+              allImportedDefinitionsMap.set(importedDefinitionTypeName, new Set());
+            }
+            const allImportedDefinitions = allImportedDefinitionsMap.get(importedDefinitionTypeName);
+            if (allImportedDefinitions) {
+              for (const importedDefinition of importedDefinitions) {
+                allImportedDefinitions.add(importedDefinition);
+              }
+            }
           }
-          const allImportedDefinitions = allImportedDefinitionsMap.get(importedDefinitionTypeName);
-          for (const importedDefinition of importedDefinitions) {
-            allImportedDefinitions.add(importedDefinition);
-          }
-        }
-      } else {
-        for (let importedDefinitionName of imports) {
-          if (importedDefinitionName.endsWith('.*')) {
-            // Adding whole type means the same thing with adding every single field
-            importedDefinitionName = importedDefinitionName.replace('.*', '');
-          }
-          const [importedDefinitionTypeName] = importedDefinitionName.split('.');
-          if (!allImportedDefinitionsMap.has(importedDefinitionTypeName)) {
-            allImportedDefinitionsMap.set(importedDefinitionTypeName, new Set());
-          }
-          const allImportedDefinitions = allImportedDefinitionsMap.get(importedDefinitionTypeName);
-          const importedDefinitions = importFileDefinitionMap.get(importedDefinitionName);
-          if (!importedDefinitions) {
-            throw new Error(`${importedDefinitionName} is not exported by ${from} imported by ${filePath}`);
-          }
-          for (const importedDefinition of importedDefinitions) {
-            allImportedDefinitions.add(importedDefinition);
+        } else {
+          for (let importedDefinitionName of imports) {
+            if (importedDefinitionName.endsWith('.*')) {
+              // Adding whole type means the same thing with adding every single field
+              importedDefinitionName = importedDefinitionName.replace('.*', '');
+            }
+            const [importedDefinitionTypeName] = importedDefinitionName.split('.');
+            if (!allImportedDefinitionsMap.has(importedDefinitionTypeName)) {
+              allImportedDefinitionsMap.set(importedDefinitionTypeName, new Set());
+            }
+            const allImportedDefinitions = allImportedDefinitionsMap.get(importedDefinitionTypeName);
+            const importedDefinitions = importFileDefinitionMap.get(importedDefinitionName);
+            if (!importedDefinitions) {
+              throw new Error(`${importedDefinitionName} is not exported by ${from} imported by ${filePath}`);
+            }
+            if (allImportedDefinitions != null) {
+              for (const importedDefinition of importedDefinitions) {
+                allImportedDefinitions.add(importedDefinition);
+              }
+            }
           }
         }
       }
@@ -264,61 +280,69 @@ function visitFile(
       visitedFiles.set(filePath, allImportedDefinitionsMap);
     } else {
       const fileDefinitionMap = visitedFiles.get(filePath);
-      const addDefinition = (
-        definition: DefinitionNode,
-        definitionName: string,
-        definitionSet: Set<DefinitionNode>
-      ) => {
-        if (!definitionSet.has(definition)) {
-        definitionSet.add(definition);
-        // Regenerate field exports if some fields are imported after visitor
-        if ('fields' in definition) {
-          for (const field of definition.fields) {
-            const fieldName = field.name.value;
-            const fieldDefinitionName = definition.name.value + '.' + fieldName;
+      if (fileDefinitionMap) {
+        const addDefinition = (
+          definition: DefinitionNode,
+          definitionName: string,
+          definitionSet: Set<DefinitionNode>
+        ) => {
+          if (!definitionSet.has(definition)) {
+            definitionSet.add(definition);
+            // Regenerate field exports if some fields are imported after visitor
+            if ('fields' in definition && definition.fields) {
+              for (const field of definition.fields) {
+                const fieldName = field.name.value;
+                const fieldDefinitionName = definition.name.value + '.' + fieldName;
+                const allImportedDefinitions = allImportedDefinitionsMap.get(definitionName);
+                allImportedDefinitions?.forEach(importedDefinition => {
+                  if (!fileDefinitionMap.has(fieldDefinitionName)) {
+                    fileDefinitionMap.set(fieldDefinitionName, new Set());
+                  }
+                  const definitionsWithDeps = fileDefinitionMap.get(fieldDefinitionName);
+                  if (definitionsWithDeps) {
+                    addDefinition(importedDefinition, fieldDefinitionName, definitionsWithDeps);
+                  }
+                });
+                const newDependencySet = new Set<string>();
+                switch (field.kind) {
+                  case Kind.FIELD_DEFINITION:
+                    visitFieldDefinitionNode(field, newDependencySet, dependenciesByDefinitionName);
+                    break;
+                  case Kind.INPUT_VALUE_DEFINITION:
+                    visitInputValueDefinitionNode(field, newDependencySet, dependenciesByDefinitionName);
+                    break;
+                }
+                newDependencySet.forEach(dependencyName => {
+                  const definitionsInCurrentFile = fileDefinitionMap.get(dependencyName);
+                  definitionsInCurrentFile?.forEach(def => addDefinition(def, definitionName, definitionSet));
+                  const definitionsFromImports = allImportedDefinitionsMap.get(dependencyName);
+                  definitionsFromImports?.forEach(def => addDefinition(def, definitionName, definitionSet));
+                });
+              }
+            }
+          }
+        };
+        for (const [definitionName] of definitionsByName) {
+          const definitionsWithDependencies = fileDefinitionMap.get(definitionName);
+          if (definitionsWithDependencies) {
             const allImportedDefinitions = allImportedDefinitionsMap.get(definitionName);
             allImportedDefinitions?.forEach(importedDefinition => {
-              if (!fileDefinitionMap.has(fieldDefinitionName)) {
-                fileDefinitionMap.set(fieldDefinitionName, new Set());
+              addDefinition(importedDefinition, definitionName, definitionsWithDependencies);
+            });
+            const dependenciesOfDefinition = dependenciesByDefinitionName.get(definitionName);
+            if (dependenciesOfDefinition) {
+              for (const dependencyName of dependenciesOfDefinition) {
+                // If that dependency cannot be found both in imports and this file, throw an error
+                if (!allImportedDefinitionsMap.has(dependencyName) && !definitionsByName.has(dependencyName)) {
+                  throw new Error(`Couldn't find type ${dependencyName} in any of the schemas.`);
+                }
+                const dependencyDefinitionsFromImports = allImportedDefinitionsMap.get(dependencyName);
+                dependencyDefinitionsFromImports?.forEach(dependencyDefinition => {
+                  addDefinition(dependencyDefinition, definitionName, definitionsWithDependencies);
+                });
               }
-              const definitionsWithDeps = fileDefinitionMap.get(fieldDefinitionName);
-              addDefinition(importedDefinition, fieldDefinitionName, definitionsWithDeps);
-            });
-            const newDependencySet = new Set<string>();
-            switch (field.kind) {
-              case Kind.FIELD_DEFINITION:
-                visitFieldDefinitionNode(field, newDependencySet, dependenciesByDefinitionName);
-                break;
-              case Kind.INPUT_VALUE_DEFINITION:
-                visitInputValueDefinitionNode(field, newDependencySet, dependenciesByDefinitionName);
-                break;
             }
-            newDependencySet.forEach(dependencyName => {
-              const definitionsInCurrentFile = fileDefinitionMap.get(dependencyName);
-              definitionsInCurrentFile?.forEach(def => addDefinition(def, definitionName, definitionSet));
-              const definitionsFromImports = allImportedDefinitionsMap.get(dependencyName);
-              definitionsFromImports?.forEach(def => addDefinition(def, definitionName, definitionSet));
-            });
           }
-        }
-        }
-      };
-      for (const [definitionName] of definitionsByName) {
-        const definitionsWithDependencies = fileDefinitionMap.get(definitionName);
-        const allImportedDefinitions = allImportedDefinitionsMap.get(definitionName);
-        allImportedDefinitions?.forEach(importedDefinition => {
-          addDefinition(importedDefinition, definitionName, definitionsWithDependencies);
-        });
-        const dependenciesOfDefinition = dependenciesByDefinitionName.get(definitionName);
-        for (const dependencyName of dependenciesOfDefinition) {
-          // If that dependency cannot be found both in imports and this file, throw an error
-          if (!allImportedDefinitionsMap.has(dependencyName) && !definitionsByName.has(dependencyName)) {
-            throw new Error(`Couldn't find type ${dependencyName} in any of the schemas.`);
-          }
-          const dependencyDefinitionsFromImports = allImportedDefinitionsMap.get(dependencyName);
-          dependencyDefinitionsFromImports?.forEach(dependencyDefinition => {
-            addDefinition(dependencyDefinition, definitionName, definitionsWithDependencies);
-          });
         }
       }
     }
@@ -327,10 +351,11 @@ function visitFile(
 }
 
 export function parseImportLine(importLine: string): { imports: string[]; from: string } {
-  if (IMPORT_FROM_REGEX.test(importLine)) {
+  let regexMatch = importLine.match(IMPORT_FROM_REGEX);
+  if (regexMatch != null) {
     // Apply regex to import line
     // Extract matches into named variables
-    const [, wildcard, importsString, , from] = importLine.match(IMPORT_FROM_REGEX);
+    const [, wildcard, importsString, , from] = regexMatch;
 
     if (from) {
       // Extract imported types
@@ -339,12 +364,16 @@ export function parseImportLine(importLine: string): { imports: string[]; from: 
       // Return information about the import line
       return { imports, from };
     }
-  } else if (IMPORT_DEFAULT_REGEX.test(importLine)) {
-    const [, , from] = importLine.match(IMPORT_DEFAULT_REGEX);
+  }
+
+  regexMatch = importLine.match(IMPORT_DEFAULT_REGEX);
+  if (regexMatch != null) {
+    const [, , from] = regexMatch;
     if (from) {
       return { imports: ['*'], from };
     }
   }
+
   throw new Error(`
     Import statement is not valid:
     > ${importLine}
@@ -354,7 +383,7 @@ export function parseImportLine(importLine: string): { imports: string[]; from: 
   `);
 }
 
-function resolveFilePath(filePath: string, importFrom: string) {
+function resolveFilePath(filePath: string, importFrom: string): string {
   const dirName = dirname(filePath);
   try {
     const fullPath = join(dirName, importFrom);
@@ -363,11 +392,14 @@ function resolveFilePath(filePath: string, importFrom: string) {
     if (e.code === 'ENOENT') {
       return resolveFrom(dirName, importFrom);
     }
+    throw e;
   }
 }
 
 function visitOperationDefinitionNode(node: OperationDefinitionNode, dependencySet: Set<string>) {
-  dependencySet.add(node.name.value);
+  if (node.name?.value) {
+    dependencySet.add(node.name.value);
+  }
   node.selectionSet.selections.forEach(selectionNode => visitSelectionNode(selectionNode, dependencySet));
 }
 
@@ -416,11 +448,13 @@ function visitObjectTypeDefinitionNode(
   node.interfaces?.forEach(namedTypeNode => {
     visitNamedTypeNode(namedTypeNode, dependencySet);
     const interfaceName = namedTypeNode.name.value;
+    let set = dependenciesByDefinitionName.get(interfaceName);
     // interface should be dependent to the type as well
-    if (!dependenciesByDefinitionName.has(interfaceName)) {
-      dependenciesByDefinitionName.set(interfaceName, new Set());
+    if (set == null) {
+      set = new Set();
+      dependenciesByDefinitionName.set(interfaceName, set);
     }
-    dependenciesByDefinitionName.get(interfaceName).add(typeName);
+    set.add(typeName);
   });
 }
 
@@ -507,18 +541,20 @@ function visitInterfaceTypeDefinitionNode(
   (node as any).interfaces?.forEach((namedTypeNode: NamedTypeNode) => {
     visitNamedTypeNode(namedTypeNode, dependencySet);
     const interfaceName = namedTypeNode.name.value;
+    let set = dependenciesByDefinitionName.get(interfaceName);
     // interface should be dependent to the type as well
-    if (!dependenciesByDefinitionName.has(interfaceName)) {
-      dependenciesByDefinitionName.set(interfaceName, new Set());
+    if (set == null) {
+      set = new Set();
+      dependenciesByDefinitionName.set(interfaceName, set);
     }
-    dependenciesByDefinitionName.get(interfaceName).add(typeName);
+    set.add(typeName);
   });
 }
 
 function visitUnionTypeDefinitionNode(node: UnionTypeDefinitionNode, dependencySet: Set<string>) {
   dependencySet.add(node.name.value);
   node.directives?.forEach(directiveNode => visitDirectiveNode(directiveNode, dependencySet));
-  node.types.forEach(namedTypeNode => visitNamedTypeNode(namedTypeNode, dependencySet));
+  node.types?.forEach(namedTypeNode => visitNamedTypeNode(namedTypeNode, dependencySet));
 }
 
 function visitEnumTypeDefinitionNode(node: EnumTypeDefinitionNode, dependencySet: Set<string>) {
@@ -563,11 +599,13 @@ function visitObjectTypeExtensionNode(
   node.interfaces?.forEach(namedTypeNode => {
     visitNamedTypeNode(namedTypeNode, dependencySet);
     const interfaceName = namedTypeNode.name.value;
+    let set = dependenciesByDefinitionName.get(interfaceName);
     // interface should be dependent to the type as well
-    if (!dependenciesByDefinitionName.has(interfaceName)) {
-      dependenciesByDefinitionName.set(interfaceName, new Set());
+    if (set == null) {
+      set = new Set();
+      dependenciesByDefinitionName.set(interfaceName, set);
     }
-    dependenciesByDefinitionName.get(interfaceName).add(typeName);
+    set.add(typeName);
   });
 }
 
@@ -585,18 +623,20 @@ function visitInterfaceTypeExtensionNode(
   (node as any).interfaces?.forEach((namedTypeNode: NamedTypeNode) => {
     visitNamedTypeNode(namedTypeNode, dependencySet);
     const interfaceName = namedTypeNode.name.value;
+    let set = dependenciesByDefinitionName.get(interfaceName);
     // interface should be dependent to the type as well
-    if (!dependenciesByDefinitionName.has(interfaceName)) {
-      dependenciesByDefinitionName.set(interfaceName, new Set());
+    if (set == null) {
+      set = new Set();
+      dependenciesByDefinitionName.set(interfaceName, set);
     }
-    dependenciesByDefinitionName.get(interfaceName).add(typeName);
+    set.add(typeName);
   });
 }
 
 function visitUnionTypeExtensionNode(node: UnionTypeExtensionNode, dependencySet: Set<string>) {
   dependencySet.add(node.name.value);
   node.directives?.forEach(directiveNode => visitDirectiveNode(directiveNode, dependencySet));
-  node.types.forEach(namedTypeNode => visitNamedTypeNode(namedTypeNode, dependencySet));
+  node.types?.forEach(namedTypeNode => visitNamedTypeNode(namedTypeNode, dependencySet));
 }
 
 function visitEnumTypeExtensionNode(node: EnumTypeExtensionNode, dependencySet: Set<string>) {

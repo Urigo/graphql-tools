@@ -5,9 +5,7 @@ export interface Observer<T> {
 }
 
 export interface Observable<T> {
-  subscribe(
-    observer: Observer<T>
-  ): {
+  subscribe(observer: Observer<T>): {
     unsubscribe: () => void;
   };
 }
@@ -22,7 +20,8 @@ export function observableToAsyncIterable<T>(observable: Observable<T>): AsyncIt
 
   const pushValue = (value: any) => {
     if (pullQueue.length !== 0) {
-      pullQueue.shift()({ value, done: false });
+      // It is safe to use the ! operator here as we check the length.
+      pullQueue.shift()!({ value, done: false });
     } else {
       pushQueue.push({ value, done: false });
     }
@@ -30,7 +29,8 @@ export function observableToAsyncIterable<T>(observable: Observable<T>): AsyncIt
 
   const pushError = (error: any) => {
     if (pullQueue.length !== 0) {
-      pullQueue.shift()({ value: { errors: [error] }, done: false });
+      // It is safe to use the ! operator here as we check the length.
+      pullQueue.shift()!({ value: { errors: [error] }, done: false });
     } else {
       pushQueue.push({ value: { errors: [error] }, done: false });
     }
@@ -38,14 +38,15 @@ export function observableToAsyncIterable<T>(observable: Observable<T>): AsyncIt
 
   const pushDone = () => {
     if (pullQueue.length !== 0) {
-      pullQueue.shift()({ done: true });
+      // It is safe to use the ! operator here as we check the length.
+      pullQueue.shift()!({ done: true });
     } else {
       pushQueue.push({ done: true });
     }
   };
 
   const pullValue = () =>
-    new Promise(resolve => {
+    new Promise<IteratorResult<T>>(resolve => {
       if (pushQueue.length !== 0) {
         const element = pushQueue.shift();
         // either {value: {errors: [...]}} or {value: ...}
@@ -79,7 +80,8 @@ export function observableToAsyncIterable<T>(observable: Observable<T>): AsyncIt
 
   return {
     next() {
-      return listening ? pullValue() : this.return();
+      // return is a defined method, so it is safe to call it.
+      return listening ? pullValue() : this.return!();
     },
     return() {
       emptyQueue();

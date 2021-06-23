@@ -17,6 +17,7 @@ import {
 
 import { Request, GraphQLExecutionContext, ExecutionResult } from './Interfaces';
 import { collectFields } from './collectFields';
+import { Maybe } from '@graphql-tools/utils';
 
 export type ValueVisitor = (value: any) => any;
 
@@ -101,10 +102,12 @@ export function visitResult(
   const errors = result.errors;
   const visitingErrors = errors != null && errorVisitorMap != null;
 
-  if (data != null) {
+  const operationDocumentNode = getOperationAST(request.document, undefined);
+
+  if (data != null && operationDocumentNode != null) {
     result.data = visitRoot(
       data,
-      getOperationAST(request.document, undefined),
+      operationDocumentNode,
       partialExecutionContext,
       resultVisitorMap,
       visitingErrors ? errors : undefined,
@@ -112,7 +115,7 @@ export function visitResult(
     );
   }
 
-  if (visitingErrors) {
+  if (errors != null && errorVisitorMap) {
     result.errors = visitErrorsByType(errors, errorVisitorMap, errorInfo);
   }
 
@@ -155,8 +158,8 @@ function visitRoot(
   root: any,
   operation: OperationDefinitionNode,
   exeContext: GraphQLExecutionContext,
-  resultVisitorMap: ResultVisitorMap,
-  errors: ReadonlyArray<GraphQLError>,
+  resultVisitorMap: Maybe<ResultVisitorMap>,
+  errors: Maybe<ReadonlyArray<GraphQLError>>,
   errorInfo: ErrorInfo
 ): any {
   const operationRootType = getOperationRootType(exeContext.schema, operation);
@@ -176,9 +179,9 @@ function visitObjectValue(
   type: GraphQLObjectType,
   fieldNodeMap: Record<string, Array<FieldNode>>,
   exeContext: GraphQLExecutionContext,
-  resultVisitorMap: ResultVisitorMap,
+  resultVisitorMap: Maybe<ResultVisitorMap>,
   pathIndex: number,
-  errors: ReadonlyArray<GraphQLError>,
+  errors: Maybe<ReadonlyArray<GraphQLError>>,
   errorInfo: ErrorInfo
 ): Record<string, any> {
   const fieldMap = type.getFields();
@@ -188,7 +191,7 @@ function visitObjectValue(
   const newObject = enterObject != null ? enterObject(object) : object;
 
   let sortedErrors: SortedErrors;
-  let errorMap: Record<string, Array<GraphQLError>>;
+  let errorMap: Maybe<Record<string, Array<GraphQLError>>> = null;
   if (errors != null) {
     sortedErrors = sortErrorsByPathSegment(errors, pathIndex);
     errorMap = sortedErrors.errorMap;
@@ -202,8 +205,8 @@ function visitObjectValue(
 
     const newPathIndex = pathIndex + 1;
 
-    let fieldErrors: Array<GraphQLError>;
-    if (errors != null) {
+    let fieldErrors: Array<GraphQLError> | undefined;
+    if (errorMap) {
       fieldErrors = errorMap[responseKey];
       if (fieldErrors != null) {
         delete errorMap[responseKey];
@@ -230,10 +233,12 @@ function visitObjectValue(
     updateObject(newObject, '__typename', oldTypename, typeVisitorMap, '__typename');
   }
 
-  if (errors != null) {
-    Object.keys(errorMap).forEach(unknownResponseKey => {
-      errorMap[unknownResponseKey].forEach(error => errorInfo.unpathedErrors.add(error));
-    });
+  if (errorMap) {
+    for (const errors of Object.values(errorMap)) {
+      for (const error of errors) {
+        errorInfo.unpathedErrors.add(error);
+      }
+    }
   }
 
   const leaveObject = typeVisitorMap?.__leave as ValueVisitor;
@@ -273,7 +278,7 @@ function visitListValue(
   returnType: GraphQLOutputType,
   fieldNodes: Array<FieldNode>,
   exeContext: GraphQLExecutionContext,
-  resultVisitorMap: ResultVisitorMap,
+  resultVisitorMap: Maybe<ResultVisitorMap>,
   pathIndex: number,
   errors: ReadonlyArray<GraphQLError>,
   errorInfo: ErrorInfo
@@ -288,9 +293,9 @@ function visitFieldValue(
   returnType: GraphQLOutputType,
   fieldNodes: Array<FieldNode>,
   exeContext: GraphQLExecutionContext,
-  resultVisitorMap: ResultVisitorMap,
+  resultVisitorMap: Maybe<ResultVisitorMap>,
   pathIndex: number,
-  errors: ReadonlyArray<GraphQLError> = [],
+  errors: ReadonlyArray<GraphQLError> | undefined = [],
   errorInfo: ErrorInfo
 ): any {
   if (value == null) {
@@ -399,7 +404,9 @@ function collectSubFields(
   const visitedFragmentNames = Object.create(null);
 
   fieldNodes.forEach(fieldNode => {
-    subFieldNodes = collectFields(exeContext, type, fieldNode.selectionSet, subFieldNodes, visitedFragmentNames);
+    if (fieldNode.selectionSet) {
+      subFieldNodes = collectFields(exeContext, type, fieldNode.selectionSet, subFieldNodes, visitedFragmentNames);
+    }
   });
 
   return subFieldNodes;

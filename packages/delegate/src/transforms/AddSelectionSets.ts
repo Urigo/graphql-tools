@@ -1,6 +1,6 @@
 import { SelectionSetNode, TypeInfo, Kind, FieldNode, SelectionNode, print } from 'graphql';
 
-import { Request } from '@graphql-tools/utils';
+import { Maybe, Request } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext } from '../types';
 import { memoize2 } from '../memoize';
@@ -35,7 +35,7 @@ function visitSelectionSet(
   selectionSetsByType: Record<string, SelectionSetNode>,
   selectionSetsByField: Record<string, Record<string, SelectionSetNode>>,
   dynamicSelectionSetsByField: Record<string, Record<string, Array<(node: FieldNode) => SelectionSetNode>>>
-): SelectionSetNode {
+): Maybe<SelectionSetNode> {
   const parentType = typeInfo.getParentType();
 
   const newSelections: Map<string, SelectionNode> = new Map();

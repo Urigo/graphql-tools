@@ -1,6 +1,6 @@
 import { GraphQLSchema, FieldNode, GraphQLObjectType, GraphQLResolveInfo } from 'graphql';
 
-import { collectFields, GraphQLExecutionContext } from '@graphql-tools/utils';
+import { collectFields, GraphQLExecutionContext, Maybe } from '@graphql-tools/utils';
 
 import { isSubschemaConfig } from './subschemaConfig';
 import { MergedTypeInfo, SubschemaConfig, StitchingInfo } from './types';
@@ -11,24 +11,27 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
   const visitedFragmentNames = Object.create(null);
 
   const type = info.schema.getType(typeName) as GraphQLObjectType;
-  const partialExecutionContext = ({
+  const partialExecutionContext = {
     schema: info.schema,
     variableValues: info.variableValues,
     fragments: info.fragments,
-  } as unknown) as GraphQLExecutionContext;
+  } as unknown as GraphQLExecutionContext;
 
   info.fieldNodes.forEach(fieldNode => {
-    subFieldNodes = collectFields(
-      partialExecutionContext,
-      type,
-      fieldNode.selectionSet,
-      subFieldNodes,
-      visitedFragmentNames
-    );
+    if (fieldNode.selectionSet) {
+      subFieldNodes = collectFields(
+        partialExecutionContext,
+        type,
+        fieldNode.selectionSet,
+        subFieldNodes,
+        visitedFragmentNames
+      );
+    }
   });
 
-  const stitchingInfo = info.schema.extensions.stitchingInfo as StitchingInfo;
-  const selectionSetsByField = stitchingInfo.selectionSetsByField;
+  // TODO: Verify whether it is safe that extensions always exists.
+  const stitchingInfo: Maybe<StitchingInfo> = info.schema.extensions?.['stitchingInfo'];
+  const selectionSetsByField = stitchingInfo?.selectionSetsByField;
 
   Object.keys(subFieldNodes).forEach(responseName => {
     const fieldName = subFieldNodes[responseName][0].name.value;
@@ -49,10 +52,13 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
 
 export const getFieldsNotInSubschema = memoizeInfoAnd2Objects(function (
   info: GraphQLResolveInfo,
-  subschema: GraphQLSchema | SubschemaConfig,
+  subschema: GraphQLSchema | SubschemaConfig<any, any, any, any>,
   mergedTypeInfo: MergedTypeInfo
 ): Array<FieldNode> {
   const typeMap = isSubschemaConfig(subschema) ? mergedTypeInfo.typeMaps.get(subschema) : subschema.getTypeMap();
+  if (!typeMap) {
+    return [];
+  }
   const typeName = mergedTypeInfo.typeName;
   const fields = (typeMap[typeName] as GraphQLObjectType).getFields();
 

@@ -102,6 +102,12 @@ input TestInput {
   const testPathChecker = (path: string) => path.startsWith(testPath);
   const testUrl = `${testHost}${testPath}`;
 
+  function assertNonMaybe<T>(input: T): asserts input is Exclude<T, null | undefined>{
+    if (input == null) {
+      throw new Error("Value should be neither null nor undefined.")
+    }
+  }
+
   describe('handle', () => {
 
     let scope: nock.Scope;
@@ -127,10 +133,9 @@ input TestInput {
     it('Should return a valid schema when request is valid', async () => {
       scope = mockGraphQLServer({ schema: testSchema, host: testHost, path: testPathChecker });
 
-      const schema = await loader.load(testUrl, {});
-
-      expect(schema.schema).toBeDefined();
-      expect(printSchemaWithDirectives(schema.schema)).toBeSimilarGqlDoc(testTypeDefs);
+      const source = await loader.load(testUrl, {});
+      assertNonMaybe(source.schema)
+      expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
     });
 
     it('Should pass default headers', async () => {
@@ -145,11 +150,11 @@ input TestInput {
         },
       });
 
-      const schema = await loader.load(testUrl, {});
+      const source = await loader.load(testUrl, {});
 
-      expect(schema).toBeDefined();
-      expect(schema.schema).toBeDefined();
-      expect(printSchemaWithDirectives(schema.schema)).toBeSimilarGqlDoc(testTypeDefs);
+      expect(source).toBeDefined();
+      assertNonMaybe(source.schema)
+      expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
 
       expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
       expect(headers['content-type']).toContain(`application/json`);
@@ -166,11 +171,11 @@ input TestInput {
         },
       });
 
-      const schema = await loader.load(testUrl, { headers: { Auth: '1' } });
+      const source = await loader.load(testUrl, { headers: { Auth: '1' } });
 
-      expect(schema).toBeDefined();
-      expect(schema.schema).toBeDefined();
-      expect(printSchemaWithDirectives(schema.schema)).toBeSimilarGqlDoc(testTypeDefs);
+      expect(source).toBeDefined();
+      assertNonMaybe(source.schema)
+      expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
 
       expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
       expect(headers['content-type']).toContain(`application/json`);
@@ -187,11 +192,11 @@ input TestInput {
           headers = ctx.req.headers;
         },
       });
-      const schema = await loader.load(testUrl, { headers: [{ A: '1' }, { B: '2', C: '3' }] });
+      const source = await loader.load(testUrl, { headers: [{ A: '1' }, { B: '2', C: '3' }] });
 
-      expect(schema).toBeDefined();
-      expect(schema.schema).toBeDefined();
-      expect(printSchemaWithDirectives(schema.schema)).toBeSimilarGqlDoc(testTypeDefs);
+      expect(source).toBeDefined();
+      assertNonMaybe(source.schema)
+      expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
 
       expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
       expect(headers['content-type']).toContain(`application/json`);
@@ -205,7 +210,8 @@ input TestInput {
       const source = await loader.load(testUrl, { descriptions: false });
 
       expect(source).toBeDefined();
-      expect(source.schema.getQueryType().description).toBeUndefined();
+      assertNonMaybe(source.schema)
+      expect(source.schema.getQueryType()!.description).toBeUndefined();
     });
 
     it('Absolute file path should not be accepted as URL', async () => {
@@ -224,7 +230,7 @@ input TestInput {
       scope.done();
 
       scope = mockGraphQLServer({ schema: testSchema, host: testHost, path: testPathChecker, method: 'GET' });
-
+      assertNonMaybe(source.schema)
       const result = await execute({
         schema: source.schema,
         document: parse(/* GraphQL */ `
@@ -253,7 +259,7 @@ input TestInput {
       scope = mockGraphQLServer({ schema: testSchema, host: address.host, path: address.path });
       const result = await loader.load(url, {});
 
-      expect(result.schema).toBeDefined();
+      assertNonMaybe(result.schema)
       expect(printSchemaWithDirectives(result.schema)).toBeSimilarGqlDoc(testTypeDefs);
     });
 
@@ -270,7 +276,7 @@ input TestInput {
       });
       const result = await loader.load(url, {});
 
-      expect(result.schema).toBeDefined();
+      assertNonMaybe(result.schema)
       expect(printSchemaWithDirectives(result.schema)).toBeSimilarGqlDoc(testTypeDefs);
     });
 
@@ -287,7 +293,7 @@ input TestInput {
       });
       const result = await loader.load(url, {});
 
-      expect(result.schema).toBeDefined();
+      assertNonMaybe(result.schema)
       expect(printSchemaWithDirectives(result.schema)).toBeSimilarGqlDoc(testTypeDefs);
     });
     it('should handle .graphql files', async () => {
@@ -296,7 +302,7 @@ input TestInput {
       scope = nock(testHost).get(testPath).reply(200, testTypeDefs);
       const result = await loader.load(testHost + testPath, {});
 
-      expect(result.document).toBeDefined();
+      assertNonMaybe(result.document)
       expect(print(result.document)).toBeSimilarGqlDoc(testTypeDefs);
     })
     it('should handle results with handleAsSDL option even if it doesn\'t end with .graphql', async () => {
@@ -307,7 +313,7 @@ input TestInput {
         handleAsSDL: true,
       });
 
-      expect(result.document).toBeDefined();
+      assertNonMaybe(result.document)
       expect(print(result.document)).toBeSimilarGqlDoc(testTypeDefs);
     })
     it('should handle subscriptions - new protocol', (done) => {
@@ -344,7 +350,7 @@ input TestInput {
         );
 
         httpServer.listen(8081);
-
+        assertNonMaybe(schema)
         const asyncIterator = await subscribe({
           schema,
           document: parse(/* GraphQL */`
@@ -372,7 +378,7 @@ input TestInput {
         expect(await getNextResult()).toBe(1);
         expect(await getNextResult()).toBe(2);
 
-        await asyncIterator.return();
+        await asyncIterator.return!();
         await subscriptionServer.dispose();
         wsServer.close(() => {
           httpServer.close(done);
@@ -413,7 +419,7 @@ input TestInput {
             path: '/graphql',
           },
         );
-
+        assertNonMaybe(schema)
         const asyncIterator = await subscribe({
           schema,
           document: parse(/* GraphQL */`
@@ -441,7 +447,7 @@ input TestInput {
         expect(await getNextResult()).toBe(1);
         expect(await getNextResult()).toBe(2);
 
-        await asyncIterator.return();
+        await asyncIterator.return!();
         subscriptionServer.close();
         httpServer.close(done);
       });
@@ -460,7 +466,7 @@ input TestInput {
       const fileName = 'testfile.txt';
 
       const absoluteFilePath = join(__dirname, fileName);
-
+      assertNonMaybe(schema)
       const result = await execute({
         schema,
         document: parse(/* GraphQL */`
@@ -481,6 +487,7 @@ input TestInput {
       const content = readFileSync(absoluteFilePath, 'utf8')
 
       expect(result.errors).toBeFalsy();
+      assertNonMaybe(result.data)
       expect(result.data.uploadFile?.filename).toBe(fileName);
       expect(result.data.uploadFile?.content).toBe(content);
     });

@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@types/extract-files": "8.1.0",
-    "@types/ws": "7.4.4",
+    "@types/ws": "7.4.5",
     "graphql-upload": "12.0.0",
     "mock-http": "1.1.0",
     "mock-socket": "9.0.3"
@@ -49,7 +49,7 @@
     "@types/websocket": "1.0.2",
     "abort-controller": "3.0.0",
     "cross-fetch": "3.1.4",
-    "extract-files": "10.0.0",
+    "extract-files": "11.0.0",
     "form-data": "4.0.0",
     "graphql-ws": "^5.0.0",
     "lodash": "4.17.21",
@@ -58,9 +58,9 @@
     "isomorphic-ws": "4.0.1",
     "subscriptions-transport-ws": "^0.10.0",
     "sync-fetch": "0.3.0",
-    "tslib": "~2.2.0",
+    "tslib": "~2.3.0",
     "valid-url": "1.0.9",
-    "ws": "7.4.6"
+    "ws": "7.5.0"
   },
   "publishConfig": {
     "access": "public",

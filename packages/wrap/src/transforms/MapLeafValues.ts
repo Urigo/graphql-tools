@@ -21,6 +21,7 @@ import {
   ResultVisitorMap,
   updateArgument,
   transformInputValue,
+  assertSome,
 } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
@@ -35,13 +36,23 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
   private readonly inputValueTransformer: LeafValueTransformer;
   private readonly outputValueTransformer: LeafValueTransformer;
   private readonly resultVisitorMap: ResultVisitorMap;
-  private originalWrappingSchema: GraphQLSchema;
-  private typeInfo: TypeInfo;
+  private originalWrappingSchema: GraphQLSchema | undefined;
+  private typeInfo: TypeInfo | undefined;
 
   constructor(inputValueTransformer: LeafValueTransformer, outputValueTransformer: LeafValueTransformer) {
     this.inputValueTransformer = inputValueTransformer;
     this.outputValueTransformer = outputValueTransformer;
     this.resultVisitorMap = Object.create(null);
+  }
+
+  private _getTypeInfo() {
+    assertSome(this.typeInfo);
+    return this.typeInfo;
+  }
+
+  private _getOriginalWrappingSchema() {
+    assertSome(this.originalWrappingSchema);
+    return this.originalWrappingSchema;
   }
 
   public transformSchema(
@@ -66,7 +77,7 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
   public transformRequest(
     originalRequest: Request,
     _delegationContext: DelegationContext,
-    transformationContext?: MapLeafValuesTransformationContext
+    transformationContext: MapLeafValuesTransformationContext
   ): Request {
     const document = originalRequest.document;
     const variableValues = originalRequest.variables;
@@ -97,12 +108,12 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
   public transformResult(
     originalResult: ExecutionResult,
     _delegationContext: DelegationContext,
-    transformationContext?: MapLeafValuesTransformationContext
+    transformationContext: MapLeafValuesTransformationContext
   ): ExecutionResult {
     return visitResult(
       originalResult,
       transformationContext.transformedRequest,
-      this.originalWrappingSchema,
+      this._getOriginalWrappingSchema(),
       this.resultVisitorMap
     );
   }
@@ -112,7 +123,9 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
     variableValues: Record<string, any>
   ): Array<OperationDefinitionNode> {
     return operations.map((operation: OperationDefinitionNode) => {
-      const variableDefinitionMap: Record<string, VariableDefinitionNode> = operation.variableDefinitions.reduce(
+      const variableDefinitionMap: Record<string, VariableDefinitionNode> = (
+        operation.variableDefinitions ?? []
+      ).reduce(
         (prev, def) => ({
           ...prev,
           [def.variable.name.value]: def,
@@ -122,7 +135,7 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
 
       const newOperation = visit(
         operation,
-        visitWithTypeInfo(this.typeInfo, {
+        visitWithTypeInfo(this._getTypeInfo(), {
           [Kind.FIELD]: node => this.transformFieldNode(node, variableDefinitionMap, variableValues),
         })
       );
@@ -138,8 +151,8 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
     field: FieldNode,
     variableDefinitionMap: Record<string, VariableDefinitionNode>,
     variableValues: Record<string, any>
-  ): FieldNode {
-    const targetField = this.typeInfo.getFieldDef();
+  ): FieldNode | undefined {
+    const targetField = this._getTypeInfo().getFieldDef();
 
     if (!targetField.name.startsWith('__')) {
       const argumentNodes = field.arguments;

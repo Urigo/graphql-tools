@@ -2,6 +2,13 @@ import { wrapSchema, TransformEnumValues } from '@graphql-tools/wrap';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql, GraphQLEnumType } from 'graphql';
 
+function assertGraphQLEnumType(input: unknown): asserts input is GraphQLEnumType {
+  if (input instanceof GraphQLEnumType) {
+    return
+  }
+  throw new Error("Expected GraphQLEnumType.")
+}
+
 describe('TransformEnumValues', () => {
   test('works', async () => {
     const schema = makeExecutableSchema({
@@ -74,7 +81,9 @@ describe('TransformEnumValues', () => {
 
     const result = await graphql(transformedSchema, query);
     expect(result.errors).toBeUndefined();
-    expect((transformedSchema.getType('TestEnum') as GraphQLEnumType).getValue('UNO').value).toBe('ONE');
+    const TestEnum = transformedSchema.getType('TestEnum')
+    assertGraphQLEnumType(TestEnum)
+    expect(TestEnum.getValue('UNO')?.value).toBe('ONE');
   });
 
   test('works with variables', async () => {

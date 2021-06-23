@@ -4,6 +4,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { delegateToSchema } from '@graphql-tools/delegate';
 import { addMocksToSchema } from '@graphql-tools/mock';
 import { stitchSchemas } from '@graphql-tools/stitch';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('basic stitching example', () => {
   test('works', async () => {
@@ -107,6 +108,7 @@ describe('basic stitching example', () => {
     const result = await graphql(stitchedSchema, query);
 
     expect(result.errors).toBeUndefined();
+    assertSome(result.data)
     expect(result.data.userById.chirps[1].id).not.toBe(null);
     expect(result.data.userById.chirps[1].text).not.toBe(null);
     expect(result.data.userById.chirps[1].author.email).not.toBe(null);
@@ -229,6 +231,7 @@ describe('stitching to interfaces', () => {
     const resultWithFragments = await graphql(stitchedSchema, queryWithFragments);
 
     expect(resultWithFragments.errors).toBeUndefined();
+    assertSome(resultWithFragments.data)
     expect(resultWithFragments.data.node.chirps[1].id).not.toBe(null);
     expect(resultWithFragments.data.node.chirps[1].text).not.toBe(null);
     expect(resultWithFragments.data.node.chirps[1].author.email).not.toBe(null);
@@ -253,6 +256,7 @@ describe('stitching to interfaces', () => {
     const resultWithoutFragments = await graphql(stitchedSchema, queryWithoutFragments);
 
     expect(resultWithoutFragments.errors).toBeUndefined();
+    assertSome(resultWithoutFragments.data)
     expect(resultWithoutFragments.data.node.chirps[1].id).not.toBe(null);
     expect(resultWithoutFragments.data.node.chirps[1].text).not.toBe(null);
     expect(resultWithoutFragments.data.node.chirps[1].author.email).not.toBe(null);

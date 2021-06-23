@@ -20,13 +20,17 @@ export default class FilterObjectFieldDirectives implements Transform {
   ): GraphQLSchema {
     const transformer = new TransformObjectFields(
       (_typeName: string, _fieldName: string, fieldConfig: GraphQLFieldConfig<any, any>) => {
-        const keepDirectives = fieldConfig.astNode.directives.filter(dir => {
-          const directiveDef = originalWrappingSchema.getDirective(dir.name.value);
-          const directiveValue = directiveDef ? getArgumentValues(directiveDef, dir) : undefined;
-          return this.filter(dir.name.value, directiveValue);
-        });
+        const keepDirectives =
+          fieldConfig.astNode?.directives?.filter(dir => {
+            const directiveDef = originalWrappingSchema.getDirective(dir.name.value);
+            const directiveValue = directiveDef ? getArgumentValues(directiveDef, dir) : undefined;
+            return this.filter(dir.name.value, directiveValue);
+          }) ?? [];
 
-        if (keepDirectives.length !== fieldConfig.astNode.directives.length) {
+        if (
+          fieldConfig.astNode?.directives != null &&
+          keepDirectives.length !== fieldConfig.astNode.directives.length
+        ) {
           fieldConfig = {
             ...fieldConfig,
             astNode: {

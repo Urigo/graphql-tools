@@ -7,6 +7,7 @@
 import { loadTypedefsSync } from '@graphql-tools/load';
 import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader';
 import { concatAST } from 'graphql';
+import { isSome } from '@graphql-tools/utils';
 
 const VALID_EXTENSIONS = ['graphql', 'graphqls', 'gql', 'gqls'];
 
@@ -16,7 +17,7 @@ function handleModule(m: NodeModule, filename: string) {
     loaders: [new GraphQLFileLoader()],
   });
 
-  const documents = sources.map(source => source.document);
+  const documents = sources.map(source => source.document).filter(isSome);
   const mergedDoc = concatAST(documents);
   m.exports = mergedDoc;
 }

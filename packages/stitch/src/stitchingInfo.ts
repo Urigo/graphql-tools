@@ -13,7 +13,7 @@ import {
   isLeafType,
 } from 'graphql';
 
-import { parseSelectionSet, TypeMap, IResolvers, IFieldResolverOptions } from '@graphql-tools/utils';
+import { parseSelectionSet, TypeMap, IResolvers, IFieldResolverOptions, isSome } from '@graphql-tools/utils';
 
 import { MergedTypeResolver, Subschema, SubschemaConfig, MergedTypeInfo, StitchingInfo } from '@graphql-tools/delegate';
 
@@ -21,11 +21,11 @@ import { MergeTypeCandidate, MergeTypeFilter } from './types';
 
 import { createMergedTypeResolver } from './createMergedTypeResolver';
 
-export function createStitchingInfo(
-  subschemaMap: Map<GraphQLSchema | SubschemaConfig, Subschema>,
-  typeCandidates: Record<string, Array<MergeTypeCandidate>>,
-  mergeTypes?: boolean | Array<string> | MergeTypeFilter
-): StitchingInfo {
+export function createStitchingInfo<TContext = Record<string, any>>(
+  subschemaMap: Map<GraphQLSchema | SubschemaConfig<any, any, any, TContext>, Subschema<any, any, any, TContext>>,
+  typeCandidates: Record<string, Array<MergeTypeCandidate<TContext>>>,
+  mergeTypes?: boolean | Array<string> | MergeTypeFilter<TContext>
+): StitchingInfo<TContext> {
   const mergedTypes = createMergedTypes(typeCandidates, mergeTypes);
   const selectionSetsByField: Record<string, Record<string, SelectionSetNode>> = Object.create(null);
 
@@ -82,11 +82,11 @@ export function createStitchingInfo(
   };
 }
 
-function createMergedTypes(
-  typeCandidates: Record<string, Array<MergeTypeCandidate>>,
-  mergeTypes?: boolean | Array<string> | MergeTypeFilter
-): Record<string, MergedTypeInfo> {
-  const mergedTypes: Record<string, MergedTypeInfo> = Object.create(null);
+function createMergedTypes<TContext = Record<string, any>>(
+  typeCandidates: Record<string, Array<MergeTypeCandidate<TContext>>>,
+  mergeTypes?: boolean | Array<string> | MergeTypeFilter<TContext>
+): Record<string, MergedTypeInfo<TContext>> {
+  const mergedTypes: Record<string, MergedTypeInfo<TContext>> = Object.create(null);
 
   Object.keys(typeCandidates).forEach(typeName => {
     if (
@@ -106,13 +106,13 @@ function createMergedTypes(
         (Array.isArray(mergeTypes) && mergeTypes.includes(typeName)) ||
         typeCandidatesWithMergedTypeConfig.length
       ) {
-        const targetSubschemas: Array<Subschema> = [];
+        const targetSubschemas: Array<Subschema<any, any, any, TContext>> = [];
 
-        const typeMaps: Map<GraphQLSchema | SubschemaConfig, TypeMap> = new Map();
-        const supportedBySubschemas: Record<string, Array<Subschema>> = Object.create({});
-        const selectionSets: Map<Subschema, SelectionSetNode> = new Map();
-        const fieldSelectionSets: Map<Subschema, Record<string, SelectionSetNode>> = new Map();
-        const resolvers: Map<Subschema, MergedTypeResolver> = new Map();
+        const typeMaps: Map<GraphQLSchema | SubschemaConfig<any, any, any, TContext>, TypeMap> = new Map();
+        const supportedBySubschemas: Record<string, Array<Subschema<any, any, any, TContext>>> = Object.create({});
+        const selectionSets: Map<Subschema<any, any, any, TContext>, SelectionSetNode> = new Map();
+        const fieldSelectionSets: Map<Subschema<any, any, any, TContext>, Record<string, SelectionSetNode>> = new Map();
+        const resolvers: Map<Subschema<any, any, any, TContext>, MergedTypeResolver<TContext>> = new Map();
 
         typeCandidates[typeName].forEach(typeCandidate => {
           const subschema = typeCandidate.transformedSubschema;
@@ -136,12 +136,14 @@ function createMergedTypes(
 
           if (mergedTypeConfig.fields) {
             const parsedFieldSelectionSets = Object.create(null);
-            Object.keys(mergedTypeConfig.fields).forEach(fieldName => {
+            for (const fieldName in mergedTypeConfig.fields) {
               if (mergedTypeConfig.fields[fieldName].selectionSet) {
                 const rawFieldSelectionSet = mergedTypeConfig.fields[fieldName].selectionSet;
-                parsedFieldSelectionSets[fieldName] = parseSelectionSet(rawFieldSelectionSet, { noLocation: true });
+                parsedFieldSelectionSets[fieldName] = rawFieldSelectionSet
+                  ? parseSelectionSet(rawFieldSelectionSet, { noLocation: true })
+                  : undefined;
               }
-            });
+            }
             fieldSelectionSets.set(subschema, parsedFieldSelectionSets);
           }
 
@@ -181,9 +183,12 @@ function createMergedTypes(
         });
 
         const sourceSubschemas = typeCandidates[typeName]
-          .filter(typeCandidate => typeCandidate.transformedSubschema != null)
-          .map(typeCandidate => typeCandidate.transformedSubschema);
-        const targetSubschemasBySubschema: Map<Subschema, Array<Subschema>> = new Map();
+          .map(typeCandidate => typeCandidate?.transformedSubschema)
+          .filter(isSome);
+        const targetSubschemasBySubschema: Map<
+          Subschema<any, any, any, TContext>,
+          Array<Subschema<any, any, any, TContext>>
+        > = new Map();
         sourceSubschemas.forEach(subschema => {
           const filteredSubschemas = targetSubschemas.filter(s => s !== subschema);
           if (filteredSubschemas.length) {
@@ -216,11 +221,11 @@ function createMergedTypes(
   return mergedTypes;
 }
 
-export function completeStitchingInfo(
-  stitchingInfo: StitchingInfo,
+export function completeStitchingInfo<TContext = Record<string, any>>(
+  stitchingInfo: StitchingInfo<TContext>,
   resolvers: IResolvers,
   schema: GraphQLSchema
-): StitchingInfo {
+): StitchingInfo<TContext> {
   const selectionSetsByType = Object.create(null);
   [schema.getQueryType(), schema.getMutationType()].forEach(rootType => {
     if (rootType) {
@@ -288,7 +293,10 @@ export function completeStitchingInfo(
   return stitchingInfo;
 }
 
-export function addStitchingInfo(stitchedSchema: GraphQLSchema, stitchingInfo: StitchingInfo): GraphQLSchema {
+export function addStitchingInfo<TContext = Record<string, any>>(
+  stitchedSchema: GraphQLSchema,
+  stitchingInfo: StitchingInfo<TContext>
+): GraphQLSchema {
   return new GraphQLSchema({
     ...stitchedSchema.toConfig(),
     extensions: {

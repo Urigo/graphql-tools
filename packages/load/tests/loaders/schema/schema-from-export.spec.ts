@@ -7,6 +7,13 @@ const monorepo = useMonorepo({
   dirname: __dirname
 });
 
+function assertNonMaybe<T>(input: T): asserts input is Exclude<T, null | undefined>{
+  if (input == null) {
+    throw new Error("Value should be neither null nor undefined.")
+  }
+}
+
+
 describe('Schema From Export', () => {
   monorepo.correctCWD();
 
@@ -26,7 +33,9 @@ describe('Schema From Export', () => {
         loaders: [new CodeFileLoader()]
       });
       expect(isSchema(result)).toBeTruthy();
-      expect(result.getQueryType().getFields().hello).toBeDefined();
+      const QueryType = result.getQueryType()
+      assertNonMaybe(QueryType)
+      expect(QueryType.getFields().hello).toBeDefined();
     });
 
     test('should load the schema correctly from variable export', async () => {
@@ -64,7 +73,9 @@ describe('Schema From Export', () => {
       const schema = await load(schemaPath, {
         loaders: [new CodeFileLoader()]
       });
-      const queryFields = Object.keys(schema.getQueryType().getFields());
+      const QueryType = schema.getQueryType()
+      assertNonMaybe(QueryType)
+      const queryFields = Object.keys(QueryType.getFields());
 
       expect(queryFields).toContain('foo');
       expect(queryFields).toContain('bar');
@@ -75,7 +86,9 @@ describe('Schema From Export', () => {
       const schema = await load(schemaPath, {
         loaders: [new CodeFileLoader()]
       });
-      const queryFields = Object.keys(schema.getQueryType().getFields());
+      const QueryType = schema.getQueryType()
+      assertNonMaybe(QueryType)
+      const queryFields = Object.keys(QueryType.getFields());
 
       expect(queryFields).toContain('foo');
       expect(queryFields).toContain('bar');

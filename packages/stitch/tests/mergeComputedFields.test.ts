@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '@graphql-tools/stitch';
 import { graphql } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 
 const productSchema = makeExecutableSchema({
   typeDefs: `
@@ -108,6 +109,7 @@ describe('merge computed fields via config', () => {
       }
     `);
 
+    assertSome(data)
     expect(data.product).toEqual({
       id: '77',
       price: 77.99,
@@ -132,6 +134,7 @@ describe('merge computed fields via config', () => {
       }
     `);
 
+    assertSome(data)
     expect(data.storefront.availableProducts).toEqual([
       {
         id: '23',
@@ -184,6 +187,7 @@ describe('merge computed fields via config', () => {
       }
     `);
 
+    assertSome(data)
     expect(data.product).toEqual({
       id: '77',
       price: 77.99,
@@ -271,6 +275,7 @@ describe('merge computed fields via SDL (Apollo Federation-style directive annot
       }
     `);
 
+    assertSome(data)
     expect(data.storefront.availableProducts).toEqual([
       {
         id: '23',

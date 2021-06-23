@@ -2,16 +2,18 @@ import { Source } from '@graphql-tools/utils';
 import { Kind } from 'graphql';
 import { LoadTypedefsOptions, loadTypedefs, loadTypedefsSync, UnnormalizedTypeDefPointer } from './load-typedefs';
 
+type KindList = Array<typeof Kind[keyof typeof Kind]>;
+
 /**
  * Kinds of AST nodes that are included in executable documents
  */
-export const OPERATION_KINDS = [Kind.OPERATION_DEFINITION, Kind.FRAGMENT_DEFINITION];
+export const OPERATION_KINDS: KindList = [Kind.OPERATION_DEFINITION, Kind.FRAGMENT_DEFINITION];
 
 /**
  * Kinds of AST nodes that are included in type system definition documents
  */
 export const NON_OPERATION_KINDS = Object.keys(Kind)
-  .reduce((prev, v) => [...prev, Kind[v]], [])
+  .reduce((prev, v) => [...prev, Kind[v]], [] as KindList)
   .filter(v => !OPERATION_KINDS.includes(v));
 
 /**

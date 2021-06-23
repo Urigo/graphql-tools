@@ -333,7 +333,7 @@ export class MockStore implements IMockStore {
         return this.normalizeValueToStore(
           nullableFieldType.ofType,
           v,
-          currentValue && currentValue[index] ? currentValue : undefined,
+          typeof currentValue === 'object' && currentValue != null && currentValue[index] ? currentValue : undefined,
           onInsertType
         );
       });
@@ -418,7 +418,7 @@ export class MockStore implements IMockStore {
 
         value = (values as any)[fieldName];
         if (typeof value === 'function') value = value();
-      } else if (typeof mock[fieldName] === 'function') {
+      } else if (typeof mock === 'object' && mock != null && typeof mock[fieldName] === 'function') {
         value = mock[fieldName]();
       }
     }
@@ -488,7 +488,7 @@ export class MockStore implements IMockStore {
           throw new Error(`Please return a __typename in "${nullableType.name}"`);
         }
         typeName = values['__typename'];
-      } else if (typeof mock['__typename'] === 'function') {
+      } else if (typeof mock === 'object' && mock != null && typeof mock['__typename'] === 'function') {
         const mockRes = mock['__typename']();
         if (typeof mockRes !== 'string')
           throw new Error(`'__typename' returned by the mock for abstract type ${nullableType.name} is not a string`);

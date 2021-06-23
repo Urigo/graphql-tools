@@ -22,7 +22,10 @@ export const freeText = (text: string | string[], skipIndentation = false) => {
   const minIndent = lines
     .filter(line => line.trim())
     .reduce<number>((minIndent, line) => {
-      const currIndent = line.match(/^ */)[0].length;
+      const currIndent = line.match(/^ */)?.[0].length;
+      if (currIndent == null) {
+        return minIndent;
+      }
 
       return currIndent < minIndent ? currIndent : minIndent;
     }, Infinity);
@@ -47,7 +50,7 @@ export const toUpperFirst = (str: string) => {
 // foo-bar-baz -> fooBarBaz
 export const toCamelCase = (str: string) => {
   const words = splitWords(str);
-  const first = words.shift().toLowerCase();
+  const first = words.shift()?.toLowerCase() ?? '';
   const rest = words.map(toUpperFirst);
 
   return [first, ...rest].join('');

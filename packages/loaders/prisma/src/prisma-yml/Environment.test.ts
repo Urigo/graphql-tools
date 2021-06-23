@@ -37,7 +37,7 @@ describe('Environment', () => {
     expect(env.clusters).toMatchSnapshot();
   });
   test('interpolates env vars', async () => {
-    process.env.SPECIAL_TEST_ENV_VAR = 'this-is-so-special';
+    process.env['SPECIAL_TEST_ENV_VAR'] = 'this-is-so-special';
     const env = makeEnv(`platformToken: \${env:SPECIAL_TEST_ENV_VAR}`);
     await env.load();
     expect(env.clusters).toMatchSnapshot();

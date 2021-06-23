@@ -46,9 +46,9 @@ import {
   InputObjectTypeExtensionNode,
   InputObjectTypeDefinitionNode,
   GraphQLType,
+  Source,
+  DefinitionNode,
 } from 'graphql';
-
-import { SchemaVisitor } from './SchemaVisitor';
 
 // graphql-js < v15 backwards compatible ExecutionResult
 // See: https://github.com/graphql/graphql-js/pull/2490
@@ -199,15 +199,21 @@ export type InputFieldFilter = (
 ) => boolean;
 
 export type FieldFilter = (
-  typeName?: string,
-  fieldName?: string,
-  fieldConfig?: GraphQLFieldConfig<any, any> | GraphQLInputFieldConfig
+  typeName: string,
+  fieldName: string,
+  fieldConfig: GraphQLFieldConfig<any, any> | GraphQLInputFieldConfig
+) => boolean;
+
+export type ObjectFieldFilter = (
+  typeName: string,
+  fieldName: string,
+  fieldConfig: GraphQLFieldConfig<any, any>
 ) => boolean;
 
 export type RootFieldFilter = (
-  operation?: 'Query' | 'Mutation' | 'Subscription',
-  rootFieldName?: string,
-  fieldConfig?: GraphQLFieldConfig<any, any>
+  operation: 'Query' | 'Mutation' | 'Subscription',
+  rootFieldName: string,
+  fieldConfig: GraphQLFieldConfig<any, any>
 ) => boolean;
 
 export type TypeFilter = (typeName: string, type: GraphQLType) => boolean;
@@ -231,9 +237,14 @@ export type IFieldResolver<TSource, TContext, TArgs = Record<string, any>, TRetu
   info: GraphQLResolveInfo
 ) => TReturn;
 
-export type ITypedef = string | DocumentNode | (() => Array<ITypedef>);
-
-export type ITypeDefinitions = string | DocumentNode | Array<ITypedef>;
+export type TypeSource =
+  | string
+  | Source
+  | DocumentNode
+  | GraphQLSchema
+  | DefinitionNode
+  | Array<TypeSource>
+  | (() => TypeSource);
 
 export type IObjectTypeResolver<TSource = any, TContext = any, TArgs = any> = {
   [key: string]: IFieldResolver<TSource, TContext, TArgs> | IFieldResolverOptions<TSource, TContext>;
@@ -298,18 +309,6 @@ export type IDefaultValueIteratorFn = (type: GraphQLInputType, value: any) => vo
 
 export type NextResolverFn = () => Promise<any>;
 
-export type DirectiveResolverFn<TSource = any, TContext = any> = (
-  next: NextResolverFn,
-  source: TSource,
-  args: { [argName: string]: any },
-  context: TContext,
-  info: GraphQLResolveInfo
-) => any;
-
-export interface IDirectiveResolvers<TSource = any, TContext = any> {
-  [directiveName: string]: DirectiveResolverFn<TSource, TContext>;
-}
-
 export interface Request {
   document: DocumentNode;
   variables: Record<string, any>;
@@ -329,79 +328,6 @@ export type VisitableSchemaType =
   | GraphQLUnionType
   | GraphQLEnumType
   | GraphQLEnumValue;
-
-export type VisitorSelector = (
-  type: VisitableSchemaType,
-  methodName: string
-) => Array<SchemaVisitor | SchemaVisitorMap>;
-
-export enum VisitSchemaKind {
-  TYPE = 'VisitSchemaKind.TYPE',
-  SCALAR_TYPE = 'VisitSchemaKind.SCALAR_TYPE',
-  ENUM_TYPE = 'VisitSchemaKind.ENUM_TYPE',
-  COMPOSITE_TYPE = 'VisitSchemaKind.COMPOSITE_TYPE',
-  OBJECT_TYPE = 'VisitSchemaKind.OBJECT_TYPE',
-  INPUT_OBJECT_TYPE = 'VisitSchemaKind.INPUT_OBJECT_TYPE',
-  ABSTRACT_TYPE = 'VisitSchemaKind.ABSTRACT_TYPE',
-  UNION_TYPE = 'VisitSchemaKind.UNION_TYPE',
-  INTERFACE_TYPE = 'VisitSchemaKind.INTERFACE_TYPE',
-  ROOT_OBJECT = 'VisitSchemaKind.ROOT_OBJECT',
-  QUERY = 'VisitSchemaKind.QUERY',
-  MUTATION = 'VisitSchemaKind.MUTATION',
-  SUBSCRIPTION = 'VisitSchemaKind.SUBSCRIPTION',
-}
-
-export interface SchemaVisitorMap {
-  [VisitSchemaKind.TYPE]?: NamedTypeVisitor;
-  [VisitSchemaKind.SCALAR_TYPE]?: ScalarTypeVisitor;
-  [VisitSchemaKind.ENUM_TYPE]?: EnumTypeVisitor;
-  [VisitSchemaKind.COMPOSITE_TYPE]?: CompositeTypeVisitor;
-  [VisitSchemaKind.OBJECT_TYPE]?: ObjectTypeVisitor;
-  [VisitSchemaKind.INPUT_OBJECT_TYPE]?: InputObjectTypeVisitor;
-  [VisitSchemaKind.ABSTRACT_TYPE]?: AbstractTypeVisitor;
-  [VisitSchemaKind.UNION_TYPE]?: UnionTypeVisitor;
-  [VisitSchemaKind.INTERFACE_TYPE]?: InterfaceTypeVisitor;
-  [VisitSchemaKind.ROOT_OBJECT]?: ObjectTypeVisitor;
-  [VisitSchemaKind.QUERY]?: ObjectTypeVisitor;
-  [VisitSchemaKind.MUTATION]?: ObjectTypeVisitor;
-  [VisitSchemaKind.SUBSCRIPTION]?: ObjectTypeVisitor;
-}
-
-export type NamedTypeVisitor = (type: GraphQLNamedType, schema: GraphQLSchema) => GraphQLNamedType | null | undefined;
-
-export type ScalarTypeVisitor = (
-  type: GraphQLScalarType,
-  schema: GraphQLSchema
-) => GraphQLScalarType | null | undefined;
-
-export type EnumTypeVisitor = (type: GraphQLEnumType, schema: GraphQLSchema) => GraphQLEnumType | null | undefined;
-
-export type CompositeTypeVisitor = (
-  type: GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType,
-  schema: GraphQLSchema
-) => GraphQLObjectType | GraphQLInterfaceType | GraphQLUnionType | null | undefined;
-
-export type ObjectTypeVisitor = (
-  type: GraphQLObjectType,
-  schema: GraphQLSchema
-) => GraphQLObjectType | null | undefined;
-
-export type InputObjectTypeVisitor = (
-  type: GraphQLInputObjectType,
-  schema: GraphQLSchema
-) => GraphQLInputObjectType | null | undefined;
-
-export type AbstractTypeVisitor = (
-  type: GraphQLInterfaceType | GraphQLUnionType,
-  schema: GraphQLSchema
-) => GraphQLInterfaceType | GraphQLUnionType | null | undefined;
-
-export type UnionTypeVisitor = (type: GraphQLUnionType, schema: GraphQLSchema) => GraphQLUnionType | null | undefined;
-
-export type InterfaceTypeVisitor = (
-  type: GraphQLInterfaceType,
-  schema: GraphQLSchema
-) => GraphQLInterfaceType | null | undefined;
 
 export enum MapperKind {
   TYPE = 'MapperKind.TYPE',
@@ -458,6 +384,18 @@ export interface SchemaMapper {
   [MapperKind.INPUT_OBJECT_FIELD]?: InputFieldMapper;
   [MapperKind.DIRECTIVE]?: DirectiveMapper;
 }
+
+export type SchemaFieldMapperTypes = Array<
+  | MapperKind.FIELD
+  | MapperKind.COMPOSITE_FIELD
+  | MapperKind.OBJECT_FIELD
+  | MapperKind.ROOT_FIELD
+  | MapperKind.QUERY_ROOT_FIELD
+  | MapperKind.MUTATION_ROOT_FIELD
+  | MapperKind.SUBSCRIPTION_ROOT_FIELD
+  | MapperKind.INTERFACE_FIELD
+  | MapperKind.INPUT_OBJECT_FIELD
+>;
 
 export type NamedTypeMapper = (type: GraphQLNamedType, schema: GraphQLSchema) => GraphQLNamedType | null | undefined;
 

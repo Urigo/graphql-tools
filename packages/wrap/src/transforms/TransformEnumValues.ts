@@ -1,6 +1,6 @@
 import { GraphQLSchema, GraphQLEnumValueConfig, ExecutionResult } from 'graphql';
 
-import { Request, MapperKind, mapSchema } from '@graphql-tools/utils';
+import { Request, MapperKind, mapSchema, Maybe } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
@@ -11,7 +11,7 @@ import MapLeafValues, { MapLeafValuesTransformationContext } from './MapLeafValu
 export default class TransformEnumValues implements Transform<MapLeafValuesTransformationContext> {
   private readonly enumValueTransformer: EnumValueTransformer;
   private readonly transformer: MapLeafValues;
-  private transformedSchema: GraphQLSchema;
+  private transformedSchema: GraphQLSchema | undefined;
   private mapping: Record<string, Record<string, string>>;
   private reverseMapping: Record<string, Record<string, string>>;
 
@@ -62,7 +62,7 @@ export default class TransformEnumValues implements Transform<MapLeafValuesTrans
     typeName: string,
     externalValue: string,
     enumValueConfig: GraphQLEnumValueConfig
-  ): GraphQLEnumValueConfig | [string, GraphQLEnumValueConfig] {
+  ): Maybe<GraphQLEnumValueConfig | [string, GraphQLEnumValueConfig]> {
     const transformedEnumValue = this.enumValueTransformer(typeName, externalValue, enumValueConfig);
     if (Array.isArray(transformedEnumValue)) {
       const newExternalValue = transformedEnumValue[0];
@@ -86,7 +86,7 @@ function mapEnumValues(typeName: string, value: string, mapping: Record<string, 
 }
 
 function generateValueTransformer(
-  valueTransformer: LeafValueTransformer,
+  valueTransformer: Maybe<LeafValueTransformer>,
   mapping: Record<string, Record<string, string>>
 ): LeafValueTransformer {
   if (valueTransformer == null) {

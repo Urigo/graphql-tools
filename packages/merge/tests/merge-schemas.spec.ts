@@ -1,7 +1,8 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { graphql, buildSchema, GraphQLScalarType, Kind, GraphQLSchema, ListValueNode, print } from 'graphql';
+import { graphql, buildSchema, GraphQLScalarType, Kind, GraphQLSchema, print } from 'graphql';
 import { mergeSchemas, mergeSchemasAsync } from '../src/merge-schemas';
-import { printSchemaWithDirectives } from '@graphql-tools/utils';
+import { assertSome, printSchemaWithDirectives } from '@graphql-tools/utils';
+import { assertListValueNode } from '../../testing/assertion';
 
 describe('Merge Schemas', () => {
     it('Should include extensions in merged schemas', () => {
@@ -76,6 +77,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.foo).toBe('FOO');
         expect(data.bar).toBe('BAR');
     });
@@ -116,6 +118,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.foo).toBe('FOO');
         expect(data.bar).toBe('BAR');
     });
@@ -163,6 +166,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.foo).toBe('FOO');
         expect(data.bar).toBe('BAR');
         expect(data.qux).toBe('QUX');
@@ -215,6 +219,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.foo).toBe('FOO');
         expect(data.bar).toBe('BAR');
         expect(data.qux).toBe('QUX');
@@ -268,6 +273,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.foo).toBe('FOO');
         expect(data.bar).toBe('BAR');
         expect(data.qux).toBe('QUX');
@@ -338,6 +344,7 @@ describe('Merge Schemas', () => {
             `
         });
         expect(errors).toBeFalsy();
+        assertSome(data)
         expect(data.bar.foo).toBe('foo');
         expect(data.bar.bar).toBe('bar');
         expect(data.qux.foo).toBe('foo');
@@ -381,6 +388,7 @@ describe('Merge Schemas', () => {
             source: /* GraphQL */` { a } `
         });
 
+        assertSome(dataA)
         expect(dataA.a).toEqual(now.toISOString());
 
         // merged schema
@@ -388,7 +396,7 @@ describe('Merge Schemas', () => {
             schema,
             source: /* GraphQL */` { a } `
         });
-
+        assertSome(data)
         expect(data.a).toEqual(now.toISOString());
     });
 
@@ -436,8 +444,16 @@ describe('Merge Schemas', () => {
           while (num--) {
               prev = mergeSchemas({schemas: [prev, base]});
           }
+        const QueryType = prev.getQueryType()
+        assertSome(QueryType)
+        const fields = QueryType.getFields()
+        assertSome(fields.test.astNode)
+        assertSome(fields.test.astNode.directives)
+        assertSome(fields.test.astNode.directives[0])
+        assertSome(fields.test.astNode.directives[0].arguments)
+        assertListValueNode(fields.test.astNode.directives[0].arguments[0].value)
 
-        expect((prev.getQueryType().getFields().test.astNode.directives[0].arguments[0].value as ListValueNode).values).toHaveLength(1);
+        expect(fields.test.astNode.directives[0].arguments[0].value.values).toHaveLength(1);
       });
       it('should merge schemas with custom scalars', () => {
         const GraphQLUUID = new GraphQLScalarType({

@@ -2,15 +2,13 @@ import { GraphQLDirective, GraphQLList, GraphQLNonNull, GraphQLSchema, GraphQLSt
 
 import { SubschemaConfig } from '@graphql-tools/delegate';
 
-import { StitchingDirectivesOptions } from './types';
+import { StitchingDirectivesFinalOptions, StitchingDirectivesOptions } from './types';
 
 import { defaultStitchingDirectiveOptions } from './defaultStitchingDirectiveOptions';
 import { stitchingDirectivesValidator } from './stitchingDirectivesValidator';
 import { stitchingDirectivesTransformer } from './stitchingDirectivesTransformer';
 
-export function stitchingDirectives(
-  options: StitchingDirectivesOptions = {}
-): {
+export function stitchingDirectives(options: StitchingDirectivesOptions = {}): {
   keyDirectiveTypeDefs: string;
   computedDirectiveTypeDefs: string;
   mergeDirectiveTypeDefs: string;
@@ -25,7 +23,7 @@ export function stitchingDirectives(
   canonicalDirective: GraphQLDirective;
   allStitchingDirectives: Array<GraphQLDirective>;
 } {
-  const finalOptions = {
+  const finalOptions: StitchingDirectivesFinalOptions = {
     ...defaultStitchingDirectiveOptions,
     ...options,
   };

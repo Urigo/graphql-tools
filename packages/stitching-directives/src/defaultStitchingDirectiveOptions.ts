@@ -1,6 +1,6 @@
-import { StitchingDirectivesOptions } from './types';
+import { StitchingDirectivesFinalOptions } from './types';
 
-export const defaultStitchingDirectiveOptions: StitchingDirectivesOptions = {
+export const defaultStitchingDirectiveOptions: StitchingDirectivesFinalOptions = {
   keyDirectiveName: 'key',
   computedDirectiveName: 'computed',
   canonicalDirectiveName: 'canonical',

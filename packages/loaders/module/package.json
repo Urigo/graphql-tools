@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@graphql-tools/utils": "^7.5.0",
-    "tslib": "~2.2.0"
+    "tslib": "~2.3.0"
   },
   "publishConfig": {
     "access": "public",

@@ -7,6 +7,12 @@ const monorepo = useMonorepo({
   dirname: __dirname
 });
 
+function assertNonMaybe<T>(input: T): asserts input is Exclude<T, null | undefined>{
+  if (input == null) {
+    throw new Error("Value should be neither null nor undefined.")
+  }
+}
+
 describe('schema from typedefs', () => {
   monorepo.correctCWD();
 
@@ -101,7 +107,9 @@ describe('schema from typedefs', () => {
       const schema = await load(schemaPath, {
         loaders: [new GraphQLFileLoader()]
       });
-      const queryFields = Object.keys(schema.getQueryType().getFields());
+      const QueryType = schema.getQueryType()
+      assertNonMaybe(QueryType)
+      const queryFields = Object.keys(QueryType.getFields());
 
       expect(queryFields).toContain('foo');
       expect(queryFields).toContain('bar');
@@ -112,7 +120,9 @@ describe('schema from typedefs', () => {
       const schema = await load(schemaPath, {
         loaders: [new GraphQLFileLoader()]
       });
-      const queryFields = Object.keys(schema.getQueryType().getFields());
+      const QueryType = schema.getQueryType()
+      assertNonMaybe(QueryType)
+      const queryFields = Object.keys(QueryType.getFields());
 
       expect(queryFields).toContain('foo');
       expect(queryFields).toContain('bar');
@@ -124,7 +134,9 @@ describe('schema from typedefs', () => {
       const schema = await load(schemaPath, {
         loaders: [new CodeFileLoader()]
       });
-      const queryFields = Object.keys(schema.getQueryType().getFields());
+      const QueryType = schema.getQueryType()
+      assertNonMaybe(QueryType)
+      const queryFields = Object.keys(QueryType.getFields());
 
       expect(queryFields).toContain('foo');
       expect(queryFields).toContain('bar');
@@ -136,7 +148,7 @@ describe('schema from typedefs', () => {
         loaders: [new GraphQLFileLoader()],
         includeSources: true,
       });
-
+      assertNonMaybe(schemaWithSources.extensions)
       expect(schemaWithSources.extensions.sources).toBeDefined();
       expect(schemaWithSources.extensions.sources).toHaveLength(1);
       expect(schemaWithSources.extensions.sources[0]).toMatchObject(expect.objectContaining({
@@ -146,7 +158,7 @@ describe('schema from typedefs', () => {
       const schemaWithoutSources = await load(glob, {
         loaders: [new GraphQLFileLoader()]
       });
-
+      assertNonMaybe(schemaWithoutSources.extensions)
       expect(schemaWithoutSources.extensions.sources).not.toBeDefined();
     });
   })

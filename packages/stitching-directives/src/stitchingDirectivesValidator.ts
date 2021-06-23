@@ -10,7 +10,14 @@ import {
   parseValue,
 } from 'graphql';
 
-import { getDirectives, getImplementingTypes, MapperKind, mapSchema, parseSelectionSet } from '@graphql-tools/utils';
+import {
+  getDirectives,
+  getImplementingTypes,
+  isSome,
+  MapperKind,
+  mapSchema,
+  parseSelectionSet,
+} from '@graphql-tools/utils';
 
 import { StitchingDirectivesOptions } from './types';
 
@@ -34,7 +41,7 @@ export function stitchingDirectivesValidator(
       [MapperKind.OBJECT_TYPE]: type => {
         const directives = getDirectives(schema, type, pathToDirectivesInExtensions);
 
-        if (directives[keyDirectiveName]) {
+        if (keyDirectiveName != null && directives[keyDirectiveName]) {
           const directiveArgumentMap = directives[keyDirectiveName];
           parseSelectionSet(directiveArgumentMap.selectionSet);
         }
@@ -44,12 +51,12 @@ export function stitchingDirectivesValidator(
       [MapperKind.OBJECT_FIELD]: (fieldConfig, _fieldName, typeName) => {
         const directives = getDirectives(schema, fieldConfig, pathToDirectivesInExtensions);
 
-        if (directives[computedDirectiveName]) {
+        if (computedDirectiveName != null && directives[computedDirectiveName]) {
           const directiveArgumentMap = directives[computedDirectiveName];
           parseSelectionSet(directiveArgumentMap.selectionSet);
         }
 
-        if (directives[mergeDirectiveName]) {
+        if (mergeDirectiveName != null && directives[mergeDirectiveName]) {
           const directiveArgumentMap = directives[mergeDirectiveName];
 
           if (typeName !== queryTypeName) {
@@ -71,7 +78,7 @@ export function stitchingDirectivesValidator(
             parseMergeArgsExpr(mergeArgsExpr);
           }
 
-          const args = Object.keys(fieldConfig.args);
+          const args = Object.keys(fieldConfig.args ?? {});
 
           const keyArg = directiveArgumentMap.keyArg;
           if (keyArg == null) {
@@ -148,7 +155,7 @@ export function stitchingDirectivesValidator(
             const implementingTypes = isInterfaceType(returnType)
               ? getImplementingTypes(returnType.name, schema).map(typeName => schema.getType(typeName))
               : returnType.getTypes();
-            const implementingTypeNames = implementingTypes.map(type => type.name);
+            const implementingTypeNames = implementingTypes.filter(isSome).map(type => type.name);
             typeNames.forEach(typeName => {
               if (!implementingTypeNames.includes(typeName)) {
                 throw new Error(

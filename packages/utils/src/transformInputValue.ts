@@ -1,12 +1,12 @@
 import { GraphQLInputType, getNullableType, isLeafType, isListType, isInputObjectType } from 'graphql';
 
-import { InputLeafValueTransformer, InputObjectValueTransformer } from './types';
+import { InputLeafValueTransformer, InputObjectValueTransformer, Maybe } from './types';
 
 export function transformInputValue(
   type: GraphQLInputType,
   value: any,
-  inputLeafValueTransformer: InputLeafValueTransformer = null,
-  inputObjectValueTransformer: InputObjectValueTransformer = null
+  inputLeafValueTransformer: Maybe<InputLeafValueTransformer> = null,
+  inputObjectValueTransformer: Maybe<InputObjectValueTransformer> = null
 ): any {
   if (value == null) {
     return value;

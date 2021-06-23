@@ -83,13 +83,13 @@ function shouldIncludeNode(
 ): boolean {
   const skip = getDirectiveValues(GraphQLSkipDirective, node, exeContext.variableValues);
 
-  if (skip?.if === true) {
+  if (skip?.['if'] === true) {
     return false;
   }
 
   const include = getDirectiveValues(GraphQLIncludeDirective, node, exeContext.variableValues);
 
-  if (include?.if === false) {
+  if (include?.['if'] === false) {
     return false;
   }
 

@@ -19,7 +19,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      rootFieldFilter: (_opName, fieldName) => fieldName.startsWith('keep'),
+      rootFieldFilter: (_opName, fieldName) => fieldName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('Query') as GraphQLObjectType).getFields()['keep']).toBeDefined();
@@ -97,7 +97,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      objectFieldFilter: (_typeName, fieldName) => fieldName.startsWith('keep'),
+      objectFieldFilter: (_typeName, fieldName) => fieldName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('Thing') as GraphQLObjectType).getFields()['keep']).toBeDefined();
@@ -120,7 +120,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      interfaceFieldFilter: (_typeName, fieldName) => fieldName.startsWith('keep'),
+      interfaceFieldFilter: (_typeName, fieldName) => fieldName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('IThing') as GraphQLInterfaceType).getFields()['keep']).toBeDefined();
@@ -143,7 +143,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      inputObjectFieldFilter: (_typeName, fieldName) => fieldName.startsWith('keep'),
+      inputObjectFieldFilter: (_typeName, fieldName) => fieldName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('ThingInput') as GraphQLInputObjectType).getFields()['keep']).toBeDefined();
@@ -171,7 +171,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      fieldFilter: (_typeName, fieldName) => fieldName.startsWith('keep'),
+      fieldFilter: (_typeName, fieldName) => fieldName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('Thing') as GraphQLObjectType).getFields()['keep']).toBeDefined();
@@ -199,7 +199,7 @@ describe('filterSchema', () => {
 
     const filtered = filterSchema({
       schema,
-      argumentFilter: (_typeName, _fieldName, argName) => argName.startsWith('keep'),
+      argumentFilter: (_typeName, _fieldName, argName) => argName?.startsWith('keep') ?? false,
     });
 
     expect((filtered.getType('Query') as GraphQLObjectType).getFields()['field'].args.map(arg => arg.name)).toEqual(['keep']);

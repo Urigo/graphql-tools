@@ -1,7 +1,8 @@
-import { Source, debugLog } from '@graphql-tools/utils';
+import { Source, Maybe } from '@graphql-tools/utils';
+import { env } from 'process';
 import { LoadTypedefsOptions } from '../load-typedefs';
 
-export async function loadFile(pointer: string, options: LoadTypedefsOptions): Promise<Source> {
+export async function loadFile(pointer: string, options: LoadTypedefsOptions): Promise<Maybe<Source>> {
   const cached = useCache({ pointer, options });
 
   if (cached) {
@@ -17,7 +18,9 @@ export async function loadFile(pointer: string, options: LoadTypedefsOptions): P
         return loadedValue;
       }
     } catch (error) {
-      debugLog(`Failed to find any GraphQL type definitions in: ${pointer} - ${error.message}`);
+      if (env['DEBUG']) {
+        console.error(`Failed to find any GraphQL type definitions in: ${pointer} - ${error.message}`);
+      }
       throw error;
     }
   }
@@ -25,7 +28,7 @@ export async function loadFile(pointer: string, options: LoadTypedefsOptions): P
   return undefined;
 }
 
-export function loadFileSync(pointer: string, options: LoadTypedefsOptions): Source {
+export function loadFileSync(pointer: string, options: LoadTypedefsOptions): Maybe<Source> {
   const cached = useCache({ pointer, options });
 
   if (cached) {
@@ -37,10 +40,13 @@ export function loadFileSync(pointer: string, options: LoadTypedefsOptions): Sou
       const canLoad = loader.canLoadSync && loader.loadSync && loader.canLoadSync(pointer, options);
 
       if (canLoad) {
-        return loader.loadSync(pointer, options);
+        // We check for the existence so it is okay to force non null
+        return loader.loadSync!(pointer, options);
       }
     } catch (error) {
-      debugLog(`Failed to find any GraphQL type definitions in: ${pointer} - ${error.message}`);
+      if (env['DEBUG']) {
+        console.error(`Failed to find any GraphQL type definitions in: ${pointer} - ${error.message}`);
+      }
       throw error;
     }
   }

@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '@graphql-tools/stitch';
 import { graphql } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('Abstract type merge', () => {
   it('merges with abstract type definitions', async () => {
@@ -84,7 +85,7 @@ describe('Abstract type merge', () => {
         }
       }
     `);
-
+    assertSome(data)
     expect(data.post.leadArt).toEqual({
       __typename: 'Image',
       url: '/path/to/23',
@@ -183,6 +184,7 @@ describe('Merged associations', () => {
       }
     `);
 
+    assertSome(data)
     expect(data.slots).toEqual([{
       id: '55',
       network: { domain: 'network56.com' }

@@ -37,7 +37,7 @@ describe('mapSchema', () => {
     expect(newSchema).toBeInstanceOf(GraphQLSchema);
 
     const result = graphqlSync(newSchema, '{ version }');
-    expect(result.data.version).toBe(1);
+    expect(result.data?.version).toBe(1);
   });
 
   test('can change the root query name', () => {
@@ -58,6 +58,6 @@ describe('mapSchema', () => {
     });
 
     expect(newSchema).toBeInstanceOf(GraphQLSchema);
-    expect(newSchema.getQueryType().name).toBe('RootQuery');
+    expect(newSchema.getQueryType()?.name).toBe('RootQuery');
   });
 });

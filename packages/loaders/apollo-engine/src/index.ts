@@ -1,6 +1,5 @@
-import { SchemaLoader, Source, SingleFileOptions, parseGraphQLSDL } from '@graphql-tools/utils';
+import { SchemaLoader, Source, SingleFileOptions, parseGraphQLSDL, AggregateError } from '@graphql-tools/utils';
 import { fetch } from 'cross-fetch';
-import AggregateError from '@ardatan/aggregate-error';
 import syncFetch from 'sync-fetch';
 
 /**
@@ -66,7 +65,7 @@ export class ApolloEngineLoader implements SchemaLoader<ApolloEngineOptions> {
     const { data, errors } = await response.json();
 
     if (errors) {
-      throw new AggregateError(errors);
+      throw new AggregateError(errors, 'Introspection from Apollo Engine failed');
     }
 
     return parseGraphQLSDL(pointer, data.service.schema.document, options);
@@ -79,7 +78,7 @@ export class ApolloEngineLoader implements SchemaLoader<ApolloEngineOptions> {
     const { data, errors } = response.json();
 
     if (errors) {
-      throw new AggregateError(errors);
+      throw new AggregateError(errors, 'Introspection from Apollo Engine failed');
     }
 
     return parseGraphQLSDL(pointer, data.service.schema.document, options);

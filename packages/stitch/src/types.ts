@@ -11,7 +11,7 @@ import {
   GraphQLEnumValueConfig,
   GraphQLEnumType,
 } from 'graphql';
-import { ITypeDefinitions } from '@graphql-tools/utils';
+import { Maybe, TypeSource } from '@graphql-tools/utils';
 import { Subschema, SubschemaConfig } from '@graphql-tools/delegate';
 import { IExecutableSchemaDefinition } from '@graphql-tools/schema';
 
@@ -55,10 +55,10 @@ export interface IStitchSchemasOptions<TContext = Record<string, any>>
   subschemas?: Array<
     GraphQLSchema | SubschemaConfig<any, any, any, TContext> | Array<SubschemaConfig<any, any, any, TContext>>
   >;
-  typeDefs?: ITypeDefinitions;
+  typeDefs?: TypeSource;
   types?: Array<GraphQLNamedType>;
-  onTypeConflict?: OnTypeConflict;
-  mergeDirectives?: boolean;
+  onTypeConflict?: OnTypeConflict<TContext>;
+  mergeDirectives?: boolean | undefined;
   mergeTypes?: boolean | Array<string> | MergeTypeFilter<TContext>;
   typeMergingOptions?: TypeMergingOptions<TContext>;
   subschemaConfigTransforms?: Array<SubschemaConfigTransform<TContext>>;
@@ -72,8 +72,8 @@ export interface TypeMergingOptions<TContext = Record<string, any>> {
   validationSettings?: ValidationSettings;
   validationScopes?: Record<string, ValidationSettings>;
   typeCandidateMerger?: (candidates: Array<MergeTypeCandidate<TContext>>) => MergeTypeCandidate<TContext>;
-  typeDescriptionsMerger?: (candidates: Array<MergeTypeCandidate<TContext>>) => string;
-  fieldConfigMerger?: (candidates: Array<MergeFieldConfigCandidate<TContext>>) => GraphQLFieldConfig<any, any>;
+  typeDescriptionsMerger?: (candidates: Array<MergeTypeCandidate<TContext>>) => Maybe<string>;
+  fieldConfigMerger?: (candidates: Array<MergeFieldConfigCandidate<TContext>>) => GraphQLFieldConfig<any, TContext>;
   inputFieldConfigMerger?: (candidates: Array<MergeInputFieldConfigCandidate<TContext>>) => GraphQLInputFieldConfig;
   enumValueConfigMerger?: (candidates: Array<MergeEnumValueConfigCandidate<TContext>>) => GraphQLEnumValueConfig;
 }

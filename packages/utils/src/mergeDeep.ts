@@ -1,3 +1,4 @@
+import { isSome } from './helpers';
 import { isScalarType } from 'graphql';
 
 type BoxedTupleTypes<T extends any[]> = { [P in keyof T]: [T[P]] }[Exclude<keyof T, keyof any[]>];
@@ -20,7 +21,9 @@ export function mergeDeep<T extends object, S extends any[]>(
       if (sourcePrototype) {
         Object.getOwnPropertyNames(sourcePrototype).forEach(key => {
           const descriptor = Object.getOwnPropertyDescriptor(sourcePrototype, key);
-          Object.defineProperty(outputPrototype, key, descriptor);
+          if (isSome(descriptor)) {
+            Object.defineProperty(outputPrototype, key, descriptor);
+          }
         });
       }
 

@@ -6,18 +6,27 @@ import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/de
 
 import TransformInputObjectFields from './TransformInputObjectFields';
 
+type RenamerFunction = (
+  typeName: string,
+  fieldName: string,
+  inputFieldConfig: GraphQLInputFieldConfig
+) => string | undefined;
+
 export default class RenameInputObjectFields implements Transform {
-  private readonly renamer: (typeName: string, fieldName: string, inputFieldConfig: GraphQLInputFieldConfig) => string;
+  private readonly renamer: RenamerFunction;
   private readonly transformer: TransformInputObjectFields;
   private reverseMap: Record<string, Record<string, string>>;
 
-  constructor(renamer: (typeName: string, fieldName: string, inputFieldConfig: GraphQLInputFieldConfig) => string) {
+  constructor(renamer: RenamerFunction) {
     this.renamer = renamer;
     this.transformer = new TransformInputObjectFields(
-      (typeName: string, inputFieldName: string, inputFieldConfig: GraphQLInputFieldConfig) => {
+      (typeName, inputFieldName, inputFieldConfig) => {
         const newName = renamer(typeName, inputFieldName, inputFieldConfig);
         if (newName !== undefined && newName !== inputFieldName) {
-          return [renamer(typeName, inputFieldName, inputFieldConfig), inputFieldConfig];
+          const value = renamer(typeName, inputFieldName, inputFieldConfig);
+          if (value != null) {
+            return [value, inputFieldConfig];
+          }
         }
       },
       (typeName: string, inputFieldName: string, inputFieldNode: ObjectFieldNode) => {

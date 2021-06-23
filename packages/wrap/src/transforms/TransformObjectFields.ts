@@ -1,6 +1,6 @@
 import { GraphQLSchema, isObjectType, GraphQLFieldConfig } from 'graphql';
 
-import { Request, ExecutionResult } from '@graphql-tools/utils';
+import { Request, ExecutionResult, assertSome } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
@@ -10,12 +10,17 @@ import TransformCompositeFields from './TransformCompositeFields';
 
 export default class TransformObjectFields implements Transform {
   private readonly objectFieldTransformer: FieldTransformer;
-  private readonly fieldNodeTransformer: FieldNodeTransformer;
-  private transformer: TransformCompositeFields;
+  private readonly fieldNodeTransformer: FieldNodeTransformer | undefined;
+  private transformer: TransformCompositeFields | undefined;
 
   constructor(objectFieldTransformer: FieldTransformer, fieldNodeTransformer?: FieldNodeTransformer) {
     this.objectFieldTransformer = objectFieldTransformer;
     this.fieldNodeTransformer = fieldNodeTransformer;
+  }
+
+  private _getTransformer() {
+    assertSome(this.transformer);
+    return this.transformer;
   }
 
   public transformSchema(
@@ -45,7 +50,7 @@ export default class TransformObjectFields implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): Request {
-    return this.transformer.transformRequest(originalRequest, delegationContext, transformationContext);
+    return this._getTransformer().transformRequest(originalRequest, delegationContext, transformationContext);
   }
 
   public transformResult(
@@ -53,6 +58,6 @@ export default class TransformObjectFields implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): ExecutionResult {
-    return this.transformer.transformResult(originalResult, delegationContext, transformationContext);
+    return this._getTransformer().transformResult(originalResult, delegationContext, transformationContext);
   }
 }

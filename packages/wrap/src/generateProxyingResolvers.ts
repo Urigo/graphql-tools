@@ -1,6 +1,6 @@
 import { GraphQLFieldResolver, GraphQLObjectType, GraphQLResolveInfo, OperationTypeNode } from 'graphql';
 
-import { getResponseKeyFromInfo } from '@graphql-tools/utils';
+import { Maybe, getResponseKeyFromInfo } from '@graphql-tools/utils';
 import {
   delegateToSchema,
   getSubschema,
@@ -12,21 +12,22 @@ import {
   getUnpathedErrors,
 } from '@graphql-tools/delegate';
 
-export function generateProxyingResolvers(
-  subschemaConfig: SubschemaConfig
+export function generateProxyingResolvers<TContext>(
+  subschemaConfig: SubschemaConfig<any, any, any, TContext>
 ): Record<string, Record<string, GraphQLFieldResolver<any, any>>> {
   const targetSchema = subschemaConfig.schema;
   const createProxyingResolver = subschemaConfig.createProxyingResolver ?? defaultCreateProxyingResolver;
 
   const transformedSchema = applySchemaTransforms(targetSchema, subschemaConfig);
 
-  const operationTypes: Record<OperationTypeNode, GraphQLObjectType> = {
+  const operationTypes: Record<OperationTypeNode, Maybe<GraphQLObjectType>> = {
     query: targetSchema.getQueryType(),
     mutation: targetSchema.getMutationType(),
     subscription: targetSchema.getSubscriptionType(),
   };
 
   const resolvers = {};
+  // @ts-expect-error: Object.keys typings suck.
   Object.keys(operationTypes).forEach((operation: OperationTypeNode) => {
     const rootType = operationTypes[operation];
     if (rootType != null) {
@@ -62,10 +63,10 @@ export function generateProxyingResolvers(
   return resolvers;
 }
 
-function createPossiblyNestedProxyingResolver(
-  subschemaConfig: SubschemaConfig,
+function createPossiblyNestedProxyingResolver<TContext>(
+  subschemaConfig: SubschemaConfig<any, any, any, TContext>,
   proxyingResolver: GraphQLFieldResolver<any, any>
-): GraphQLFieldResolver<any, any> {
+): GraphQLFieldResolver<any, TContext, any> {
   return (parent, args, context, info) => {
     if (parent != null) {
       const responseKey = getResponseKeyFromInfo(info);
@@ -88,11 +89,11 @@ function createPossiblyNestedProxyingResolver(
   };
 }
 
-export function defaultCreateProxyingResolver({
+export function defaultCreateProxyingResolver<TContext>({
   subschemaConfig,
   operation,
   transformedSchema,
-}: ICreateProxyingResolverOptions): GraphQLFieldResolver<any, any> {
+}: ICreateProxyingResolverOptions<TContext>): GraphQLFieldResolver<any, any> {
   return (_parent, _args, context, info) =>
     delegateToSchema({
       schema: subschemaConfig,

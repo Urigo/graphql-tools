@@ -7,7 +7,8 @@ import { stripWhitespaces } from './utils';
 import gql from 'graphql-tag';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import {jest} from '@jest/globals';
+import { jest } from '@jest/globals';
+import { assertSome } from '@graphql-tools/utils';
 
 const introspectionSchema = JSON.parse(readFileSync(join(__dirname, './schema.json'), 'utf8'));
 
@@ -202,7 +203,7 @@ describe('Merge TypeDefs', () => {
       const queryType = schema.getQueryType();
 
       expect(queryType).toBeDefined();
-      expect(queryType).not.toBeNull();
+      assertSome(queryType)
       expect(queryType.name).toEqual('RootQuery');
     });
 

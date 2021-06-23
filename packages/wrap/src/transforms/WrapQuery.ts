@@ -28,7 +28,7 @@ export default class WrapQuery implements Transform {
       [Kind.FIELD]: {
         enter: (node: FieldNode) => {
           fieldPath.push(node.name.value);
-          if (ourPath === JSON.stringify(fieldPath)) {
+          if (node.selectionSet != null && ourPath === JSON.stringify(fieldPath)) {
             const wrapResult = this.wrapper(node.selectionSet);
 
             // Selection can be either a single selection or a selection set. If it's just one selection,
@@ -68,7 +68,7 @@ export default class WrapQuery implements Transform {
       let data = rootData;
       const path = [...this.path];
       while (path.length > 1) {
-        const next = path.shift();
+        const next = path.shift()!;
         if (data[next]) {
           data = data[next];
         }

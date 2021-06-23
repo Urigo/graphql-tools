@@ -35,8 +35,9 @@
     "input": "./src/index.ts"
   },
   "dependencies": {
+    "@graphql-tools/merge": "6.2.14",
     "@graphql-tools/utils": "^7.1.2",
-    "tslib": "~2.2.0",
+    "tslib": "~2.3.0",
     "value-or-promise": "1.0.10"
   },
   "publishConfig": {

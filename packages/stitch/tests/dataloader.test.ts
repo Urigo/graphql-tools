@@ -68,7 +68,7 @@ describe('dataloader', () => {
     });
 
     const usersLoader = new DataLoader(
-      async (keys: Array<{ id: any; info: GraphQLResolveInfo }>) => {
+      async (keys: ReadonlyArray<{ id: any; info: GraphQLResolveInfo }>) => {
         const users = await delegateToSchema({
           schema: userSchema,
           operation: 'query',

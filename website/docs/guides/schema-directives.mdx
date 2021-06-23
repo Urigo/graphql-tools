@@ -23,10 +23,6 @@ The possible applications of directive syntax are numerous: enforcing access per
 
 This document focuses on directives that appear in GraphQL _schemas_ (as opposed to queries) written in [Schema Definition Language](https://github.com/facebook/graphql/pull/90), or SDL for short. In the following sections, you will see how custom directives can be implemented and used to modify the structure and behavior of a GraphQL schema in ways that would not be possible using SDL syntax alone.
 
-## (At least) two strategies
-
-Earlier versions of `graphql-tools` provides a class-based mechanism for directive-based schema modification. The documentation for the class-based version is [still available](/docs/legacy-schema-directives/), but the remainder of this document describes the newer functional mechanism. We believe the newer approach is easier to reason about, but older class-based schema directives are still supported.
-
 ## Using schema directives
 
 Most of this document is concerned with _implementing_ schema directives, and some of the examples may seem quite complicated. No matter how many tools and best practices you have at your disposal, it can be difficult to implement a non-trivial schema directive in a reliable, reusable way. Exhaustive testing is essential, and using a typed language like TypeScript is recommended, because there are so many different schema types to worry about.
@@ -692,7 +688,7 @@ In theory, access to the query directives is available within the `info` resolve
 
 The `makeExecutableSchema` function also takes a `directiveResolvers` option that can be used for implementing certain kinds of `@directive`s on fields that have resolver functions.
 
-The new abstraction is more general, since it can visit any kind of schema syntax, and do much more than just wrap resolver functions. However, the old `directiveResolvers` API has been [left in place](directive-resolvers) for backwards compatibility, though it is now implemented in terms of `mapSchema`:
+The new abstraction is more general, since it can visit any kind of schema syntax, and do much more than just wrap resolver functions. However, the old `directiveResolvers` API has been left in place for backwards compatibility, though it is now implemented in terms of `mapSchema`:
 
 ```typescript
 export function attachDirectiveResolvers(

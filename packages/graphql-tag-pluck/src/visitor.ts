@@ -8,6 +8,7 @@ import {
   isImportSpecifier,
 } from '@babel/types';
 import { asArray } from '@graphql-tools/utils';
+import { Visitor } from '@babel/traverse';
 
 const defaults: GraphQLTagPluckOptions = {
   modules: [
@@ -140,13 +141,17 @@ export type PluckedContent = {
 
 export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) => {
   // Apply defaults to options
-  let { modules, globalGqlIdentifierName, gqlMagicComment } = {
+  let {
+    modules = [],
+    globalGqlIdentifierName,
+    gqlMagicComment,
+  } = {
     ...defaults,
     ...options,
   };
 
   // Prevent case related potential errors
-  gqlMagicComment = gqlMagicComment.toLowerCase();
+  gqlMagicComment = gqlMagicComment!.toLowerCase();
   // normalize `name` and `identifier` values
   modules = modules.map(mod => {
     return {
@@ -154,7 +159,7 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
       identifier: mod.identifier && mod.identifier.toLowerCase(),
     };
   });
-  globalGqlIdentifierName = asArray(globalGqlIdentifierName).map(s => s.toLowerCase());
+  globalGqlIdentifierName = asArray(globalGqlIdentifierName).map(s => s!.toLowerCase());
 
   // Keep imported identifiers
   // import gql from 'graphql-tag' -> gql
@@ -167,12 +172,12 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
 
   // Check if package is registered
   function isValidPackage(name: string) {
-    return modules.some(pkg => pkg.name && name && pkg.name.toLowerCase() === name.toLowerCase());
+    return modules!.some(pkg => pkg.name && name && pkg.name.toLowerCase() === name.toLowerCase());
   }
 
   // Check if identifier is defined and imported from registered packages
   function isValidIdentifier(name: string) {
-    return definedIdentifierNames.some(id => id === name) || globalGqlIdentifierName.includes(name);
+    return definedIdentifierNames.some(id => id === name) || globalGqlIdentifierName!.includes(name);
   }
 
   const pluckStringFromFile = ({ start, end }: { start: number; end: number }) => {
@@ -221,12 +226,20 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
     }
   };
 
-  return {
+  const visitor: Visitor = {
     CallExpression: {
-      enter(path: any) {
+      enter(path) {
         // Find the identifier name used from graphql-tag, commonJS
         // e.g. import gql from 'graphql-tag' -> gql
-        if (path.node.callee.name === 'require' && isValidPackage(path.node.arguments[0].value)) {
+        const arg0 = path.node.arguments[0];
+
+        if (
+          'name' in path.node.callee &&
+          path.node.callee.name === 'require' &&
+          'value' in arg0 &&
+          typeof arg0.value === 'string' &&
+          isValidPackage(arg0.value)
+        ) {
           if (!isVariableDeclarator(path.parent)) {
             return;
           }
@@ -239,29 +252,30 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
           return;
         }
 
-        const arg0 = path.node.arguments[0];
-
         // Push strings template literals to gql calls
         // e.g. gql(`query myQuery {}`) -> query myQuery {}
         if (isIdentifier(path.node.callee) && isValidIdentifier(path.node.callee.name) && isTemplateLiteral(arg0)) {
-          const gqlTemplateLiteral = pluckStringFromFile(arg0);
+          const { start, end, loc } = arg0;
+          if (start != null && end != null && start != null && loc != null) {
+            const gqlTemplateLiteral = pluckStringFromFile({ start, end });
 
-          // If the entire template was made out of interpolations it should be an empty
-          // string by now and thus should be ignored
-          if (gqlTemplateLiteral) {
-            gqlTemplateLiterals.push({
-              content: gqlTemplateLiteral,
-              loc: arg0.loc,
-              end: arg0.end,
-              start: arg0.start,
-            });
+            // If the entire template was made out of interpolations it should be an empty
+            // string by now and thus should be ignored
+            if (gqlTemplateLiteral) {
+              gqlTemplateLiterals.push({
+                content: gqlTemplateLiteral,
+                loc,
+                end,
+                start,
+              });
+            }
           }
         }
       },
     },
 
     ImportDeclaration: {
-      enter(path: any) {
+      enter(path) {
         // Find the identifier name used from graphql-tag, es6
         // e.g. import gql from 'graphql-tag' -> gql
         if (!isValidPackage(path.node.source.value)) {
@@ -269,6 +283,10 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
         }
 
         const moduleNode = modules.find(pkg => pkg.name.toLowerCase() === path.node.source.value.toLowerCase());
+
+        if (moduleNode == null) {
+          return;
+        }
 
         const gqlImportSpecifier = path.node.specifiers.find((importSpecifier: any) => {
           // When it's a default import and registered package has no named identifier
@@ -340,4 +358,6 @@ export default (code: string, out: any, options: GraphQLTagPluckOptions = {}) =>
       out.returnValue = gqlTemplateLiterals;
     },
   };
+
+  return visitor;
 };

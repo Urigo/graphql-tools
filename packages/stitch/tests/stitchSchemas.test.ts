@@ -1,12 +1,10 @@
 import {
   graphql,
   GraphQLSchema,
-  GraphQLField,
   GraphQLObjectType,
   GraphQLScalarType,
   subscribe,
   parse,
-  defaultFieldResolver,
   findDeprecatedUsages,
   printSchema,
   GraphQLResolveInfo,
@@ -18,9 +16,9 @@ import { stitchSchemas } from '../src/stitchSchemas';
 import {
   cloneSchema,
   getResolversFromSchema,
-  SchemaDirectiveVisitor,
   IResolvers,
   ExecutionResult,
+  assertSome,
 } from '@graphql-tools/utils';
 
 import { addMocksToSchema } from '@graphql-tools/mock';
@@ -355,20 +353,6 @@ testCombinations.forEach((combination) => {
           codeCoverageTypeDefs,
           schemaDirectiveTypeDefs,
         ],
-        schemaDirectives: {
-          upper: class extends SchemaDirectiveVisitor {
-            public visitFieldDefinition(field: GraphQLField<any, any>) {
-              const { resolve = defaultFieldResolver } = field;
-              field.resolve = async function (...args) {
-                const result = await resolve.apply(this, args);
-                if (typeof result === 'string') {
-                  return result.toUpperCase();
-                }
-                return result;
-              };
-            }
-          },
-        },
         mergeDirectives: true,
         resolvers: {
           Property: {
@@ -2238,6 +2222,7 @@ fragment BookingFragment on Booking {
 
         expect(originalResult.errors).toBeUndefined();
         expect(originalResult.data).toBeDefined();
+        assertSome(originalResult.data)
         expect(originalResult.data.persona.transactions.items.length).toBe(2);
         expect(originalResult.data.persona.transactions.items[1].debt).toBeDefined();
 
@@ -2337,6 +2322,7 @@ fragment BookingFragment on Booking {
                             return ast;
                           },
                           transformResult: (originalResult: ExecutionResult) => {
+                            assertSome(originalResult.data)
                             originalResult.data.persona = {
                               page: originalResult.data.persona.transactions.items,
                             };
@@ -2379,7 +2365,7 @@ fragment BookingFragment on Booking {
         });
 
         expect(result.errors).toBeUndefined();
-        expect(result.data).toBeDefined();
+        assertSome(result.data)
         expect(result.data.flattenedTransactions.page.length).toBe(2);
         expect(result.data.flattenedTransactions.page[1].debt).toBeDefined();
       });
@@ -2558,6 +2544,8 @@ fragment BookingFragment on Booking {
           ...propertyResult.data,
           ...bookingResult.data,
         });
+        assertSome(stitchedResult.errors)
+        assertSome(propertyResult.errors)
         expect(stitchedResult.errors.map(removeLocations)).toEqual(
           propertyResult.errors.map(removeLocations),
         );
@@ -2575,6 +2563,7 @@ fragment BookingFragment on Booking {
         );
 
         expect(stitchedResult2.data).toBe(null);
+        assertSome(stitchedResult2.errors)
         expect(stitchedResult2.errors.map(removeLocations)).toEqual([
           {
             message: 'Sample error non-null!',
@@ -2627,6 +2616,7 @@ fragment BookingFragment on Booking {
           },
         });
 
+        assertSome(result.errors)
         const errorsWithoutLocations = result.errors.map(removeLocations);
 
         const expectedErrors: Array<any> = [
@@ -2690,10 +2680,10 @@ fragment BookingFragment on Booking {
           const stitchedResult = await graphql(stitchedSchema, propertyQuery, undefined, {});
 
           [propertyResult, stitchedResult].forEach((result) => {
-            expect(result.errors).toBeDefined();
+            assertSome(result.errors)
             expect(result.errors.length > 0).toBe(true);
             const error = result.errors[0];
-            expect(error.extensions).toBeDefined();
+            assertSome(error.extensions)
             expect(error.extensions.code).toBe('SOME_CUSTOM_CODE');
           });
         },
@@ -2702,33 +2692,34 @@ fragment BookingFragment on Booking {
 
     describe('types in schema extensions', () => {
       test('should parse descriptions on new types', () => {
-        expect(stitchedSchema.getType('AnotherNewScalar').description).toBe(
+        expect(stitchedSchema.getType('AnotherNewScalar')?.description).toBe(
           'Description of AnotherNewScalar.',
         );
 
-        expect(stitchedSchema.getType('TestingScalar').description).toBe(
+        expect(stitchedSchema.getType('TestingScalar')?.description).toBe(
           'A type that uses TestScalar.',
         );
 
-        expect(stitchedSchema.getType('Color').description).toBe(
+        expect(stitchedSchema.getType('Color')?.description).toBe(
           'A type that uses an Enum.',
         );
 
-        expect(stitchedSchema.getType('NumericEnum').description).toBe(
+        expect(stitchedSchema.getType('NumericEnum')?.description).toBe(
           'A type that uses an Enum with a numeric constant.',
         );
 
-        expect(stitchedSchema.getType('LinkType').description).toBe(
+        expect(stitchedSchema.getType('LinkType')?.description).toBe(
           'A new type linking the Property type.',
         );
 
-        expect(stitchedSchema.getType('LinkType').description).toBe(
+        expect(stitchedSchema.getType('LinkType')?.description).toBe(
           'A new type linking the Property type.',
         );
       });
 
       test('should parse descriptions on new fields', () => {
         const Query = stitchedSchema.getQueryType();
+        assertSome(Query)
         expect(Query.getFields().linkTest.description).toBe(
           'A new field on the root query.',
         );
@@ -3079,31 +3070,6 @@ fragment BookingFragment on Booking {
       });
     });
 
-    describe('schema directives', () => {
-      test('should work with schema directives', async () => {
-        const result = await graphql(
-          stitchedSchema,
-          `
-            query {
-              propertyById(id: "p1") {
-                someField
-              }
-            }
-          `,
-          undefined,
-          {},
-        );
-
-        expect(result).toEqual({
-          data: {
-            propertyById: {
-              someField: 'SOMEFIELD',
-            },
-          },
-        });
-      });
-    });
-
     describe('regression', () => {
       test('should not pass extra arguments to delegates', async () => {
         const result = await graphql(
@@ -3152,7 +3118,7 @@ fragment BookingFragment on Booking {
         });
 
         const result = await graphql(schema, '{ book { cat: category } }');
-
+assertSome(result.data)
         expect(result.data.book.cat).toBe('Test');
       });
     });
@@ -3285,7 +3251,7 @@ fragment BookingFragment on Booking {
       });
 
       const result = await graphql(schema, '{ book { cat: category } }');
-
+assertSome(result.data)
       expect(result.data.book.cat).toBe('Test');
     });
   });

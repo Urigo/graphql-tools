@@ -1,4 +1,4 @@
-import { cloneSubschemaConfig, SubschemaConfig } from '@graphql-tools/delegate';
+import { cloneSubschemaConfig, MergedTypeConfig, SubschemaConfig } from '@graphql-tools/delegate';
 
 export function splitMergedTypeEntryPointsTransformer(subschemaConfig: SubschemaConfig): Array<SubschemaConfig> {
   if (!subschemaConfig.merge) return [subschemaConfig];
@@ -13,10 +13,12 @@ export function splitMergedTypeEntryPointsTransformer(subschemaConfig: Subschema
 
   for (let i = 0; i < maxEntryPoints; i += 1) {
     const subschemaPermutation = cloneSubschemaConfig(subschemaConfig);
-    const mergedTypesCopy = subschemaPermutation.merge;
+    const mergedTypesCopy: Record<string, MergedTypeConfig<any, any, any>> = subschemaPermutation.merge ??
+    Object.create(null);
+    let currentMerge = mergedTypesCopy;
 
     if (i > 0) {
-      subschemaPermutation.merge = Object.create(null);
+      subschemaPermutation.merge = currentMerge = Object.create(null);
     }
 
     Object.keys(mergedTypesCopy).forEach(typeName => {
@@ -25,7 +27,9 @@ export function splitMergedTypeEntryPointsTransformer(subschemaConfig: Subschema
 
       if (mergedTypeEntryPoint) {
         if (mergedTypeConfig.selectionSet ?? mergedTypeConfig.fieldName ?? mergedTypeConfig.resolve) {
-          throw new Error(`Merged type ${typeName} may not define entryPoints in addition to selectionSet, fieldName, or resolve`);
+          throw new Error(
+            `Merged type ${typeName} may not define entryPoints in addition to selectionSet, fieldName, or resolve`
+          );
         }
 
         Object.assign(mergedTypeConfig, mergedTypeEntryPoint);
@@ -40,7 +44,7 @@ export function splitMergedTypeEntryPointsTransformer(subschemaConfig: Subschema
           }
         }
 
-        subschemaPermutation.merge[typeName] = mergedTypeConfig;
+        currentMerge[typeName] = mergedTypeConfig;
       }
     });
 

@@ -8,10 +8,14 @@ export type QueryTransformer = (
   selectionSet: SelectionSetNode,
   fragments: Record<string, FragmentDefinitionNode>,
   delegationContext: DelegationContext,
-  transformationContext: Record<string, any>,
+  transformationContext: Record<string, any>
 ) => SelectionSetNode;
 
-export type ResultTransformer = (result: any, delegationContext: DelegationContext, transformationContext: Record<string, any>) => any;
+export type ResultTransformer = (
+  result: any,
+  delegationContext: DelegationContext,
+  transformationContext: Record<string, any>
+) => any;
 
 export type ErrorPathTransformer = (path: ReadonlyArray<string | number>) => Array<string | number>;
 
@@ -26,7 +30,7 @@ export default class TransformQuery implements Transform {
     path,
     queryTransformer,
     resultTransformer = result => result,
-    errorPathTransformer = errorPath => [].concat(errorPath),
+    errorPathTransformer = errorPath => [...errorPath],
     fragments = {},
   }: {
     path: Array<string>;
@@ -52,14 +56,19 @@ export default class TransformQuery implements Transform {
     const document = visit(originalRequest.document, {
       [Kind.FIELD]: {
         enter: node => {
-          if (index === pathLength || node.name.value !== this.path[index]) {
+          if (index === pathLength || node.name.value !== this.path[index] || node.selectionSet == null) {
             return false;
           }
 
           index++;
 
           if (index === pathLength) {
-            const selectionSet = this.queryTransformer(node.selectionSet, this.fragments, delegationContext, transformationContext);
+            const selectionSet = this.queryTransformer(
+              node.selectionSet,
+              this.fragments,
+              delegationContext,
+              transformationContext
+            );
 
             return {
               ...node,
@@ -92,7 +101,11 @@ export default class TransformQuery implements Transform {
     };
   }
 
-  private transformData(data: any, delegationContext: DelegationContext, transformationContext: Record<string, any>): any {
+  private transformData(
+    data: any,
+    delegationContext: DelegationContext,
+    transformationContext: Record<string, any>
+  ): any {
     const leafIndex = this.path.length - 1;
     let index = 0;
     let newData = data;
@@ -114,7 +127,11 @@ export default class TransformQuery implements Transform {
 
   private transformErrors(errors: ReadonlyArray<GraphQLError>): ReadonlyArray<GraphQLError> {
     return errors.map(error => {
-      const path: ReadonlyArray<string | number> = error.path;
+      const path: ReadonlyArray<string | number> | undefined = error.path;
+
+      if (path == null) {
+        return error;
+      }
 
       let match = true;
       let index = 0;

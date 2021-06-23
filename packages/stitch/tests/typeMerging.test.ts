@@ -10,6 +10,8 @@ import { addMocksToSchema } from '@graphql-tools/mock';
 import { delegateToSchema } from '@graphql-tools/delegate';
 
 import { RenameRootFields, RenameTypes } from '@graphql-tools/wrap';
+import { assertSome } from '@graphql-tools/utils';
+
 
 import { stitchSchemas } from '../src/stitchSchemas';
 
@@ -107,6 +109,7 @@ describe('merging using type merging', () => {
     );
 
     expect(result.errors).toBeUndefined();
+    assertSome(result.data)
     expect(result.data.userById.__typename).toBe('User');
     expect(result.data.userById.chirps[1].id).not.toBe(null);
     expect(result.data.userById.chirps[1].text).not.toBe(null);
@@ -422,7 +425,7 @@ describe('Merged associations', () => {
         }
       }
     `);
-
+      assertSome(data)
     expect(data.posts).toEqual([{
       title: 'Post 55',
       network: { domain: 'network57.com' },
@@ -527,6 +530,7 @@ describe('merging using type merging when renaming', () => {
     );
 
     expect(result.errors).toBeUndefined();
+    assertSome(result.data)
     expect(result.data.User_userById.__typename).toBe('Gateway_User');
     expect(result.data.User_userById.chirps[1].id).not.toBe(null);
     expect(result.data.User_userById.chirps[1].text).not.toBe(null);
@@ -552,7 +556,7 @@ describe('external object annotation with batchDelegateToSchema', () => {
     resolvers: {
       Query: {
         networks: (_root, { ids }) =>
-          ids.map((id) => ({ id, domains: [{ id: Number(id) + 3, name: `network${id}.com` }] })),
+          ids.map((id: unknown) => ({ id, domains: [{ id: Number(id) + 3, name: `network${id}.com` }] })),
       },
     },
   })
@@ -573,7 +577,7 @@ describe('external object annotation with batchDelegateToSchema', () => {
     resolvers: {
       Query: {
         posts: (_root, { ids }) =>
-          ids.map((id) => ({
+          ids.map((id: unknown) => ({
             id,
             network: { id: Number(id) + 2 },
           })),
@@ -617,7 +621,7 @@ describe('external object annotation with batchDelegateToSchema', () => {
         }
       `,
     )
-
+    assertSome(data)
     expect(data.posts).toEqual([
       {
         network: { id: '57', domains: [{ id: '60', name: 'network57.com' }] },

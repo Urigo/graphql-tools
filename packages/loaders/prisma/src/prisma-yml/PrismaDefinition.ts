@@ -27,12 +27,12 @@ export class PrismaDefinitionClass {
   typesString?: string;
   secrets: string[] | null;
   definitionPath?: string | null;
-  definitionDir: string;
+  definitionDir: string | undefined;
   env: Environment;
   out?: IOutput;
   envVars: any;
   rawEndpoint?: string;
-  private definitionString: string;
+  private definitionString: string | undefined;
   constructor(env: Environment, definitionPath?: string | null, envVars: EnvVars = process.env, out?: IOutput) {
     this.secrets = null;
     this.definitionPath = definitionPath;
@@ -45,8 +45,8 @@ export class PrismaDefinitionClass {
   }
 
   async load(args: Args, envPath?: string, graceful?: boolean) {
-    if (args.project) {
-      const flagPath = path.resolve(args.project as string);
+    if (args['project']) {
+      const flagPath = path.resolve(String(args['project']));
 
       try {
         fs.accessSync(flagPath);
@@ -97,7 +97,7 @@ export class PrismaDefinitionClass {
   }
 
   get endpoint(): string | undefined {
-    return (this.definition && this.definition.endpoint) || process.env.PRISMA_MANAGEMENT_API_ENDPOINT;
+    return (this.definition && this.definition.endpoint) || process.env['PRISMA_MANAGEMENT_API_ENDPOINT'];
   }
 
   get clusterBaseUrl(): string | undefined {
@@ -212,11 +212,11 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
   }
 
   findClusterByBaseUrl(baseUrl: string) {
-    return this.env.clusters.find(c => c.baseUrl.toLowerCase() === baseUrl);
+    return this.env.clusters?.find(c => c.baseUrl.toLowerCase() === baseUrl);
   }
 
   async getClusterByEndpoint(data: ParseEndpointResult) {
-    if (data.clusterBaseUrl && !process.env.PRISMA_MANAGEMENT_API_SECRET) {
+    if (data.clusterBaseUrl && !process.env['PRISMA_MANAGEMENT_API_SECRET']) {
       const cluster = this.findClusterByBaseUrl(data.clusterBaseUrl);
       if (cluster) {
         return cluster;
@@ -256,7 +256,7 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
 
     let allTypes = '';
     typesPaths.forEach(unresolvedTypesPath => {
-      const typesPath = path.join(this.definitionDir, unresolvedTypesPath!);
+      const typesPath = path.join(this.definitionDir!, unresolvedTypesPath!);
       try {
         fs.accessSync(typesPath);
         const types = fs.readFileSync(typesPath, 'utf-8');
@@ -297,7 +297,7 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
 
         let query = subscription.query;
         if (subscription.query.endsWith('.graphql')) {
-          const queryPath = path.join(this.definitionDir, subscription.query);
+          const queryPath = path.join(this.definitionDir!, subscription.query);
           try {
             fs.accessSync(queryPath);
           } catch {
@@ -326,7 +326,7 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
 
   addDatamodel(datamodel: any) {
     this.definitionString += `\ndatamodel: ${datamodel}`;
-    fs.writeFileSync(this.definitionPath!, this.definitionString);
+    fs.writeFileSync(this.definitionPath!, this.definitionString!);
     this.definition!.datamodel = datamodel;
   }
 

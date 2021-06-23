@@ -9,12 +9,12 @@ import {
   ASTVisitor,
 } from 'graphql';
 import { Source } from './loaders';
-import AggregateError from '@ardatan/aggregate-error';
+import { AggregateError } from './AggregateError';
 
 export type ValidationRule = (context: ValidationContext) => ASTVisitor;
 
 export interface LoadDocumentError {
-  readonly filePath: string;
+  readonly filePath?: string;
   readonly errors: ReadonlyArray<GraphQLError>;
 }
 
@@ -42,20 +42,22 @@ export async function validateGraphQlDocuments(
     documentFiles.map(async documentFile => {
       const documentToValidate = {
         kind: Kind.DOCUMENT,
-        definitions: [...allFragments, ...documentFile.document.definitions].filter((definition, index, list) => {
-          if (definition.kind === Kind.FRAGMENT_DEFINITION) {
-            const firstIndex = list.findIndex(
-              def => def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === definition.name.value
-            );
-            const isDuplicated = firstIndex !== index;
+        definitions: [...allFragments, ...(documentFile.document?.definitions ?? [])].filter(
+          (definition, index, list) => {
+            if (definition.kind === Kind.FRAGMENT_DEFINITION) {
+              const firstIndex = list.findIndex(
+                def => def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === definition.name.value
+              );
+              const isDuplicated = firstIndex !== index;
 
-            if (isDuplicated) {
-              return false;
+              if (isDuplicated) {
+                return false;
+              }
             }
-          }
 
-          return true;
-        }),
+            return true;
+          }
+        ),
       };
 
       const errors = validate(schema, documentToValidate, effectiveRules);
@@ -82,7 +84,7 @@ export function checkValidationErrors(loadDocumentErrors: ReadonlyArray<LoadDocu
         error.name = 'GraphQLDocumentError';
         error.message = `${error.name}: ${graphQLError.message}`;
         error.stack = error.message;
-        graphQLError.locations.forEach(
+        graphQLError.locations?.forEach(
           location => (error.stack += `\n    at ${loadDocumentError.filePath}:${location.line}:${location.column}`)
         );
 
@@ -90,7 +92,7 @@ export function checkValidationErrors(loadDocumentErrors: ReadonlyArray<LoadDocu
       }
     }
 
-    throw new AggregateError(errors);
+    throw new AggregateError(errors, 'Validation failed');
   }
 }
 

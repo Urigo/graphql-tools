@@ -8,7 +8,6 @@ import {
   graphql,
   GraphQLString,
   GraphQLScalarType,
-  StringValueNode,
   GraphQLInputFieldConfig,
   GraphQLFieldConfig,
   isNonNullType,
@@ -125,7 +124,7 @@ describe('@directives', () => {
           const directives = getDirectives(schema, type);
           Object.keys(directives).forEach(directiveName => {
             if (directiveNames.includes(directiveName)) {
-              expect(type.name).toBe(schema.getQueryType().name);
+              expect(type.name).toBe(schema.getQueryType()?.name);
               visited.add(type);
             }
           });
@@ -345,6 +344,10 @@ describe('@directives', () => {
               const { resolve = defaultFieldResolver } = fieldConfig;
               const { defaultFormat } = directiveArgumentMap;
 
+              if (!fieldConfig.args) {
+                throw new Error("Unexpected Error. args should be defined.")
+              }
+
               fieldConfig.args['format'] = {
                 type: GraphQLString,
               };
@@ -515,6 +518,12 @@ describe('@directives', () => {
       );
     }
 
+    function assertStringArray(input: Array<unknown>): asserts input is Array<string> {
+      if (input.some(item => typeof item !== "string")) {
+        throw new Error("All items in array should be strings.")
+      }
+    }
+
     function checkErrors(
       expectedCount: number,
       ...expectedNames: Array<string>
@@ -522,15 +531,13 @@ describe('@directives', () => {
       return function ({
         errors = [],
         data,
-      }: {
-        errors: Array<any>;
-        data: any;
-      }) {
+      }: ExecutionResult) {
         expect(errors.length).toBe(expectedCount);
         expect(
           errors.every((error) => error.message === 'not authorized'),
         ).toBeTruthy();
-        const actualNames = errors.map((error) => error.path.slice(-1)[0]);
+        const actualNames = errors.map((error) => error.path!.slice(-1)[0]);
+        assertStringArray(actualNames)
         expect(expectedNames.sort((a, b) => a.localeCompare(b))).toEqual(
           actualNames.sort((a, b) => a.localeCompare(b)),
         );
@@ -545,10 +552,10 @@ describe('@directives', () => {
       execWithRole('ADMIN')
         .then(checkErrors(0))
         .then((data) => {
-          expect(data.users.length).toBe(1);
-          expect(data.users[0].banned).toBe(true);
-          expect(data.users[0].canPost).toBe(false);
-          expect(data.users[0].name).toBe('Ben');
+          expect(data?.users.length).toBe(1);
+          expect(data?.users[0].banned).toBe(true);
+          expect(data?.users[0].canPost).toBe(false);
+          expect(data?.users[0].name).toBe('Ben');
         }),
     ]);
   });
@@ -577,7 +584,7 @@ describe('@directives', () => {
               return type.parseValue(value);
             },
 
-            parseLiteral(ast: StringValueNode) {
+            parseLiteral(ast) {
               return type.parseLiteral(ast, {});
             },
           });
@@ -679,8 +686,8 @@ describe('@directives', () => {
         }
       `,
     );
-    expect(errors.length).toBe(1);
-    expect(errors[0].message).toBe('expected 26 to be at most 10');
+    expect(errors?.length).toBe(1);
+    expect(errors?.[0].message).toBe('expected 26 to be at most 10');
 
     const result = await graphql(
       schema,
@@ -798,7 +805,7 @@ describe('@directives', () => {
     ).then((result) => {
       const { data } = result;
 
-      expect(data.people).toEqual([
+      expect(data?.people).toEqual([
         {
           uid: '580a207c8e94f03b93a2b01217c3cc218490571a',
           personID: 1,
@@ -806,7 +813,7 @@ describe('@directives', () => {
         },
       ]);
 
-      expect(data.locations).toEqual([
+      expect(data?.locations).toEqual([
         {
           uid: 'c31b71e6e23a7ae527f94341da333590dd7cba96',
           locationID: 1,
@@ -1038,7 +1045,7 @@ describe('@directives', () => {
           const directives = getDirectives(schema, type);
           const directiveArgumentMap = directives[directiveName];
           if (directiveArgumentMap) {
-            expect(type.name).toBe(schema.getQueryType().name);
+            expect(type.name).toBe(schema.getQueryType()?.name);
             visited.add(type);
           }
           return undefined;

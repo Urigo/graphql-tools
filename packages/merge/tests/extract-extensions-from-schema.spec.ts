@@ -1,4 +1,6 @@
-import { buildSchema, GraphQLEnumType, GraphQLSchema, printSchema, buildClientSchema, buildASTSchema, parse } from 'graphql';
+import { buildSchema, GraphQLSchema, printSchema, buildASTSchema, parse } from 'graphql';
+import { assertGraphQLEnumType, assertGraphQLInputObjectType, assertGraphQLObjectType, assertGraphQLInterfaceType, assertGraphQLUnionType, assertGraphQLScalerType } from '../../testing/assertion';
+import { assertSome } from '@graphql-tools/utils';
 import { extractExtensionsFromSchema, mergeExtensions, applyExtensions } from '../src/extensions'
 
 describe('extensions', () => {
@@ -47,103 +49,170 @@ describe('extensions', () => {
     });
 
     it('Should extract extensions correctly for all possible types', () => {
-      schema.getType('MyInput').extensions = { input: true };
-      schema.getType('MyType').extensions = { type: true };
-      schema.getType('Node').extensions = { interface: true };
-      schema.getType('MyEnum').extensions = { enum: true };
-      schema.getType('MyUnion').extensions = { union: true };
-      schema.getType('MyScalar').extensions = { scalar: true };
+      const MyInput = schema.getType('MyInput')
+      assertSome(MyInput)
+      MyInput.extensions = { input: true };
+      const MyType = schema.getType('MyType')
+      assertSome(MyType)
+      MyType.extensions = { type: true };
+      const Node = schema.getType('Node')
+      assertSome(Node)
+      Node.extensions = { interface: true };
+      const MyEnum = schema.getType('MyEnum')
+      assertSome(MyEnum)
+      MyEnum.extensions = { enum: true };
+      const MyUnion = schema.getType('MyUnion')
+      assertSome(MyUnion)
+      MyUnion.extensions = { union: true };
+      const MyScalar = schema.getType('MyScalar')
+      assertSome(MyScalar)
+      MyScalar.extensions = { scalar: true };
 
       const { types: extensions } = extractExtensionsFromSchema(schema);
-      expect(extensions.MyInput.extensions).toEqual({ input: true })
-      expect(extensions.MyType.extensions).toEqual({ type: true })
-      expect(extensions.Node.extensions).toEqual({ interface: true })
-      expect(extensions.MyEnum.extensions).toEqual({ enum: true })
-      expect(extensions.MyUnion.extensions).toEqual({ union: true })
-      expect(extensions.MyScalar.extensions).toEqual({ scalar: true })
+      expect(extensions['MyInput'].extensions).toEqual({ input: true })
+      expect(extensions['MyType'].extensions).toEqual({ type: true })
+      expect(extensions['Node'].extensions).toEqual({ interface: true })
+      expect(extensions['MyEnum'].extensions).toEqual({ enum: true })
+      expect(extensions['MyUnion'].extensions).toEqual({ union: true })
+      expect(extensions['MyScalar'].extensions).toEqual({ scalar: true })
     });
 
     it('Should extract extensions correctly for fields arguments', () => {
-        schema.getQueryType().getFields().t.args[0].extensions = { fieldArg: true };
+      const queryType = schema.getQueryType()
+      assertSome(queryType)
+      queryType.getFields()['t'].args[0].extensions = { fieldArg: true };
 
-        const { types: extensions } = extractExtensionsFromSchema(schema);
-        expect(extensions.Query.fields.t.arguments.i).toEqual({ fieldArg: true })
+      const { types: extensions } = extractExtensionsFromSchema(schema);
+      if (extensions['Query'].type !== "object") {
+        throw new Error("Unexpected type.")
+      }
+
+      expect(extensions['Query'].fields['t'].arguments['i']).toEqual({ fieldArg: true })
     });
 
     it('Should extract extensions correctly for enum values', () => {
-        (schema.getType('MyEnum') as GraphQLEnumType).getValues()[0].extensions = { enumValue: true };
+      const MyEnum = schema.getType('MyEnum')
+      assertGraphQLEnumType(MyEnum)
+      MyEnum.getValues()[0].extensions = { enumValue: true };
 
-        const { types: extensions } = extractExtensionsFromSchema(schema);
-        expect(extensions.MyEnum.values.A).toEqual({ enumValue: true });
-        expect(extensions.MyEnum.values.B).toEqual({});
-        expect(extensions.MyEnum.values.C).toEqual({});
+      const { types: extensions } = extractExtensionsFromSchema(schema);
+      if (extensions['MyEnum'].type !== "enum") {
+        throw new Error("Unexpected type.")
+      }
+      expect(extensions['MyEnum'].values['A']).toEqual({ enumValue: true });
+      expect(extensions['MyEnum'].values['B']).toEqual({});
+      expect(extensions['MyEnum'].values['C']).toEqual({});
     });
 
     it('Should extract extensions correctly for fields', () => {
-        schema.getQueryType().getFields().t.extensions = { field: true };
+      const queryType = schema.getQueryType()
+      assertSome(queryType)
+      queryType.getFields()['t'].extensions = { field: true };
 
-        const { types: extensions } = extractExtensionsFromSchema(schema);
-        expect(extensions.Query.fields.t.extensions).toEqual({ field: true })
+      const { types: extensions } = extractExtensionsFromSchema(schema);
+      if (extensions['Query'].type !== "object") {
+        throw new Error("Unexpected type.")
+      }
+      expect(extensions['Query'].fields['t'].extensions).toEqual({ field: true })
     });
 
     it('Should extract extensions correctly for input fields', () => {
-        (schema.getType('MyInput') as any).getFields().foo.extensions = { inputField: true };
+      const MyInput = schema.getType('MyInput')
+      assertGraphQLInputObjectType(MyInput)
+      MyInput.getFields()['foo'].extensions = { inputField: true };
 
-        const { types: extensions } = extractExtensionsFromSchema(schema);
-        expect(extensions.MyInput.fields.foo.extensions).toEqual({ inputField: true })
+      const { types: extensions } = extractExtensionsFromSchema(schema);
+      if (extensions['MyInput'].type !== "input") {
+        throw new Error("Unexpected type.")
+      }
+      expect(extensions['MyInput'].fields['foo'].extensions).toEqual({ inputField: true })
     });
   });
 
   describe('mergeExtensions', () => {
     it('Should merge all extensions from 2 schemas correctly', () => {
-      schema.getQueryType().extensions = { queryTest: true };
+      const queryType = schema.getQueryType()
+      assertSome(queryType)
+      queryType.extensions = { queryTest: true };
       const secondSchema = buildSchema(/* GraphQL */`
         type Query {
           foo: String!
         }
       `);
-      secondSchema.getQueryType().extensions = { querySecondTest: true };
+      const secondQueryType = secondSchema.getQueryType()
+      assertSome(secondQueryType)
+      secondQueryType.extensions = { querySecondTest: true };
 
       const extensions = extractExtensionsFromSchema(schema);
       const secondExtensions = extractExtensionsFromSchema(secondSchema);
       const mergedExtensions = mergeExtensions([extensions, secondExtensions]);
-      expect(mergedExtensions.types.Query.extensions).toEqual({ queryTest: true, querySecondTest: true })
+      expect(mergedExtensions.types['Query'].extensions).toEqual({ queryTest: true, querySecondTest: true })
     })
   });
 
   describe('applyExtensionsToSchema', () => {
     it('Should re apply extensions to schema and types correctly', () => {
       schema.extensions = { schema: true };
-      schema.getType('MyInput').extensions = { input: true };
-      schema.getType('MyType').extensions = { type: true };
-      schema.getType('Node').extensions = { interface: true };
-      schema.getType('MyEnum').extensions = { enum: true };
-      schema.getType('MyUnion').extensions = { union: true };
-      schema.getType('MyScalar').extensions = { scalar: true };
-      (schema.getType('MyInput') as any).getFields().foo.extensions = { inputField: true };
-      schema.getQueryType().getFields().t.extensions = { field: true };
-      (schema.getType('MyEnum') as GraphQLEnumType).getValues()[0].extensions = { enumValue: true };
-      schema.getQueryType().getFields().t.args[0].extensions = { fieldArg: true };
+      let MyInput = schema.getType('MyInput')
+      assertGraphQLInputObjectType(MyInput)
+      MyInput.extensions = { input: true };
+      let MyType = schema.getType("MyType")
+      assertGraphQLObjectType(MyType)
+      MyType.extensions = { type: true };
+      let Node = schema.getType("Node")
+      assertGraphQLInterfaceType(Node)
+      Node.extensions = { interface: true };
+      let MyEnum = schema.getType('MyEnum')
+      assertGraphQLEnumType(MyEnum)
+      MyEnum.extensions = { enum: true };
+      let MyUnion = schema.getType('MyUnion')
+      assertGraphQLUnionType(MyUnion)
+      MyUnion.extensions = { union: true };
+      let MyScalar = schema.getType('MyScalar')
+      assertGraphQLScalerType(MyScalar)
+      MyScalar.extensions = { scalar: true };
+      MyInput.getFields()['foo'].extensions = { inputField: true };
+      let QueryType = schema.getQueryType();
+      assertSome(QueryType)
+      QueryType.getFields()['t'].extensions = { field: true };
+      MyEnum.getValues()[0].extensions = { enumValue: true };
+      QueryType.getFields()['t'].args[0].extensions = { fieldArg: true };
 
       const result = extractExtensionsFromSchema(schema);
       const cleanSchema = buildASTSchema(parse(printSchema(schema)));
 
+      MyInput = cleanSchema.getType('MyInput')
+      assertGraphQLInputObjectType(MyInput)
       // To make sure it's stripped
-      expect(cleanSchema.getType('MyInput').extensions).toBeUndefined();
+      expect(MyInput.extensions).toBeUndefined();
 
       const modifiedSchema = applyExtensions(cleanSchema, result);
-      
+
       expect(modifiedSchema.extensions).toEqual({ schema: true })
-      expect(modifiedSchema.getType('MyInput').extensions).toEqual({ input: true });
-      expect(modifiedSchema.getType('MyType').extensions).toEqual({ type: true });
-      expect(modifiedSchema.getType('Node').extensions).toEqual({ interface: true });
-      expect(modifiedSchema.getType('MyEnum').extensions).toEqual({ enum: true });
-      expect(modifiedSchema.getType('MyUnion').extensions).toEqual({ union: true });
-      expect(modifiedSchema.getType('MyScalar').extensions).toEqual({ scalar: true });
-      expect((modifiedSchema.getType('MyInput') as any).getFields().foo.extensions).toEqual({ inputField: true });
-      expect(modifiedSchema.getQueryType().getFields().t.extensions).toEqual({ field: true });
-      expect((modifiedSchema.getType('MyEnum') as GraphQLEnumType).getValues()[0].extensions).toEqual({ enumValue: true });
-      expect(modifiedSchema.getQueryType().getFields().t.args[0].extensions).toEqual({ fieldArg: true });
+      MyInput = modifiedSchema.getType('MyInput')
+      assertGraphQLInputObjectType(MyInput)
+      expect(MyInput.extensions).toEqual({ input: true });
+      MyType = modifiedSchema.getType("MyType")
+      assertGraphQLObjectType(MyType)
+      expect(MyType.extensions).toEqual({ type: true });
+      Node = modifiedSchema.getType("Node")
+      assertGraphQLInterfaceType(Node)
+      expect(Node.extensions).toEqual({ interface: true });
+      MyEnum = modifiedSchema.getType('MyEnum')
+      assertGraphQLEnumType(MyEnum)
+      expect(MyEnum.extensions).toEqual({ enum: true });
+      MyUnion = modifiedSchema.getType('MyUnion')
+      assertGraphQLUnionType(MyUnion)
+      expect(MyUnion.extensions).toEqual({ union: true });
+      MyScalar = modifiedSchema.getType('MyScalar')
+      assertGraphQLScalerType(MyScalar)
+      expect(MyScalar.extensions).toEqual({ scalar: true });
+      expect(MyInput.getFields()['foo'].extensions).toEqual({ inputField: true });
+      QueryType = modifiedSchema.getQueryType();
+      assertSome(QueryType)
+      expect(QueryType.getFields()['t'].extensions).toEqual({ field: true });
+      expect(MyEnum.getValues()[0].extensions).toEqual({ enumValue: true });
+      expect(QueryType.getFields()['t'].args[0].extensions).toEqual({ fieldArg: true });
     });
   })
 });

@@ -10,15 +10,16 @@ function buildFixedSchema(schema: GraphQLSchema, options: BuildSchemaOptions & S
 }
 
 export function fixSchemaAst(schema: GraphQLSchema, options: BuildSchemaOptions & SchemaPrintOptions) {
-  let schemaWithValidAst: GraphQLSchema;
+  // eslint-disable-next-line no-undef-init
+  let schemaWithValidAst: GraphQLSchema | undefined = undefined;
   if (!schema.astNode || !schema.extensionASTNodes) {
     schemaWithValidAst = buildFixedSchema(schema, options);
   }
 
-  if (!schema.astNode) {
+  if (!schema.astNode && schemaWithValidAst?.astNode) {
     schema.astNode = schemaWithValidAst.astNode;
   }
-  if (!schema.extensionASTNodes) {
+  if (!schema.extensionASTNodes && schemaWithValidAst?.astNode) {
     schema.extensionASTNodes = schemaWithValidAst.extensionASTNodes;
   }
   return schema;

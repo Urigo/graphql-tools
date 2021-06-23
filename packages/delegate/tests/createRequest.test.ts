@@ -36,7 +36,7 @@ describe('bare requests', () => {
       `,
       resolvers: {
         Query: {
-          delegate: (_root, args) => {
+          delegate: (_root, args, _context, info) => {
             const request = createRequest({
               fieldNodes: [{
                 kind: Kind.FIELD,
@@ -72,6 +72,7 @@ describe('bare requests', () => {
             return delegateRequest({
               request,
               schema: innerSchema,
+              info
             });
           },
         },
@@ -129,7 +130,7 @@ describe('bare requests', () => {
       `,
       resolvers: {
         Query: {
-          delegate: (_root, args) => {
+          delegate: (_root, args, _context, info) => {
             const request = createRequest({
               fieldNodes: [{
                 kind: Kind.FIELD,
@@ -155,6 +156,7 @@ describe('bare requests', () => {
               request,
               schema: innerSchema,
               args,
+              info,
             });
           },
         },
@@ -203,7 +205,7 @@ describe('bare requests', () => {
       `,
       resolvers: {
         Query: {
-          delegate: () => {
+          delegate: (_source, _args, _context, info) => {
             const request = createRequest({
               fieldNodes: [{
                 kind: Kind.FIELD,
@@ -218,6 +220,7 @@ describe('bare requests', () => {
             return delegateRequest({
               request,
               schema: innerSchema,
+              info
             });
           },
         },

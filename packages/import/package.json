@@ -35,6 +35,6 @@
   },
   "dependencies": {
     "resolve-from": "5.0.0",
-    "tslib": "~2.2.0"
+    "tslib": "~2.3.0"
   }
 }

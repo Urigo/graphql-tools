@@ -146,7 +146,10 @@ export function mergeExtensions(extensions: SchemaExtensions[]): SchemaExtension
   );
 }
 
-function applyExtensionObject(obj: { extensions: Maybe<Readonly<Record<string, any>>> }, extensions: ExtensionsObject) {
+function applyExtensionObject(
+  obj: Maybe<{ extensions: Maybe<Readonly<Record<string, any>>> }>,
+  extensions: ExtensionsObject
+) {
   if (!obj) {
     return;
   }

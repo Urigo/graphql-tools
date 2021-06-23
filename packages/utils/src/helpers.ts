@@ -48,27 +48,30 @@ export function isValidPath(str: string): boolean {
 }
 
 export function compareStrings<A, B>(a: A, b: B) {
-  if (a.toString() < b.toString()) {
+  if (String(a) < String(b)) {
     return -1;
   }
 
-  if (a.toString() > b.toString()) {
+  if (String(a) > String(b)) {
     return 1;
   }
 
   return 0;
 }
 
-export function nodeToString(a: ASTNode) {
+export function nodeToString(a: ASTNode): string {
+  let name: string | undefined;
   if ('alias' in a) {
-    return a.alias.value;
+    name = a.alias?.value;
+  }
+  if (name == null && 'name' in a) {
+    name = a.name?.value;
+  }
+  if (name == null) {
+    name = a.kind;
   }
 
-  if ('name' in a) {
-    return a.name.value;
-  }
-
-  return a.kind;
+  return name;
 }
 
 export function compareNodes(a: ASTNode, b: ASTNode, customFn?: (a: any, b: any) => number) {
@@ -80,4 +83,17 @@ export function compareNodes(a: ASTNode, b: ASTNode, customFn?: (a: any, b: any)
   }
 
   return compareStrings(aStr, bStr);
+}
+
+export function isSome<T>(input: T): input is Exclude<T, null | undefined> {
+  return input != null;
+}
+
+export function assertSome<T>(
+  input: T,
+  message = 'Value should be something'
+): asserts input is Exclude<T, null | undefined> {
+  if (input == null) {
+    throw new Error(message);
+  }
 }

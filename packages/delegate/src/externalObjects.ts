@@ -12,7 +12,7 @@ export function isExternalObject(data: any): data is ExternalObject {
 export function annotateExternalObject(
   object: any,
   errors: Array<GraphQLError>,
-  subschema: GraphQLSchema | SubschemaConfig
+  subschema: GraphQLSchema | SubschemaConfig | undefined
 ): ExternalObject {
   Object.defineProperties(object, {
     [OBJECT_SUBSCHEMA_SYMBOL]: { value: subschema },

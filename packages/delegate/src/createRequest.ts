@@ -53,6 +53,10 @@ export function createRequestFromInfo({
   });
 }
 
+const raiseError = (message: string) => {
+  throw new Error(message);
+};
+
 export function createRequest({
   sourceSchema,
   sourceParentType,
@@ -66,16 +70,16 @@ export function createRequest({
   selectionSet,
   fieldNodes,
 }: ICreateRequest): Request {
-  let newSelectionSet: SelectionSetNode;
+  let newSelectionSet: SelectionSetNode | undefined;
   let argumentNodeMap: Record<string, ArgumentNode>;
 
   if (selectionSet != null) {
     newSelectionSet = selectionSet;
     argumentNodeMap = Object.create(null);
   } else {
-    const selections: Array<SelectionNode> = fieldNodes.reduce(
+    const selections: Array<SelectionNode> = (fieldNodes ?? []).reduce(
       (acc, fieldNode) => (fieldNode.selectionSet != null ? acc.concat(fieldNode.selectionSet.selections) : acc),
-      []
+      [] as Array<SelectionNode>
     );
 
     newSelectionSet = selections.length
@@ -87,7 +91,7 @@ export function createRequest({
 
     argumentNodeMap = {};
 
-    const args = fieldNodes[0]?.arguments;
+    const args = fieldNodes?.[0]?.arguments;
     if (args) {
       argumentNodeMap = args.reduce(
         (prev, curr) => ({
@@ -107,14 +111,14 @@ export function createRequest({
       const varName = def.variable.name.value;
       variableDefinitionMap[varName] = def;
       const varType = typeFromAST(sourceSchema, def.type as NamedTypeNode) as GraphQLInputType;
-      const serializedValue = serializeInputValue(varType, variableValues[varName]);
+      const serializedValue = serializeInputValue(varType, variableValues?.[varName]);
       if (serializedValue !== undefined) {
         newVariables[varName] = serializedValue;
       }
     });
   }
 
-  if (sourceParentType != null) {
+  if (sourceParentType != null && sourceFieldName != null) {
     updateArgumentsWithDefaults(
       sourceParentType,
       sourceFieldName,
@@ -129,7 +133,10 @@ export function createRequest({
     arguments: Object.keys(argumentNodeMap).map(argName => argumentNodeMap[argName]),
     name: {
       kind: Kind.NAME,
-      value: targetFieldName || fieldNodes[0].name.value,
+      value:
+        targetFieldName ??
+        fieldNodes?.[0]?.name.value ??
+        raiseError("Either 'targetFieldName' or a non empty 'fieldNodes' array must be provided."),
     },
     selectionSet: newSelectionSet,
   };

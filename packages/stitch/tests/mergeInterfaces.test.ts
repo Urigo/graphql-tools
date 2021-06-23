@@ -1,6 +1,7 @@
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '../src/stitchSchemas';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('merged interfaces via concrete type', () => {
   const namedItemSchema = makeExecutableSchema({
@@ -77,6 +78,7 @@ describe('merged interfaces via concrete type', () => {
       }
     `);
 
+    assertSome(result.data)
     expect(result.data.placement).toEqual({ id: '23', index: 23, name: 'Item 23' });
   });
 
@@ -90,6 +92,7 @@ describe('merged interfaces via concrete type', () => {
       }
     `);
 
+    assertSome(result.data)
     expect(result.data.placement).toEqual({ index: 23, name: 'Item 23' });
   });
 });
@@ -169,6 +172,8 @@ describe('merged interfaces via abstract type', () => {
       }
     `);
 
+
+    assertSome(result.data)
     expect(result.data.placement).toEqual({ id: '23', index: 23, name: 'Item 23' });
   });
 
@@ -181,7 +186,7 @@ describe('merged interfaces via abstract type', () => {
         }
       }
     `);
-
+    assertSome(result.data)
     expect(result.data.placement).toEqual({ index: 23, name: 'Item 23' });
   });
 });

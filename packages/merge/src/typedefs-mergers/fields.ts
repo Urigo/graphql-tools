@@ -24,40 +24,45 @@ function fieldAlreadyExists(fieldsArr: ReadonlyArray<any>, otherField: any, conf
 
 export function mergeFields<T extends FieldDefinitionNode | InputValueDefinitionNode>(
   type: { name: NameNode },
-  f1: ReadonlyArray<T>,
-  f2: ReadonlyArray<T>,
+  f1: ReadonlyArray<T> | undefined,
+  f2: ReadonlyArray<T> | undefined,
   config?: Config
 ): T[] {
-  const result: T[] = [...f2];
+  const result: T[] = [];
+  if (f2 != null) {
+    result.push(...f2);
+  }
+  if (f1 != null) {
+    for (const field of f1) {
+      if (fieldAlreadyExists(result, field, config)) {
+        const existing: any = result.find((f: any) => f.name.value === (field as any).name.value);
 
-  for (const field of f1) {
-    if (fieldAlreadyExists(result, field, config)) {
-      const existing: any = result.find((f: any) => f.name.value === (field as any).name.value);
+        if (!config?.ignoreFieldConflicts) {
+          if (config?.throwOnConflict) {
+            preventConflicts(type, existing, field, false);
+          } else {
+            preventConflicts(type, existing, field, true);
+          }
 
-      if (!config?.ignoreFieldConflicts) {
-        if (config?.throwOnConflict) {
-          preventConflicts(type, existing, field, false);
-        } else {
-          preventConflicts(type, existing, field, true);
+          if (isNonNullTypeNode(field.type) && !isNonNullTypeNode(existing.type)) {
+            existing.type = field.type;
+          }
         }
 
-        if (isNonNullTypeNode(field.type) && !isNonNullTypeNode(existing.type)) {
-          existing.type = field.type;
-        }
+        existing.arguments = mergeArguments(field['arguments'] || [], existing.arguments || [], config);
+        existing.directives = mergeDirectives(field.directives, existing.directives, config);
+        existing.description = field.description || existing.description;
+      } else {
+        result.push(field);
       }
-
-      existing.arguments = mergeArguments(field['arguments'] || [], existing.arguments || [], config);
-      existing.directives = mergeDirectives(field.directives, existing.directives, config);
-      existing.description = field.description || existing.description;
-    } else {
-      result.push(field);
     }
   }
   if (config && config.sort) {
     result.sort(compareNodes);
   }
   if (config && config.exclusions) {
-    return result.filter(field => !config.exclusions.includes(`${type.name.value}.${field.name.value}`));
+    const exclusions = config.exclusions;
+    return result.filter(field => !exclusions.includes(`${type.name.value}.${field.name.value}`));
   }
   return result;
 }

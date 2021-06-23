@@ -45,9 +45,18 @@ export enum CompareVal {
   A_EQUALS_B = 0,
   A_GREATER_THAN_B = 1,
 }
-export type CompareFn<T> = (a: T, b: T) => -1 | 0 | 1;
+export type CompareFn<T> = (a: T | undefined, b: T | undefined) => -1 | 0 | 1;
 
-export function defaultStringComparator(a: string, b: string): CompareVal {
+export function defaultStringComparator(a: string | undefined, b: string | undefined): CompareVal {
+  if (a == null && b == null) {
+    return CompareVal.A_EQUALS_B;
+  }
+  if (a == null) {
+    return CompareVal.A_SMALLER_THAN_B;
+  }
+  if (b == null) {
+    return CompareVal.A_GREATER_THAN_B;
+  }
   if (a < b) return CompareVal.A_SMALLER_THAN_B;
   if (a > b) return CompareVal.A_GREATER_THAN_B;
   return CompareVal.A_EQUALS_B;

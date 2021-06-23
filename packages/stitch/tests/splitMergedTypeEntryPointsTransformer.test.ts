@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { splitMergedTypeEntryPointsTransformer } from '@graphql-tools/stitch';
+import { assertSome } from '@graphql-tools/utils';
 
 const schema = makeExecutableSchema({ typeDefs: 'type Query { go:Int }' });
 
@@ -18,6 +19,7 @@ describe('splitMergedTypeEntryPointsTransformer', () => {
     });
 
     expect(results.length).toEqual(1);
+    assertSome(results[0].merge)
     expect(results[0].merge.Product).toEqual({
       selectionSet: '{ yep }',
       fieldName: 'yep',
@@ -79,10 +81,12 @@ describe('splitMergedTypeEntryPointsTransformer', () => {
     });
 
     expect(results.length).toEqual(2);
+    assertSome(results[0].merge)
     expect(results[0].merge.Product).toEqual({
       selectionSet: '{ id }',
       fieldName: 'productById',
     });
+    assertSome(results[1].merge)
     expect(results[1].merge.Product).toEqual({
       selectionSet: '{ upc }',
       fieldName: 'productByUpc',

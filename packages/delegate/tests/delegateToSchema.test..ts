@@ -3,6 +3,12 @@ import { graphql } from 'graphql';
 import { delegateToSchema } from '../src/delegateToSchema';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 
+function assertSome<T>(input: T): asserts input is Exclude<T, null | undefined>{
+  if (input == null) {
+    throw new Error("Value should be neither null nor undefined.")
+  }
+}
+
 describe('delegateToSchema', () => {
   test('should work', async () => {
     const innerSchema = makeExecutableSchema({
@@ -47,6 +53,7 @@ describe('delegateToSchema', () => {
       `,
     );
 
+    assertSome(result.data)
     expect(result.data.delegateToSchema).toEqual('test');
   });
 
@@ -93,6 +100,7 @@ describe('delegateToSchema', () => {
       `,
     );
 
+    assertSome(result.data)
     expect(result.data.delegateToSchema).toEqual('test');
   });
 
@@ -144,6 +152,7 @@ describe('delegateToSchema', () => {
       },
     );
 
+    assertSome(result.data)
     expect(result.data.delegateToSchema).toEqual('test');
   });
 });

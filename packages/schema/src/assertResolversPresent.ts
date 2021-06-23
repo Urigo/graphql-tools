@@ -6,11 +6,8 @@ export function assertResolversPresent(
   schema: GraphQLSchema,
   resolverValidationOptions: IResolverValidationOptions = {}
 ): void {
-  const {
-    requireResolversForArgs,
-    requireResolversForNonScalar,
-    requireResolversForAllFields,
-  } = resolverValidationOptions;
+  const { requireResolversForArgs, requireResolversForNonScalar, requireResolversForAllFields } =
+    resolverValidationOptions;
 
   if (requireResolversForAllFields && (requireResolversForArgs || requireResolversForNonScalar)) {
     throw new TypeError(
@@ -40,7 +37,7 @@ export function assertResolversPresent(
 
 function expectResolver(
   validator: string,
-  behavior: ValidatorBehavior,
+  behavior: ValidatorBehavior | undefined,
   field: GraphQLField<any, any>,
   typeName: string,
   fieldName: string

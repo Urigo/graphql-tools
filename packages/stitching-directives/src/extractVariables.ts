@@ -7,12 +7,12 @@ export function extractVariables(inputValue: ValueNode): { inputValue: ValueNode
   const variablePaths = Object.create(null);
 
   const keyPathVisitor = {
-    enter: (_node: any, key: string | number) => {
+    enter: (_node: any, key: string | number | undefined) => {
       if (typeof key === 'number') {
         path.push(key);
       }
     },
-    leave: (_node: any, key: string | number) => {
+    leave: (_node: any, key: string | number | undefined) => {
       if (typeof key === 'number') {
         path.pop();
       }
@@ -29,7 +29,7 @@ export function extractVariables(inputValue: ValueNode): { inputValue: ValueNode
   };
 
   const variableVisitor = {
-    enter: (node: VariableNode, key: string | number) => {
+    enter: (node: VariableNode, key: string | number | undefined) => {
       if (typeof key === 'number') {
         variablePaths[node.name.value] = path.concat([key]);
       } else {

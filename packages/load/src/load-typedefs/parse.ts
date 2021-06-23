@@ -9,7 +9,7 @@ type Input = {
 };
 type AddValidSource = (source: Source) => void;
 type ParseOptions = {
-  partialSource: Partial<Source>;
+  partialSource: Source;
   options: any;
   globOptions: any;
   pointerOptionMap: any;
@@ -44,15 +44,21 @@ function prepareInput({
   globOptions,
   pointerOptionMap,
 }: {
-  source: Partial<Source>;
+  source: Source;
   options: any;
   globOptions: any;
   pointerOptionMap: any;
 }): Input {
-  const specificOptions = {
+  let specificOptions = {
     ...options,
-    ...(source.location in pointerOptionMap ? globOptions : pointerOptionMap[source.location]),
   };
+
+  if (source.location) {
+    specificOptions = {
+      ...specificOptions,
+      ...(source.location in pointerOptionMap ? globOptions : pointerOptionMap[source.location]),
+    };
+  }
 
   return { source: { ...source }, options: specificOptions };
 }
@@ -77,14 +83,14 @@ function useKindsFilter(input: Input) {
 }
 
 function useComments(input: Input) {
-  if (!input.source.rawSDL) {
+  if (!input.source.rawSDL && input.source.document) {
     input.source.rawSDL = printWithComments(input.source.document);
     resetComments();
   }
 }
 
 function collectValidSources(input: Input, addValidSource: AddValidSource) {
-  if (input.source.document.definitions && input.source.document.definitions.length > 0) {
+  if (input.source.document?.definitions && input.source.document.definitions.length > 0) {
     addValidSource(input.source);
   }
 }

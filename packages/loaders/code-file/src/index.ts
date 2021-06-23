@@ -4,7 +4,6 @@ import { isSchema, GraphQLSchema, DocumentNode } from 'graphql';
 import {
   SchemaPointerSingle,
   DocumentPointerSingle,
-  debugLog,
   SingleFileOptions,
   Source,
   UniversalLoader,
@@ -24,7 +23,7 @@ import isGlob from 'is-glob';
 import unixify from 'unixify';
 import { tryToLoadFromExport, tryToLoadFromExportSync } from './load-from-module';
 import { isAbsolute, resolve } from 'path';
-import { cwd } from 'process';
+import { cwd, env } from 'process';
 import { readFileSync, promises as fsPromises, existsSync } from 'fs';
 
 const { readFile, access } = fsPromises;
@@ -118,7 +117,10 @@ export class CodeFileLoader implements UniversalLoader<CodeFileLoaderOptions> {
     );
   }
 
-  async load(pointer: SchemaPointerSingle | DocumentPointerSingle, options: CodeFileLoaderOptions): Promise<Source> {
+  async load(
+    pointer: SchemaPointerSingle | DocumentPointerSingle,
+    options: CodeFileLoaderOptions
+  ): Promise<Source | null> {
     const normalizedFilePath = ensureAbsolutePath(pointer, options);
 
     const errors: Error[] = [];
@@ -132,7 +134,9 @@ export class CodeFileLoader implements UniversalLoader<CodeFileLoaderOptions> {
           return parseGraphQLSDL(pointer, sdl, options);
         }
       } catch (e) {
-        debugLog(`Failed to load schema from code file "${normalizedFilePath}": ${e.message}`);
+        if (env['DEBUG']) {
+          console.error(`Failed to load schema from code file "${normalizedFilePath}": ${e.message}`);
+        }
         errors.push(e);
       }
     }
@@ -161,7 +165,7 @@ export class CodeFileLoader implements UniversalLoader<CodeFileLoaderOptions> {
     return null;
   }
 
-  loadSync(pointer: SchemaPointerSingle | DocumentPointerSingle, options: CodeFileLoaderOptions): Source {
+  loadSync(pointer: SchemaPointerSingle | DocumentPointerSingle, options: CodeFileLoaderOptions): Source | null {
     const normalizedFilePath = ensureAbsolutePath(pointer, options);
 
     const errors: Error[] = [];
@@ -175,7 +179,9 @@ export class CodeFileLoader implements UniversalLoader<CodeFileLoaderOptions> {
           return parseGraphQLSDL(pointer, sdl, options);
         }
       } catch (e) {
-        debugLog(`Failed to load schema from code file "${normalizedFilePath}": ${e.message}`);
+        if (env['DEBUG']) {
+          console.error(`Failed to load schema from code file "${normalizedFilePath}": ${e.message}`);
+        }
         errors.push(e);
       }
     }
@@ -207,7 +213,7 @@ export class CodeFileLoader implements UniversalLoader<CodeFileLoaderOptions> {
 
 function resolveSource(
   pointer: string,
-  value: GraphQLSchema | DocumentNode | string,
+  value: GraphQLSchema | DocumentNode | string | null,
   options: CodeFileLoaderOptions
 ): Source | null {
   if (typeof value === 'string') {

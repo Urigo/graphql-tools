@@ -111,7 +111,7 @@ export function rewireTypes(
       };
       if ('interfaces' in newConfig) {
         newConfig.interfaces = () =>
-          rewireNamedTypes(((config as unknown) as { interfaces: Array<GraphQLInterfaceType> }).interfaces);
+          rewireNamedTypes((config as unknown as { interfaces: Array<GraphQLInterfaceType> }).interfaces);
       }
       return new GraphQLInterfaceType(newConfig);
     } else if (isUnionType(type)) {
@@ -139,7 +139,7 @@ export function rewireTypes(
       return new GraphQLScalarType(scalarConfig);
     }
 
-    throw new Error(`Unexpected schema type: ${(type as unknown) as string}`);
+    throw new Error(`Unexpected schema type: ${type as unknown as string}`);
   }
 
   function rewireFields(fields: GraphQLFieldConfigMap<any, any>): GraphQLFieldConfigMap<any, any> {
@@ -147,7 +147,7 @@ export function rewireTypes(
     Object.keys(fields).forEach(fieldName => {
       const field = fields[fieldName];
       const rewiredFieldType = rewireType(field.type);
-      if (rewiredFieldType != null) {
+      if (rewiredFieldType != null && field.args) {
         field.type = rewiredFieldType;
         field.args = rewireArgs(field.args);
         rewiredFields[fieldName] = field;

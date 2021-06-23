@@ -41,7 +41,7 @@ export function addResolversToSchema(
   const options: IAddResolversToSchemaOptions = isSchema(schemaOrOptions)
     ? {
         schema: schemaOrOptions,
-        resolvers: legacyInputResolvers,
+        resolvers: legacyInputResolvers ?? {},
         resolverValidationOptions: legacyInputValidationOptions,
       }
     : schemaOrOptions;
@@ -162,7 +162,7 @@ export function addResolversToSchema(
 function addResolversToExistingSchema(
   schema: GraphQLSchema,
   resolvers: IResolvers,
-  defaultFieldResolver: GraphQLFieldResolver<any, any>
+  defaultFieldResolver?: GraphQLFieldResolver<any, any>
 ): GraphQLSchema {
   const typeMap = schema.getTypeMap();
   getAllPropertyNames(resolvers).forEach(typeName => {
@@ -183,7 +183,7 @@ function addResolversToExistingSchema(
               ),
             };
           } else if (fieldName === 'extensionASTNodes' && type.extensionASTNodes != null) {
-            type.extensionASTNodes = ([] ?? type.extensionASTNodes).concat(
+            type.extensionASTNodes = type.extensionASTNodes.concat(
               (resolverValue as GraphQLScalarType)?.extensionASTNodes ?? []
             );
           } else if (
@@ -279,7 +279,7 @@ function addResolversToExistingSchema(
 function createNewSchemaWithResolvers(
   schema: GraphQLSchema,
   resolvers: IResolvers,
-  defaultFieldResolver: GraphQLFieldResolver<any, any>
+  defaultFieldResolver?: GraphQLFieldResolver<any, any>
 ): GraphQLSchema {
   schema = mapSchema(schema, {
     [MapperKind.SCALAR_TYPE]: type => {

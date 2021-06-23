@@ -89,7 +89,7 @@ describe('batch delegation within basic stitching example', () => {
 
     expect(numCalls).toEqual(1);
     expect(result.errors).toBeUndefined();
-    expect(result.data.trendingChirps[0].chirpedAtUser.email).not.toBe(null);
+    expect(result.data!.trendingChirps[0].chirpedAtUser.email).not.toBe(null);
   });
 
   test('works with key arrays', async () => {
@@ -108,9 +108,9 @@ describe('batch delegation within basic stitching example', () => {
       `,
       resolvers: {
         Query: {
-          posts: (obj, args) => {
+          posts: (_, args) => {
             numCalls += 1;
-            return args.ids.map(id => ({ id, title: `Post ${id}` }));
+            return args.ids.map((id: unknown) => ({ id, title: `Post ${id}` }));
           }
         }
       }
@@ -129,8 +129,8 @@ describe('batch delegation within basic stitching example', () => {
       `,
       resolvers: {
         Query: {
-          users: (obj, args) => {
-            return args.ids.map(id => {
+          users: (_, args) => {
+            return args.ids.map((id: unknown) => {
               return { id, postIds: [Number(id)+1, Number(id)+2] };
             });
           }

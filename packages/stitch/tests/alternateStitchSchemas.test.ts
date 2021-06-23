@@ -33,7 +33,7 @@ import {
 import { delegateToSchema, SubschemaConfig } from '@graphql-tools/delegate';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { addMocksToSchema } from '@graphql-tools/mock';
-import { filterSchema, ExecutionResult } from '@graphql-tools/utils';
+import { filterSchema, ExecutionResult, assertSome } from '@graphql-tools/utils';
 
 import { stitchSchemas } from '../src/stitchSchemas';
 
@@ -440,9 +440,11 @@ describe('optional arguments', () => {
     `;
 
     const originalResult = await graphql(schema, query);
+    assertSome(originalResult.data)
     expect(originalResult.data.test).toEqual(true);
 
     const stitchedResult = await graphql(stitchedSchema, query);
+    assertSome(stitchedResult.data)
     expect(stitchedResult.data.test).toEqual(true);
   });
 
@@ -454,9 +456,11 @@ describe('optional arguments', () => {
     `;
 
     const originalResult = await graphql(schema, query);
+    assertSome(originalResult.data)
     expect(originalResult.data.test).toEqual(true);
 
     const stitchedResult = await graphql(stitchedSchema, query);
+    assertSome(stitchedResult.data)
     expect(stitchedResult.data.test).toEqual(true);
   });
 
@@ -475,6 +479,7 @@ describe('optional arguments', () => {
       {},
       { arg: undefined },
     );
+    assertSome(originalResult.data)
     expect(originalResult.data.test).toEqual(false);
 
     const stitchedResult = await graphql(
@@ -484,6 +489,7 @@ describe('optional arguments', () => {
       {},
       { arg: undefined },
     );
+    assertSome(stitchedResult.data)
     expect(stitchedResult.data.test).toEqual(false);
   });
 });
@@ -495,11 +501,12 @@ describe('default values', () => {
       transforms: [
         new TransformRootFields(
           (
-            typeName: string,
-            fieldName: string,
-            fieldConfig: GraphQLFieldConfig<any, any>,
+            typeName,
+            fieldName,
+            fieldConfig,
           ) => {
             if (typeName === 'Query' && fieldName === 'jsonTest') {
+              assertSome(fieldConfig.args)
               return [
                 'renamedJsonTest',
                 {
@@ -1508,6 +1515,7 @@ describe('schema transformation with wrapping of object fields', () => {
 
       const query = '{ wrapped { user { dummy } } }';
       const result = await graphql(stitchedSchema, query);
+      assertSome(result.data)
       expect(result.data.wrapped.user.dummy).not.toEqual(null);
     });
   });
@@ -1579,6 +1587,7 @@ describe('interface resolver inheritance', () => {
     });
     const query = '{ user { id name } }';
     const response = await graphql(stitchedSchema, query);
+    assertSome(response.errors)
     expect(response.errors.length).toBe(1);
     expect(response.errors[0].message).toBe(
       'Cannot return null for non-nullable field User.id.',
@@ -1598,6 +1607,7 @@ describe('interface resolver inheritance', () => {
     });
     const query = '{ user { id name } }';
     const response = await graphql(stitchedSchema, query);
+    assertSome(response.errors)
     expect(response.errors.length).toBe(1);
     expect(response.errors[0].message).toBe(
       'Cannot return null for non-nullable field User.id.',
@@ -1629,6 +1639,7 @@ describe('stitchSchemas', () => {
 
     const query = '{ test { field } }';
     const response = await graphql(stitchedSchema, query);
+    assertSome(response.data)
     expect(response.data.test).toBe(null);
     expect(response.errors).toBeUndefined();
   });

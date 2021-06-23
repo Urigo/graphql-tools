@@ -49,7 +49,7 @@
     "lodash": "^4.17.20",
     "replaceall": "^0.1.6",
     "scuid": "^1.1.0",
-    "tslib": "~2.2.0",
+    "tslib": "~2.3.0",
     "yaml-ast-parser": "^0.0.43"
   },
   "publishConfig": {

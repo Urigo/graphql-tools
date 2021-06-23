@@ -4,7 +4,7 @@ import {uniqueCode} from '@graphql-tools/webpack-loader-runtime';
 import loader from '../src/index';
 
 function useLoader(source: string, options: any): string {
-  return loader.call({cacheable() {}, query: options}, source)
+  return loader.call({cacheable() {}, query: options} as any, source)
 }
 
 test('basic query', () => {

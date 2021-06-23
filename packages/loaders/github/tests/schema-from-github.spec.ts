@@ -27,17 +27,22 @@ function normalize(doc: string): string {
     return print(parse(doc));
 }
 
+function assertNonMaybe<T>(input: T): asserts input is Exclude<T, null | undefined>{
+  if (input == null) {
+    throw new Error("Value should be neither null nor undefined.")
+  }
+}
+
 test('load schema from GitHub', async () => {
-  let headers: Record<string, string | string[]> = {};
-  let query: string;
-  let variables: any;
-  let operationName: string;
+  let params: any = null;
 
   const server = nock('https://api.github.com').post('/graphql').reply(function reply(_, body: any) {
-    headers = this.req.headers;
-    query = body.query;
-    variables = body.variables;
-    operationName = body.operationName;
+    params = {
+      headers: this.req.headers,
+      query: body.query,
+      variables: body.variables,
+      operationName: body.operationName
+    }
 
     return [200, {
       data: {
@@ -58,13 +63,15 @@ test('load schema from GitHub', async () => {
 
   server.done();
 
+  assertNonMaybe(params);
+
   // headers
-  expect(headers['content-type']).toContain('application/json; charset=utf-8');
-  expect(headers.authorization).toContain(`bearer ${token}`);
+  expect(params.headers['content-type']).toContain('application/json; charset=utf-8');
+  expect(params.headers.authorization).toContain(`bearer ${token}`);
 
   // query
-  expect(normalize(query)).toEqual(
-    normalize(`
+  expect(normalize(params.query)).toEqual(
+    normalize(/* GraphQL */`
       query GetGraphQLSchemaForGraphQLtools($owner: String!, $name: String!, $expression: String!) {
         repository(owner: $owner, name: $name) {
           object(expression: $expression) {
@@ -78,15 +85,16 @@ test('load schema from GitHub', async () => {
   );
 
   // variables
-  expect(variables).toEqual({
+  expect(params.variables).toEqual({
     owner,
     name,
     expression: ref + ':' + path,
   });
-
+  assertNonMaybe(params.operationName)
   // name
-  expect(operationName).toEqual('GetGraphQLSchemaForGraphQLtools');
+  expect(params.operationName).toEqual('GetGraphQLSchemaForGraphQLtools');
 
+  assertNonMaybe(schema.document)
   // schema
   expect(print(schema.document)).toEqual(printSchema(buildSchema(typeDefs)));
 });

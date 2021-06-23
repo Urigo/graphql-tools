@@ -1,7 +1,7 @@
 import { DocumentNode, GraphQLResolveInfo } from 'graphql';
 import { ExecutionResult } from './Interfaces';
 
-export interface ExecutionParams<TArgs = Record<string, any>, TContext = any> {
+export interface ExecutionParams<TArgs extends Record<string, any> = Record<string, any>, TContext = any> {
   document: DocumentNode;
   variables?: TArgs;
   extensions?: Record<string, any>;
@@ -36,4 +36,4 @@ export type Subscriber<TBaseContext = Record<string, any>> = <
   TContext extends TBaseContext = TBaseContext
 >(
   params: ExecutionParams<TArgs, TContext>
-) => Promise<AsyncIterator<ExecutionResult<TReturn>> | ExecutionResult<TReturn>>;
+) => Promise<AsyncIterableIterator<ExecutionResult<TReturn>> | ExecutionResult<TReturn>>;

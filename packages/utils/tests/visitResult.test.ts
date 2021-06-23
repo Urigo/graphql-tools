@@ -389,7 +389,7 @@ describe('visiting errors', () => {
     const visitedResult = visitResult(result, request, schema, undefined, {
       Query: {
         test: (error, pathIndex) => {
-          const oldPath = error.path;
+          const oldPath = error.path ?? [];
           const newPath = [...oldPath.slice(0, pathIndex), 'inserted', ...oldPath.slice(pathIndex)];
           return relocatedError(error, newPath);
         },

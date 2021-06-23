@@ -10,6 +10,8 @@ import { mergeDirective } from './directives';
 import { collectComment } from './comments';
 import { mergeSchemaDefs } from './schema-def';
 
+export const schemaDefSymbol = 'SCHEMA_DEF_SYMBOL';
+
 export type MergedResultMap = Record<string, NamedDefinitionNode> & {
   [schemaDefSymbol]: SchemaDefinitionNode | SchemaExtensionNode;
 };
@@ -19,15 +21,17 @@ export function isNamedDefinitionNode(definitionNode: DefinitionNode): definitio
   return 'name' in definitionNode;
 }
 
-export const schemaDefSymbol = 'SCHEMA_DEF_SYMBOL';
-
 export function mergeGraphQLNodes(nodes: ReadonlyArray<DefinitionNode>, config?: Config): MergedResultMap {
   const mergedResultMap = {} as MergedResultMap;
   for (const nodeDefinition of nodes) {
     if (isNamedDefinitionNode(nodeDefinition)) {
-      const name = nodeDefinition.name.value;
+      const name = nodeDefinition.name?.value;
       if (config?.commentDescriptions) {
         collectComment(nodeDefinition);
+      }
+
+      if (name == null) {
+        continue;
       }
 
       if (config?.exclusions?.includes(name + '.*') || config?.exclusions?.includes(name)) {

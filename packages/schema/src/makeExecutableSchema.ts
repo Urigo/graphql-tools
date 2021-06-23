@@ -1,15 +1,11 @@
-import { GraphQLFieldResolver } from 'graphql';
+import { buildASTSchema } from 'graphql';
 
-import { mergeDeep, SchemaDirectiveVisitor, pruneSchema } from '@graphql-tools/utils';
+import { pruneSchema } from '@graphql-tools/utils';
 import { addResolversToSchema } from './addResolversToSchema';
 
-import { attachDirectiveResolvers } from './attachDirectiveResolvers';
 import { assertResolversPresent } from './assertResolversPresent';
-import { addSchemaLevelResolver } from './addSchemaLevelResolver';
-import { buildSchemaFromTypeDefinitions } from './buildSchemaFromTypeDefinitions';
-import { addErrorLoggingToSchema } from './addErrorLoggingToSchema';
-import { addCatchUndefinedToSchema } from './addCatchUndefinedToSchema';
 import { ExecutableSchemaTransformation, IExecutableSchemaDefinition } from './types';
+import { mergeResolvers, mergeTypeDefs } from '@graphql-tools/merge';
 
 /**
  * Builds a schema from the provided type definitions and resolvers.
@@ -58,17 +54,12 @@ import { ExecutableSchemaTransformation, IExecutableSchemaDefinition } from './t
 export function makeExecutableSchema<TContext = any>({
   typeDefs,
   resolvers = {},
-  logger,
-  allowUndefinedInResolve = true,
   resolverValidationOptions = {},
-  directiveResolvers,
-  schemaDirectives,
   schemaTransforms: userProvidedSchemaTransforms,
   parseOptions = {},
   inheritResolversFromInterfaces = false,
   pruningOptions,
   updateResolversInPlace = false,
-  noExtensionExtraction = false,
 }: IExecutableSchemaDefinition<TContext>) {
   // Validate and clean up arguments
   if (typeof resolverValidationOptions !== 'object') {
@@ -83,11 +74,10 @@ export function makeExecutableSchema<TContext = any>({
   const schemaTransforms: ExecutableSchemaTransformation[] = [
     schema => {
       // We allow passing in an array of resolver maps, in which case we merge them
-      const resolverMap: any = Array.isArray(resolvers) ? resolvers.reduce(mergeDeep, {}) : resolvers;
 
       const schemaWithResolvers = addResolversToSchema({
         schema,
-        resolvers: resolverMap,
+        resolvers: mergeResolvers(resolvers),
         resolverValidationOptions,
         inheritResolversFromInterfaces,
         updateResolversInPlace,
@@ -101,46 +91,18 @@ export function makeExecutableSchema<TContext = any>({
     },
   ];
 
-  if (!allowUndefinedInResolve) {
-    schemaTransforms.push(addCatchUndefinedToSchema);
-  }
-
-  if (logger != null) {
-    schemaTransforms.push(schema => addErrorLoggingToSchema(schema, logger));
-  }
-
-  if (typeof resolvers['__schema'] === 'function') {
-    // TODO a bit of a hack now, better rewrite generateSchema to attach it there.
-    // not doing that now, because I'd have to rewrite a lot of tests.
-    schemaTransforms.push(schema =>
-      addSchemaLevelResolver(schema, resolvers['__schema'] as GraphQLFieldResolver<any, any>)
-    );
-  }
-
   if (userProvidedSchemaTransforms) {
     schemaTransforms.push(schema =>
       userProvidedSchemaTransforms.reduce((s, schemaTransform) => schemaTransform(s), schema)
     );
   }
 
-  // directive resolvers are implemented using SchemaDirectiveVisitor.visitSchemaDirectives
-  // schema visiting modifies the schema in place
-  if (directiveResolvers != null) {
-    schemaTransforms.push(schema => attachDirectiveResolvers(schema, directiveResolvers));
-  }
-
-  if (schemaDirectives != null) {
-    schemaTransforms.push(schema => {
-      SchemaDirectiveVisitor.visitSchemaDirectives(schema, schemaDirectives);
-      return schema;
-    });
-  }
-
   if (pruningOptions) {
     schemaTransforms.push(pruneSchema);
   }
 
-  const schemaFromTypeDefs = buildSchemaFromTypeDefinitions(typeDefs, parseOptions, noExtensionExtraction);
+  const mergedTypeDefs = mergeTypeDefs(typeDefs, parseOptions);
+  const schemaFromTypeDefs = buildASTSchema(mergedTypeDefs, parseOptions);
 
   return schemaTransforms.reduce((schema, schemaTransform) => schemaTransform(schema), schemaFromTypeDefs);
 }

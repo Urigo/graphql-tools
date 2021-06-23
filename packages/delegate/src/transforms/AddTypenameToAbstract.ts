@@ -10,7 +10,7 @@ import {
   isAbstractType,
 } from 'graphql';
 
-import { Request } from '@graphql-tools/utils';
+import { Maybe, Request } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext } from '../types';
 
@@ -34,7 +34,7 @@ function addTypenameToAbstract(targetSchema: GraphQLSchema, document: DocumentNo
     document,
     visitWithTypeInfo(typeInfo, {
       [Kind.SELECTION_SET](node: SelectionSetNode): SelectionSetNode | null | undefined {
-        const parentType: GraphQLType = typeInfo.getParentType();
+        const parentType: Maybe<GraphQLType> = typeInfo.getParentType();
         let selections = node.selections;
         if (parentType != null && isAbstractType(parentType)) {
           selections = selections.concat({

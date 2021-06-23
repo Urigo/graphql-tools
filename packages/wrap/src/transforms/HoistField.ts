@@ -9,7 +9,14 @@ import {
   GraphQLFieldResolver,
 } from 'graphql';
 
-import { appendObjectFields, removeObjectFields, Request, ExecutionResult, relocatedError } from '@graphql-tools/utils';
+import {
+  appendObjectFields,
+  removeObjectFields,
+  Request,
+  ExecutionResult,
+  relocatedError,
+  assertSome,
+} from '@graphql-tools/utils';
 
 import { Transform, defaultMergedResolver, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
@@ -24,7 +31,7 @@ export default class HoistField implements Transform {
   private readonly oldFieldName: string;
   private readonly argFilters: Array<(arg: GraphQLArgument) => boolean>;
   private readonly argLevels: Record<string, number>;
-  private readonly transformer: Transform;
+  private readonly transformer: MapFields<any>;
 
   constructor(
     typeName: string,
@@ -45,6 +52,7 @@ export default class HoistField implements Transform {
 
     const pathToField = path.slice();
     const oldFieldName = pathToField.pop();
+    assertSome(oldFieldName);
 
     this.oldFieldName = oldFieldName;
     this.pathToField = pathToField;
@@ -59,7 +67,7 @@ export default class HoistField implements Transform {
       {
         [typeName]: value => unwrapValue(value, alias),
       },
-      errors => unwrapErrors(errors, alias)
+      errors => (errors != null ? unwrapErrors(errors, alias) : undefined)
     );
     this.argLevels = argLevels;
   }
@@ -97,7 +105,7 @@ export default class HoistField implements Transform {
 
       if (hoistingToRootField) {
         const targetSchema = subschemaConfig.schema;
-        const operation = this.typeName === targetSchema.getQueryType().name ? 'query' : 'mutation';
+        const operation = this.typeName === targetSchema.getQueryType()?.name ? 'query' : 'mutation';
         const createProxyingResolver = subschemaConfig.createProxyingResolver ?? defaultCreateProxyingResolver;
         resolve = createProxyingResolver({
           subschemaConfig,
@@ -112,26 +120,32 @@ export default class HoistField implements Transform {
 
     const newTargetField = {
       ...targetField,
-      resolve,
+      resolve: resolve!,
     };
 
     const level = this.pathToField.length;
 
-    Object.keys(targetField.args).forEach(argName => {
-      const argConfig = targetField.args[argName];
-      const arg = {
-        ...argConfig,
-        name: argName,
-        description: argConfig.description,
-        defaultValue: argConfig.defaultValue,
-        extensions: argConfig.extensions,
-        astNode: argConfig.astNode,
-      } as GraphQLArgument;
-      if (this.argFilters[level](arg)) {
-        argsMap[argName] = arg;
-        this.argLevels[arg.name] = level;
+    const args = targetField.args;
+    if (args != null) {
+      for (const argName in args) {
+        const argConfig = args[argName];
+        if (argConfig == null) {
+          continue;
+        }
+        const arg = {
+          ...argConfig,
+          name: argName,
+          description: argConfig.description,
+          defaultValue: argConfig.defaultValue,
+          extensions: argConfig.extensions,
+          astNode: argConfig.astNode,
+        } as GraphQLArgument;
+        if (this.argFilters[level](arg)) {
+          argsMap[argName] = arg;
+          this.argLevels[arg.name] = level;
+        }
       }
-    });
+    }
 
     newTargetField.args = argsMap;
 
@@ -180,11 +194,17 @@ export function wrapFieldNode(
         kind: Kind.SELECTION_SET,
         selections: [acc],
       },
-      arguments: fieldNode.arguments.filter(arg => argLevels[arg.name.value] === index),
+      arguments:
+        fieldNode.arguments != null
+          ? fieldNode.arguments.filter(arg => argLevels[arg.name.value] === index)
+          : undefined,
     }),
     {
       ...fieldNode,
-      arguments: fieldNode.arguments.filter(arg => argLevels[arg.name.value] === path.length),
+      arguments:
+        fieldNode.arguments != null
+          ? fieldNode.arguments.filter(arg => argLevels[arg.name.value] === path.length)
+          : undefined,
     }
   );
 }
@@ -218,7 +238,7 @@ export function unwrapValue(originalValue: any, alias: string): any {
   return originalValue;
 }
 
-function unwrapErrors(errors: ReadonlyArray<GraphQLError>, alias: string): Array<GraphQLError> {
+function unwrapErrors(errors: ReadonlyArray<GraphQLError> | undefined, alias: string): Array<GraphQLError> | undefined {
   if (errors === undefined) {
     return undefined;
   }

@@ -1,6 +1,7 @@
 import { wrapSchema, RenameInputObjectFields } from '@graphql-tools/wrap';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { graphql } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('RenameInputObjectFields', () => {
   test('renaming with arguments works', async () => {
@@ -33,7 +34,7 @@ describe('RenameInputObjectFields', () => {
       schema,
       transforms: [
         new RenameInputObjectFields(
-          (typeName: string, fieldName: string) => {
+          (typeName, fieldName) => {
             if (typeName === 'InputObject' && fieldName === 'field2') {
               return 'field3';
             }
@@ -53,6 +54,7 @@ describe('RenameInputObjectFields', () => {
     }`;
 
     const result = await graphql(transformedSchema, query);
+    assertSome(result.data)
     expect(result.data.test.field1).toBe('field1');
     expect(result.data.test.field2).toBe('field2');
   });
@@ -115,6 +117,7 @@ describe('RenameInputObjectFields', () => {
       }
     }
     const result = await graphql(transformedSchema, query, {}, {}, variables);
+    assertSome(result.data)
     expect(result.data.test.field1).toBe('field1');
     expect(result.data.test.field2).toBe('field2');
   });

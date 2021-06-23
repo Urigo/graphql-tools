@@ -8,29 +8,31 @@ const { readFile, stat } = fsPromises;
 const DEFAULT_IGNORED_EXTENSIONS = ['spec', 'test', 'd', 'map'];
 const DEFAULT_EXTENSIONS = ['gql', 'graphql', 'graphqls', 'ts', 'js'];
 const DEFAULT_EXPORT_NAMES = ['schema', 'typeDef', 'typeDefs', 'resolver', 'resolvers'];
-const DEFAULT_EXTRACT_EXPORTS_FACTORY = (exportNames: string[]) => (fileExport: any): any | null => {
-  if (!fileExport) {
-    return null;
-  }
+const DEFAULT_EXTRACT_EXPORTS_FACTORY =
+  (exportNames: string[]) =>
+  (fileExport: any): any | null => {
+    if (!fileExport) {
+      return null;
+    }
 
-  if (fileExport.default) {
+    if (fileExport.default) {
+      for (const exportName of exportNames) {
+        if (fileExport.default[exportName]) {
+          return fileExport.default[exportName];
+        }
+      }
+
+      return fileExport.default;
+    }
+
     for (const exportName of exportNames) {
-      if (fileExport.default[exportName]) {
-        return fileExport.default[exportName];
+      if (fileExport[exportName]) {
+        return fileExport[exportName];
       }
     }
 
-    return fileExport.default;
-  }
-
-  for (const exportName of exportNames) {
-    if (fileExport[exportName]) {
-      return fileExport[exportName];
-    }
-  }
-
-  return fileExport;
-};
+    return fileExport;
+  };
 
 function asArray<T>(obj: T | T[]): T[] {
   if (obj instanceof Array) {
@@ -68,9 +70,9 @@ function formatExtension(extension: string): string {
 
 function buildGlob(
   basePath: string,
-  extensions: string[],
+  extensions: string[] = [],
   ignoredExtensions: string[] = [],
-  recursive: boolean
+  recursive?: boolean
 ): string {
   const ignored =
     ignoredExtensions.length > 0 ? `!(${ignoredExtensions.map(e => `*${formatExtension(e)}`).join('|')})` : '*';
@@ -135,7 +137,7 @@ export function loadFilesSync<T = any>(
     options.globOptions
   );
 
-  const extractExports = execOptions.extractExports || DEFAULT_EXTRACT_EXPORTS_FACTORY(execOptions.exportNames);
+  const extractExports = execOptions.extractExports || DEFAULT_EXTRACT_EXPORTS_FACTORY(execOptions.exportNames ?? []);
   const requireMethod = execOptions.requireMethod || require;
 
   return relevantPaths
@@ -220,7 +222,7 @@ export async function loadFiles(
     options.globOptions
   );
 
-  const extractExports = execOptions.extractExports || DEFAULT_EXTRACT_EXPORTS_FACTORY(execOptions.exportNames);
+  const extractExports = execOptions.extractExports || DEFAULT_EXTRACT_EXPORTS_FACTORY(execOptions.exportNames ?? []);
   const defaultRequireMethod = (path: string) => import(path).catch(async () => require(path));
   const requireMethod = execOptions.requireMethod || defaultRequireMethod;
 

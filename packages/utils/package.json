@@ -11,8 +11,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -35,9 +35,7 @@
     "graphql-scalars": "1.10.0"
   },
   "dependencies": {
-    "@ardatan/aggregate-error": "0.0.6",
-    "camel-case": "4.1.2",
-    "tslib": "~2.2.0"
+    "tslib": "~2.3.0"
   },
   "publishConfig": {
     "access": "public",

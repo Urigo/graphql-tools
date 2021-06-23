@@ -76,9 +76,9 @@ describe('parse sdl', () => {
 
     it('should transform comments to descriptions correctly on all available nodes with noLocation=true', () => {
       const transformed = parseGraphQLSDL('test.graphql', ast, { noLocation: true, commentDescriptions: true });
-      const type = transformed.document.definitions.find(d => (d as any)?.name?.value === 'Type');
-      expect((type as ObjectTypeDefinitionNode).description.value).toBe('test type comment');
-      expect((type as ObjectTypeDefinitionNode).loc).not.toBeDefined();
+      const type = transformed.document.definitions.find((d): d is ObjectTypeDefinitionNode => "name" in d && d.name?.value === 'Type');
+      expect(type?.description?.value).toBe('test type comment');
+      expect(type?.loc).not.toBeDefined();
       const printed = print(transformed.document);
       expect(printed).toMatchSnapshot();
     });

@@ -1,4 +1,4 @@
-import { GraphQLSchema, GraphQLFieldConfig } from 'graphql';
+import { GraphQLSchema } from 'graphql';
 
 import { getDirectives, valueMatchesCriteria } from '@graphql-tools/utils';
 
@@ -20,18 +20,16 @@ export default class RemoveObjectFieldsWithDirective implements Transform {
     subschemaConfig: SubschemaConfig,
     transformedSchema?: GraphQLSchema
   ): GraphQLSchema {
-    const transformer = new FilterObjectFields(
-      (_typeName: string, _fieldName: string, fieldConfig: GraphQLFieldConfig<any, any>) => {
-        const valueMap = getDirectives(originalWrappingSchema, fieldConfig);
-        return !Object.keys(valueMap).some(
-          directiveName =>
-            valueMatchesCriteria(directiveName, this.directiveName) &&
-            ((Array.isArray(valueMap[directiveName]) &&
-              valueMap[directiveName].some((value: any) => valueMatchesCriteria(value, this.args))) ||
-              valueMatchesCriteria(valueMap[directiveName], this.args))
-        );
-      }
-    );
+    const transformer = new FilterObjectFields((_typeName, _fieldName, fieldConfig) => {
+      const valueMap = getDirectives(originalWrappingSchema, fieldConfig);
+      return !Object.keys(valueMap).some(
+        directiveName =>
+          valueMatchesCriteria(directiveName, this.directiveName) &&
+          ((Array.isArray(valueMap[directiveName]) &&
+            valueMap[directiveName].some((value: any) => valueMatchesCriteria(value, this.args))) ||
+            valueMatchesCriteria(valueMap[directiveName], this.args))
+      );
+    });
 
     return transformer.transformSchema(originalWrappingSchema, subschemaConfig, transformedSchema);
   }

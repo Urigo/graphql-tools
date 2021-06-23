@@ -21,6 +21,7 @@ import {
   IResolvers,
   ExecutionResult,
   mapAsyncIterator,
+  isAsyncIterable,
 } from '@graphql-tools/utils';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 
@@ -698,6 +699,12 @@ function makeExecutorFromSchema(schema: GraphQLSchema) {
   };
 }
 
+function assertAsyncIterable(input: unknown): asserts input is AsyncIterableIterator<unknown> {
+  if (isAsyncIterable(input) === false) {
+    throw new Error("Expected AsyncIterable.")
+  }
+}
+
 function makeSubscriberFromSchema(schema: GraphQLSchema) {
   return async <TReturn, TArgs, TContext>({ document, variables, context }: ExecutionParams<TArgs, TContext>) => {
     const result = subscribe(
@@ -708,8 +715,10 @@ function makeSubscriberFromSchema(schema: GraphQLSchema) {
       variables,
     ) as Promise<AsyncIterator<ExecutionResult<TReturn>> | ExecutionResult<TReturn>>;
     if (isPromise(result)) {
-      return result.then(asyncIterator =>
-        mapAsyncIterator(asyncIterator as AsyncIterator<ExecutionResult>, (originalResult: ExecutionResult<TReturn>) => JSON.parse(JSON.stringify(originalResult))));
+      return result.then(asyncIterator => {
+        assertAsyncIterable(asyncIterator)
+        return mapAsyncIterator(asyncIterator, (originalResult: ExecutionResult<TReturn>) => JSON.parse(JSON.stringify(originalResult)))
+      });
     }
     return JSON.parse(JSON.stringify(result));
   };

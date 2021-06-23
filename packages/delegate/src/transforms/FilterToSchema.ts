@@ -19,9 +19,10 @@ import {
   getNamedType,
   isObjectType,
   isInterfaceType,
+  GraphQLObjectType,
 } from 'graphql';
 
-import { Request, implementsAbstractType, TypeMap } from '@graphql-tools/utils';
+import { Request, implementsAbstractType, TypeMap, assertSome, Maybe } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext } from '../types';
 
@@ -71,7 +72,7 @@ function filterToSchema(
   let fragmentSet = Object.create(null);
 
   operations.forEach((operation: OperationDefinitionNode) => {
-    let type;
+    let type: Maybe<GraphQLObjectType<any, any>>;
     if (operation.operation === 'subscription') {
       type = targetSchema.getSubscriptionType();
     } else if (operation.operation === 'mutation') {
@@ -79,6 +80,7 @@ function filterToSchema(
     } else {
       type = targetSchema.getQueryType();
     }
+    assertSome(type);
 
     const {
       selectionSet,
@@ -98,7 +100,7 @@ function filterToSchema(
     newFragments = collectedNewFragments;
     fragmentSet = collectedFragmentSet;
 
-    const variableDefinitions = operation.variableDefinitions.filter(
+    const variableDefinitions = (operation.variableDefinitions ?? []).filter(
       (variable: VariableDefinitionNode) => operationOrFragmentVariables.indexOf(variable.variable.name.value) !== -1
     );
 
@@ -148,6 +150,7 @@ function collectFragmentVariables(
       const name = nextFragmentName;
       const typeName = fragment.typeCondition.name.value;
       const type = targetSchema.getType(typeName);
+      assertSome(type);
       const {
         selectionSet,
         usedFragments: fragmentUsedFragments,
@@ -156,7 +159,7 @@ function collectFragmentVariables(
       remainingFragments = union(remainingFragments, fragmentUsedFragments);
       usedVariables = union(usedVariables, fragmentUsedVariables);
 
-      if (!(name in fragmentSet)) {
+      if (name && !(name in fragmentSet)) {
         fragmentSet[name] = true;
         newFragments.push({
           kind: Kind.FRAGMENT_DEFINITION,
@@ -214,7 +217,9 @@ function filterSelectionSet(
           }
         },
         leave(node: FieldNode): null | undefined | FieldNode {
-          const resolvedType = getNamedType(typeInfo.getType());
+          const type = typeInfo.getType();
+          assertSome(type);
+          const resolvedType = getNamedType(type);
           if (isObjectType(resolvedType) || isInterfaceType(resolvedType)) {
             const selections = node.selectionSet != null ? node.selectionSet.selections : null;
             if (selections == null || selections.length === 0) {

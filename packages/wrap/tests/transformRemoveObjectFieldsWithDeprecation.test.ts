@@ -1,5 +1,6 @@
 import { wrapSchema, RemoveObjectFieldsWithDeprecation } from '@graphql-tools/wrap';
 import { makeExecutableSchema } from '@graphql-tools/schema';
+import { assertGraphQLObjectType } from '../../testing/assertion';
 
 describe('RemoveObjectFieldsWithDeprecation', () => {
   const originalSchema = makeExecutableSchema({
@@ -20,7 +21,9 @@ describe('RemoveObjectFieldsWithDeprecation', () => {
       ],
     });
 
-    const fields = transformedSchema.getType('Test').getFields();
+    const Test = transformedSchema.getType('Test')
+    assertGraphQLObjectType(Test)
+    const fields = Test.getFields();
     expect(fields.first).toBeDefined();
     expect(fields.second).toBeUndefined();
   });
@@ -33,7 +36,9 @@ describe('RemoveObjectFieldsWithDeprecation', () => {
       ],
     });
 
-    const fields = transformedSchema.getType('Test').getFields();
+    const Test = transformedSchema.getType('Test')
+    assertGraphQLObjectType(Test)
+    const fields = Test.getFields();
     expect(fields.first).toBeUndefined();
     expect(fields.second).toBeUndefined();
   });

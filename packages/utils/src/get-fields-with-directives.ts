@@ -60,6 +60,10 @@ export function getFieldsWithDirectives(documentNode: DocumentNode, options: Opt
   for (const type of allTypes) {
     const typeName = type.name.value;
 
+    if (type.fields == null) {
+      continue;
+    }
+
     for (const field of type.fields) {
       if (field.directives && field.directives.length > 0) {
         const fieldName = field.name.value;

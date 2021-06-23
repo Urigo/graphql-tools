@@ -7,7 +7,7 @@ import {
   GraphQLFieldConfigMap,
 } from 'graphql';
 
-import { mapSchema, MapperKind, addTypes, modifyObjectFields } from '@graphql-tools/utils';
+import { mapSchema, MapperKind, addTypes, modifyObjectFields, assertSome } from '@graphql-tools/utils';
 import { wrapSchema, RenameTypes } from '../src';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { addMocksToSchema } from '@graphql-tools/mock';
@@ -36,7 +36,9 @@ class NamespaceUnderFieldTransform {
   }
 
   transformSchema(schema: GraphQLSchema) {
-    const queryConfig = schema.getQueryType().toConfig();
+    const QueryType = schema.getQueryType();
+    assertSome(QueryType)
+    const queryConfig = QueryType.toConfig();
 
     const nestedQuery = new GraphQLObjectType({
       ...queryConfig,

@@ -2,6 +2,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas, createMergedTypeResolver } from '@graphql-tools/stitch';
 import { MergedTypeResolver, MergedTypeResolverOptions } from '@graphql-tools/delegate';
 import { graphql } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('Merge resolvers', () => {
   const firstSchema = makeExecutableSchema({
@@ -91,6 +92,7 @@ describe('Merge resolvers', () => {
   it('works with wrapped resolvers', async () => {
     function wrapResolve(mergedTypeResolverOptions: MergedTypeResolverOptions): MergedTypeResolver {
       const defaultResolve = createMergedTypeResolver(mergedTypeResolverOptions);
+      assertSome(defaultResolve)
       return async (obj, ctx, inf, sch, sel, key) => {
         const result = await defaultResolve(obj, ctx, inf, sch, sel, key);
         result.source += '->resolve';

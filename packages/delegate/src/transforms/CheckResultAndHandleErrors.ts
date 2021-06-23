@@ -7,9 +7,7 @@ import {
   locatedError,
 } from 'graphql';
 
-import AggregateError from '@ardatan/aggregate-error';
-
-import { getResponseKeyFromInfo, ExecutionResult, relocatedError } from '@graphql-tools/utils';
+import { AggregateError, getResponseKeyFromInfo, ExecutionResult, relocatedError } from '@graphql-tools/utils';
 
 import { SubschemaConfig, Transform, DelegationContext } from '../types';
 import { resolveExternalValue } from '../resolveExternalValue';
@@ -38,7 +36,7 @@ export function checkResultAndHandleErrors(
   context: Record<string, any>,
   info: GraphQLResolveInfo,
   responseKey: string = getResponseKeyFromInfo(info),
-  subschema?: GraphQLSchema | SubschemaConfig,
+  subschema: GraphQLSchema | SubschemaConfig,
   returnType: GraphQLOutputType = info.returnType,
   skipTypeMerging?: boolean,
   onLocatedError?: (originalError: GraphQLError) => GraphQLError
@@ -46,7 +44,7 @@ export function checkResultAndHandleErrors(
   const { data, unpathedErrors } = mergeDataAndErrors(
     result.data == null ? undefined : result.data[responseKey],
     result.errors == null ? [] : result.errors,
-    info ? responsePathAsArray(info.path) : undefined,
+    info != null && info.path ? responsePathAsArray(info.path) : undefined,
     onLocatedError
   );
 
@@ -56,8 +54,8 @@ export function checkResultAndHandleErrors(
 export function mergeDataAndErrors(
   data: any,
   errors: ReadonlyArray<GraphQLError>,
-  path: Array<string | number>,
-  onLocatedError: (originalError: GraphQLError) => GraphQLError,
+  path: Array<string | number> | undefined,
+  onLocatedError?: (originalError: GraphQLError) => GraphQLError,
   index = 1
 ): { data: any; unpathedErrors: Array<GraphQLError> } {
   if (data == null) {
@@ -73,7 +71,11 @@ export function mergeDataAndErrors(
       return { data: relocatedError(errors[0], newPath), unpathedErrors: [] };
     }
 
-    const newError = locatedError(new AggregateError(errors), undefined, path);
+    // We cast path as any for GraphQL.js 14 compat
+    // locatedError path argument must be defined, but it is just forwarded to a constructor that allows a undefined value
+    // https://github.com/graphql/graphql-js/blob/b4bff0ba9c15c9d7245dd68556e754c41f263289/src/error/locatedError.js#L25
+    // https://github.com/graphql/graphql-js/blob/b4bff0ba9c15c9d7245dd68556e754c41f263289/src/error/GraphQLError.js#L19
+    const newError = locatedError(new AggregateError(errors), undefined as any, path as any);
 
     return { data: newError, unpathedErrors: [] };
   }

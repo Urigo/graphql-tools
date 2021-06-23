@@ -30,9 +30,9 @@
     "graphql": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
-    "globby": "11.0.3",
+    "globby": "11.0.4",
     "unixify": "1.0.0",
-    "tslib": "~2.2.0"
+    "tslib": "~2.3.0"
   },
   "publishConfig": {
     "access": "public",

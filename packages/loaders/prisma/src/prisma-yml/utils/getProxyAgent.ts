@@ -46,7 +46,7 @@ function getProxyFromURI(uri: any) {
   // environmental variables (NO_PROXY, HTTP_PROXY, etc.)
   // respect NO_PROXY environment variables (see: http://lynx.isc.org/current/breakout/lynx_help/keystrokes/environments.html)
 
-  const noProxy = process.env.NO_PROXY || process.env.no_proxy || '';
+  const noProxy = process.env['NO_PROXY'] || process.env['no_proxy'] || '';
 
   // if the noProxy is a wildcard then return null
 
@@ -63,12 +63,16 @@ function getProxyFromURI(uri: any) {
   // Check for HTTP or HTTPS Proxy in environment Else default to null
 
   if (uri.protocol === 'http:') {
-    return process.env.HTTP_PROXY || process.env.http_proxy || null;
+    return process.env['HTTP_PROXY'] || process.env['http_proxy'] || null;
   }
 
   if (uri.protocol === 'https:') {
     return (
-      process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy || null
+      process.env['HTTPS_PROXY'] ||
+      process.env['https_proxy'] ||
+      process.env['HTTP_PROXY'] ||
+      process.env['http_proxy'] ||
+      null
     );
   }
 

@@ -9,7 +9,7 @@ export function createSchemaDefinition(
   config?: {
     force?: boolean;
   }
-): string {
+): string | undefined {
   const schemaRoot: {
     query?: string;
     mutation?: string;

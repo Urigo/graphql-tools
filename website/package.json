@@ -6,8 +6,14 @@
     "start": "next start",
     "analyze": "cross-env ANALYZE=true next build"
   },
-  "pnpm": { "overrides": { "esbuild": "^0.12.8" } },
-  "resolutions": { "esbuild": "^0.12.8" },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "^0.12.8"
+    }
+  },
+  "resolutions": {
+    "esbuild": "^0.12.8"
+  },
   "devDependencies": {
     "@next/bundle-analyzer": "^11.0.1",
     "@types/concurrently": "^6.2.0",

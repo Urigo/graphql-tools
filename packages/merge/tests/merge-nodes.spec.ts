@@ -1,5 +1,7 @@
 import { mergeGraphQLNodes } from '../src';
-import { parse, InputObjectTypeDefinitionNode, EnumTypeDefinitionNode } from 'graphql';
+import { parse, InputObjectTypeDefinitionNode } from 'graphql';
+import { assertEnumTypeDefinitionNode, assertInputObjectTypeDefinitionNode, assertInterfaceTypeDefinitionNode, assertNamedTypeNode, assertObjectTypeDefinitionNode, assertScalarTypeDefinitionNode, assertUnionTypeDefinitionNode } from '../../testing/assertion';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('Merge Nodes', () => {
   describe('type', () => {
@@ -7,10 +9,12 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
-
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.fields)
       expect(type.fields.length).toBe(1);
       expect(type.fields[0].name.value).toBe('f1');
+      assertNamedTypeNode(type.fields[0].type)
       expect(type.fields[0].type.name.value).toBe('String');
     });
 
@@ -18,12 +22,16 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A { f2: Int }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.fields)
 
       expect(type.fields.length).toBe(2);
       expect(type.fields[0].name.value).toBe('f1');
       expect(type.fields[1].name.value).toBe('f2');
+      assertNamedTypeNode(type.fields[0].type)
       expect(type.fields[0].type.name.value).toBe('String');
+      assertNamedTypeNode(type.fields[1].type)
       expect(type.fields[1].type.name.value).toBe('Int');
     });
 
@@ -31,12 +39,16 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A { f1: String, f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.fields)
 
       expect(type.fields.length).toBe(2);
       expect(type.fields[0].name.value).toBe('f1');
       expect(type.fields[1].name.value).toBe('f2');
+      assertNamedTypeNode(type.fields[0].type)
       expect(type.fields[0].type.name.value).toBe('String');
+      assertNamedTypeNode(type.fields[1].type)
       expect(type.fields[1].type.name.value).toBe('Int');
     });
 
@@ -44,7 +56,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base { f1: String } type A implements Base { f1: String }`);
       const type2 = parse(`interface Base { f1: String } type A implements Base { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.interfaces)
 
       expect(type.interfaces.length).toBe(1);
       expect(type.interfaces[0].name.value).toBe('Base');
@@ -54,7 +68,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base { f1: String } type A implements Base { f1: String }`);
       const type2 = parse(`type A { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type  = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.interfaces)
 
       expect(type.interfaces.length).toBe(1);
       expect(type.interfaces[0].name.value).toBe('Base');
@@ -64,7 +80,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.directives)
 
       expect(type.directives.length).toBe(1);
       expect(type.directives[0].name.value).toBe('test');
@@ -74,7 +92,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @other { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.directives)
 
       expect(type.directives.length).toBe(2);
       expect(type.directives[0].name.value).toBe('test');
@@ -85,7 +105,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @test { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.directives)
 
       expect(type.directives.length).toBe(1);
       expect(type.directives[0].name.value).toBe('test');
@@ -95,7 +117,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @test2 { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.directives)
 
       expect(type.directives.length).toBe(2);
       expect(type.directives[0].name.value).toBe('test');
@@ -108,7 +132,9 @@ describe('Merge Nodes', () => {
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions], {
         reverseDirectives: true,
       });
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.directives)
 
       expect(type.directives.length).toBe(2);
       expect(type.directives[0].name.value).toBe('test2');
@@ -119,7 +145,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base1 { f1: String } type A implements Base1 { f1: String }`);
       const type2 = parse(`interface Base2 { f2: Int } type A implements Base2 { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.A;
+      const type = merged.A;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.interfaces)
 
       expect(type.interfaces.length).toBe(2);
       expect(type.interfaces[0].name.value).toBe('Base1');
@@ -140,8 +168,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A { T }`);
       const type2 = parse(`enum A { S }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A as EnumTypeDefinitionNode;
-
+      const result = merged.A
+      assertEnumTypeDefinitionNode(result)
+      assertSome(result.values)
       expect(result.values.length).toBe(2);
       expect(result.values.findIndex(v => v.name.value === 'T')).not.toBe(-1);
       expect(result.values.findIndex(v => v.name.value === 'S')).not.toBe(-1);
@@ -151,7 +180,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A { T }`);
       const type2 = parse(`enum A { T }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.A;
+      const result = merged.A;
+      assertEnumTypeDefinitionNode(result)
+      assertSome(result.values)
 
       expect(result.values.length).toBe(1);
       expect(result.values[0].name.value).toBe('T');
@@ -161,7 +192,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A @test { T }`);
       const type2 = parse(`enum A @test2 { T }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.A;
+      const result = merged.A;
+      assertEnumTypeDefinitionNode(result)
+      assertSome(result.directives)
 
       expect(result.directives.length).toBe(2);
       expect(result.directives[0].name.value).toBe('test');
@@ -172,7 +205,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A @test { T }`);
       const type2 = parse(`enum A { S }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.A;
+      const result = merged.A;
+      assertEnumTypeDefinitionNode(result)
+      assertSome(result.directives)
 
       expect(result.directives.length).toBe(1);
       expect(result.directives[0].name.value).toBe('test');
@@ -184,7 +219,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A union C = A`);
       const type2 = parse(`type B union C = B`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.C;
+      const result = merged.C;
+      assertUnionTypeDefinitionNode(result)
+      assertSome(result.types)
 
       expect(result.types.length).toBe(2);
       expect(result.types[0].name.value).toBe('A');
@@ -197,7 +234,8 @@ describe('Merge Nodes', () => {
       const type1 = parse(`scalar A`);
       const type2 = parse(`scalar A`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.A;
+      const result = merged.A;
+      assertScalarTypeDefinitionNode(result)
 
       expect(result.name.value).toBe('A');
     });
@@ -208,7 +246,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`input A { f1: String }`);
       const type2 = parse(`input A { f2: String }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: any = merged.A;
+      const result = merged.A;
+      assertInputObjectTypeDefinitionNode(result)
+      assertSome(result.fields)
 
       expect(result.fields.length).toBe(2);
       expect(result.fields[0].name.value).toBe('f1');
@@ -219,7 +259,9 @@ describe('Merge Nodes', () => {
       const type1 = parse(`input A { f1: String }`);
       const type2 = parse(`input A { f1: String! }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result: InputObjectTypeDefinitionNode = merged.A as any;
+      const result = merged.A;
+      assertInputObjectTypeDefinitionNode(result)
+      assertSome(result.fields)
 
       expect(result.fields.length).toBe(1);
       expect(result.fields[0].name.value).toBe('f1');
@@ -232,12 +274,16 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type Query { f1: String }`);
       const type2 = parse(`type Query { f2: String }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type: any = merged.Query;
+      const type = merged.Query;
+      assertObjectTypeDefinitionNode(type)
+      assertSome(type.fields)
 
       expect(type.fields.length).toBe(2);
       expect(type.fields[0].name.value).toBe('f1');
       expect(type.fields[1].name.value).toBe('f2');
+      assertNamedTypeNode(type.fields[0].type)
       expect(type.fields[0].type.name.value).toBe('String');
+      assertNamedTypeNode(type.fields[1].type)
       expect(type.fields[1].type.name.value).toBe('String');
     });
 

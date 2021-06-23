@@ -6,7 +6,7 @@ import { mergeDirectives } from './directives';
 export function mergeInterface(
   node: InterfaceTypeDefinitionNode | InterfaceTypeExtensionNode,
   existingNode: InterfaceTypeDefinitionNode | InterfaceTypeExtensionNode,
-  config: Config
+  config?: Config
 ): InterfaceTypeDefinitionNode | InterfaceTypeExtensionNode {
   if (existingNode) {
     try {

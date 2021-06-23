@@ -76,11 +76,17 @@ export function loadSchemaSync(
 }
 
 function includeSources(schema: GraphQLSchema, sources: Source[]) {
+  const finalSources: Array<GraphQLSource> = [];
+  for (const source of sources) {
+    if (source.rawSDL) {
+      finalSources.push(new GraphQLSource(source.rawSDL, source.location));
+    } else if (source.document) {
+      finalSources.push(new GraphQLSource(print(source.document), source.location));
+    }
+  }
   schema.extensions = {
     ...schema.extensions,
-    sources: sources
-      .filter(source => source.rawSDL || source.document)
-      .map(source => new GraphQLSource(source.rawSDL || print(source.document), source.location)),
+    sources: finalSources,
   };
 }
 
@@ -88,13 +94,13 @@ function collectSchemasAndTypeDefs(sources: Source[]) {
   const schemas: GraphQLSchema[] = [];
   const typeDefs: DocumentNode[] = [];
 
-  sources.forEach(source => {
+  for (const source of sources) {
     if (source.schema) {
       schemas.push(source.schema);
-    } else {
+    } else if (source.document) {
       typeDefs.push(source.document);
     }
-  });
+  }
 
   return {
     schemas,

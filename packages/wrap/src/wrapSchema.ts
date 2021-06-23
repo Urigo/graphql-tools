@@ -11,7 +11,9 @@ import { MapperKind, mapSchema } from '@graphql-tools/utils';
 import { SubschemaConfig, defaultMergedResolver, applySchemaTransforms } from '@graphql-tools/delegate';
 import { generateProxyingResolvers } from './generateProxyingResolvers';
 
-export function wrapSchema(subschemaConfig: SubschemaConfig): GraphQLSchema {
+export function wrapSchema<TConfig = Record<string, any>>(
+  subschemaConfig: SubschemaConfig<any, any, any, TConfig>
+): GraphQLSchema {
   const targetSchema = subschemaConfig.schema;
 
   const proxyingResolvers = generateProxyingResolvers(subschemaConfig);
@@ -32,9 +34,13 @@ function createWrappingSchema(
 
       const fieldConfigMap = config.fields;
       Object.keys(fieldConfigMap).forEach(fieldName => {
+        const field = fieldConfigMap[fieldName];
+        if (field == null) {
+          return;
+        }
         fieldConfigMap[fieldName] = {
-          ...fieldConfigMap[fieldName],
-          ...proxyingResolvers[type.name][fieldName],
+          ...field,
+          ...proxyingResolvers[type.name]?.[fieldName],
         };
       });
 
@@ -45,8 +51,12 @@ function createWrappingSchema(
       config.isTypeOf = undefined;
 
       Object.keys(config.fields).forEach(fieldName => {
-        config.fields[fieldName].resolve = defaultMergedResolver;
-        config.fields[fieldName].subscribe = null;
+        const field = config.fields[fieldName];
+        if (field == null) {
+          return;
+        }
+        field.resolve = defaultMergedResolver;
+        field.subscribe = undefined;
       });
 
       return new GraphQLObjectType(config);

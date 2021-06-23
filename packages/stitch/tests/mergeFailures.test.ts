@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '@graphql-tools/stitch';
-import { ExecutionResult } from '@graphql-tools/utils';
+import { assertSome, ExecutionResult } from '@graphql-tools/utils';
 import { graphql, GraphQLError, GraphQLSchema } from 'graphql';
 
 describe('merge failures', () => {
@@ -139,6 +139,7 @@ describe('merge failures', () => {
     });
 
     const stitchedResult = await graphql(stitchedSchema, '{ parent { thing { name desc id } } }');
+    assertSome(stitchedResult.errors)
     expect(stitchedResult.errors[0].path).toEqual(['parent', 'thing', 'name']);
   });
 

@@ -7,6 +7,12 @@ const monorepo = useMonorepo({
   dirname: __dirname,
 });
 
+function assertNonMaybe<T>(input: T): asserts input is Exclude<T, null | undefined>{
+  if (input == null) {
+    throw new Error("Value should be neither null nor undefined.")
+  }
+}
+
 describe('Schema From Export', () => {
   monorepo.correctCWD();
 
@@ -29,6 +35,7 @@ describe('Schema From Export', () => {
       for (const typeName in schema.getTypeMap()) {
         if (!typeName.startsWith('__')) {
           const type = schema.getType(typeName);
+          assertNonMaybe(type)
           const introspectionType = introspectionSchema.types.find((t: { name: string; }) => t.name === typeName);
           if (type.description || introspectionType.description) {
             expect(type.description).toBe(introspectionType.description);
@@ -39,6 +46,7 @@ describe('Schema From Export', () => {
               const field = fieldMap[fieldName];
               const introspectionField = introspectionType.fields.find((f: { name: string; }) => f.name === fieldName);
               if (field.description || introspectionField.description) {
+                assertNonMaybe(field.description)
                 expect(field.description.trim()).toBe(introspectionField.description.trim());
               }
             }

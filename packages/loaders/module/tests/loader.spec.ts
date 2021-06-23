@@ -24,15 +24,15 @@ describe('ModuleLoader', () => {
       sync: loader.canLoadSync.bind(loader),
     })(canLoad => {
       it('should return true for a valid pointer', async () => {
-        await expect(canLoad(getPointer('schema'), {})).resolves.toBe(true);
+        await expect(canLoad(getPointer('schema'))).resolves.toBe(true);
       });
 
       it('should return false if missing prefix', async () => {
-        await expect(canLoad(getPointer('schema').substring(7), {})).resolves.toBe(false);
+        await expect(canLoad(getPointer('schema').substring(7))).resolves.toBe(false);
       });
 
       it('should return false if pointer is not a string', async () => {
-        await expect(canLoad(42 as any, {})).resolves.toBe(false);
+        await expect(canLoad(42 as any)).resolves.toBe(false);
       });
     });
   });
@@ -43,39 +43,39 @@ describe('ModuleLoader', () => {
       sync: loader.loadSync.bind(loader),
     })(load => {
       it('should load GraphQLSchema object from a file', async () => {
-        const result: Source = await load(getPointer('schema'), {});
+        const result: Source = await load(getPointer('schema'));
         expect(result.schema).toBeDefined();
       });
 
       it('should load DocumentNode object from a file', async () => {
-        const result: Source = await load(getPointer('type-defs'), {});
+        const result: Source = await load(getPointer('type-defs'));
         expect(result.document).toBeDefined();
       });
 
       it('should load string from a file', async () => {
-        const result: Source = await load(getPointer('type-defs-string'), {});
+        const result: Source = await load(getPointer('type-defs-string'));
         expect(result.rawSDL).toBeDefined();
       });
 
       it('should load using a named export', async () => {
-        const result: Source = await load(getPointer('type-defs-named-export', 'typeDefs'), {});
+        const result: Source = await load(getPointer('type-defs-named-export', 'typeDefs'));
         expect(result.document).toBeDefined();
       });
 
       it('should throw error when using a bad pointer', async () => {
-        await expect(load(getPointer('type-defs-named-export', 'tooMany#'), {})).rejects.toThrowError(
+        await expect(load(getPointer('type-defs-named-export', 'tooMany#'))).rejects.toThrowError(
           'Schema pointer should match'
         );
       });
 
       it('should throw error when using a bad identifier', async () => {
-        await expect(load(getPointer('type-defs-named-export', 'badIdentifier'), {})).rejects.toThrowError(
+        await expect(load(getPointer('type-defs-named-export', 'badIdentifier'))).rejects.toThrowError(
           'Unable to load schema from module'
         );
       });
 
       it('should throw error when loaded object is not GraphQLSchema, DocumentNode or string', async () => {
-        await expect(load(getPointer('type-defs-named-export', 'favoriteNumber'), {})).rejects.toThrowError(
+        await expect(load(getPointer('type-defs-named-export', 'favoriteNumber'))).rejects.toThrowError(
           'Imported object was not a string, DocumentNode or GraphQLSchema'
         );
       });

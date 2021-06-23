@@ -11,21 +11,21 @@ import {
   FragmentDefinitionNode,
 } from 'graphql';
 
-import { Request, MapperKind, mapSchema, visitData, ExecutionResult } from '@graphql-tools/utils';
+import { Request, MapperKind, mapSchema, visitData, ExecutionResult, Maybe, assertSome } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
 import { FieldTransformer, FieldNodeTransformer, DataTransformer, ErrorsTransformer } from '../types';
 
-export default class TransformCompositeFields implements Transform {
+export default class TransformCompositeFields<TContext = Record<string, any>> implements Transform<any, TContext> {
   private readonly fieldTransformer: FieldTransformer;
-  private readonly fieldNodeTransformer: FieldNodeTransformer;
-  private readonly dataTransformer: DataTransformer;
-  private readonly errorsTransformer: ErrorsTransformer;
-  private transformedSchema: GraphQLSchema;
-  private typeInfo: TypeInfo;
+  private readonly fieldNodeTransformer: FieldNodeTransformer | undefined;
+  private readonly dataTransformer: DataTransformer | undefined;
+  private readonly errorsTransformer: ErrorsTransformer | undefined;
+  private transformedSchema: GraphQLSchema | undefined;
+  private typeInfo: TypeInfo | undefined;
   private mapping: Record<string, Record<string, string>>;
-  private subscriptionTypeName: string;
+  private subscriptionTypeName: string | undefined;
 
   constructor(
     fieldTransformer: FieldTransformer,
@@ -40,9 +40,14 @@ export default class TransformCompositeFields implements Transform {
     this.mapping = {};
   }
 
+  private _getTypeInfo() {
+    assertSome(this.typeInfo);
+    return this.typeInfo;
+  }
+
   public transformSchema(
     originalWrappingSchema: GraphQLSchema,
-    _subschemaConfig: SubschemaConfig,
+    _subschemaConfig: SubschemaConfig<any, any, any, TContext>,
     _transformedSchema?: GraphQLSchema
   ): GraphQLSchema {
     this.transformedSchema = mapSchema(originalWrappingSchema, {
@@ -90,10 +95,11 @@ export default class TransformCompositeFields implements Transform {
     _delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): ExecutionResult {
-    if (this.dataTransformer != null) {
-      result.data = visitData(result.data, value => this.dataTransformer(value, transformationContext));
+    const dataTransformer = this.dataTransformer;
+    if (dataTransformer != null) {
+      result.data = visitData(result.data, value => dataTransformer(value, transformationContext));
     }
-    if (this.errorsTransformer != null) {
+    if (this.errorsTransformer != null && Array.isArray(result.errors)) {
       result.errors = this.errorsTransformer(result.errors, transformationContext);
     }
     return result;
@@ -106,10 +112,10 @@ export default class TransformCompositeFields implements Transform {
   ): DocumentNode {
     return visit(
       document,
-      visitWithTypeInfo(this.typeInfo, {
+      visitWithTypeInfo(this._getTypeInfo(), {
         leave: {
           [Kind.SELECTION_SET]: node =>
-            this.transformSelectionSet(node, this.typeInfo, fragments, transformationContext),
+            this.transformSelectionSet(node, this._getTypeInfo(), fragments, transformationContext),
         },
       })
     );
@@ -120,8 +126,8 @@ export default class TransformCompositeFields implements Transform {
     typeInfo: TypeInfo,
     fragments: Record<string, FragmentDefinitionNode>,
     transformationContext: Record<string, any>
-  ): SelectionSetNode {
-    const parentType: GraphQLType = typeInfo.getParentType();
+  ): SelectionSetNode | undefined {
+    const parentType: Maybe<GraphQLType> = typeInfo.getParentType();
     if (parentType == null) {
       return undefined;
     }
@@ -151,7 +157,7 @@ export default class TransformCompositeFields implements Transform {
         });
       }
 
-      let transformedSelection: SelectionNode | Array<SelectionNode>;
+      let transformedSelection: Maybe<SelectionNode | Array<SelectionNode>>;
       if (this.fieldNodeTransformer == null) {
         transformedSelection = selection;
       } else {

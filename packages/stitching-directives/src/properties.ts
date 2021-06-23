@@ -29,6 +29,9 @@ export function getProperty(object: Record<string, any>, path: Array<string>): a
 
   const newPath = path.slice();
   const key = newPath.shift();
+  if (key == null) {
+    return;
+  }
   const prop = object[key];
 
   return getProperty(prop, newPath);
@@ -49,7 +52,7 @@ export function getProperties(object: Record<string, any>, propertyTree: Propert
 
     const prop = object[key];
 
-    newObject[key] = deepMap(prop, (item) => getProperties(item, subKey));
+    newObject[key] = deepMap(prop, item => getProperties(item, subKey));
   });
 
   return newObject;

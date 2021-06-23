@@ -1,5 +1,5 @@
 import { buildSchema, graphql } from 'graphql';
-import { addMocksToSchema, assertIsRef, createMockStore } from '../src';
+import { addMocksToSchema, assertIsRef, createMockStore, isRef } from '../src';
 
 const typeDefs = `
 type User {
@@ -311,5 +311,10 @@ describe('addMocksToSchema', () => {
     expect(errors).toBeFalsy();
     expect(data.foo.foo_field).toBe('text');
     expect(data.foo.boo).toBe(null);
+  });
+  it('handle objects without object prototype correctly', () => {
+    const maybeRef = Object.create(null);
+    maybeRef.$ref = {};
+    expect(isRef(maybeRef)).toBeTruthy();
   });
 });

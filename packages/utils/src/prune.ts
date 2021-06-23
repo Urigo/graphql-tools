@@ -18,6 +18,7 @@ import { PruneSchemaOptions } from './types';
 
 import { mapSchema } from './mapSchema';
 import { MapperKind } from './Interfaces';
+import { isSome } from './helpers';
 
 type NamedOutputType =
   | GraphQLObjectType
@@ -47,7 +48,7 @@ export function pruneSchema(schema: GraphQLSchema, options: PruneSchemaOptions =
 
   Object.keys(schema.getTypeMap()).forEach(typeName => {
     const type = schema.getType(typeName);
-    if ('getInterfaces' in type) {
+    if (type && 'getInterfaces' in type) {
       type.getInterfaces().forEach(iface => {
         const implementations = getImplementations(pruningContext, iface);
         if (implementations == null) {
@@ -187,9 +188,7 @@ function visitTypes(pruningContext: PruningContext, schema: GraphQLSchema): void
 
   const visitedTypes: Record<string, boolean> = Object.create(null);
 
-  const rootTypes = [schema.getQueryType(), schema.getMutationType(), schema.getSubscriptionType()].filter(
-    type => type != null
-  );
+  const rootTypes = [schema.getQueryType(), schema.getMutationType(), schema.getSubscriptionType()].filter(isSome);
 
   rootTypes.forEach(rootType => visitOutputType(visitedTypes, pruningContext, rootType));
 

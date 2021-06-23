@@ -1,0 +1,44 @@
+{
+  "name": "@graphql-tools/jest-transform",
+  "version": "0.0.0",
+  "description": "Jest Plugin to load and parse imported GraphQL files",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ardatan/graphql-tools.git",
+    "directory": "packages/jest-transform"
+  },
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    },
+    "./*": {
+      "require": "./dist/*.js",
+      "import": "./dist/*.mjs"
+    }
+  },
+  "typings": "dist/index.d.ts",
+  "typescript": {
+    "definition": "dist/index.d.ts"
+  },
+  "peerDependencies": {
+    "graphql": "^14.0.0 || ^15.0.0"
+  },
+  "buildOptions": {
+    "input": "./src/index.ts"
+  },
+  "dependencies": {
+    "@graphql-tools/webpack-loader": "^6.4.0",
+    "@jest/transform": "^27.0.2",
+    "@jest/types": "^27.0.2",
+    "tslib": "~2.3.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
+  }
+}

@@ -18,7 +18,7 @@ import {
   OperationTypeNode,
 } from 'graphql';
 
-import { ExecutionParams } from '@graphql-tools/utils';
+import { ExecutionParams, Maybe } from '@graphql-tools/utils';
 
 import { createPrefix } from './prefix';
 
@@ -66,7 +66,7 @@ export function mergeExecutionParams(
   const mergedFragmentDefinitions: Array<FragmentDefinitionNode> = [];
   let mergedExtensions: Record<string, any> = Object.create(null);
 
-  let operation: OperationTypeNode;
+  let operation: Maybe<OperationTypeNode>;
 
   execs.forEach((executionParams, index) => {
     const prefixedExecutionParams = prefixExecutionParams(createPrefix(index), executionParams);
@@ -84,6 +84,10 @@ export function mergeExecutionParams(
     Object.assign(mergedVariables, prefixedExecutionParams.variables);
     mergedExtensions = extensionsReducer(mergedExtensions, executionParams);
   });
+
+  if (operation == null) {
+    throw new Error('Could not identify operation type. Did the document only include fragment definitions?');
+  }
 
   const mergedOperationDefinition: OperationDefinitionNode = {
     kind: Kind.OPERATION_DEFINITION,
@@ -109,7 +113,8 @@ export function mergeExecutionParams(
 
 function prefixExecutionParams(prefix: string, executionParams: ExecutionParams): ExecutionParams {
   let document = aliasTopLevelFields(prefix, executionParams.document);
-  const variableNames = Object.keys(executionParams.variables);
+  const executionVariables = executionParams.variables ?? {};
+  const variableNames = Object.keys(executionVariables);
 
   if (variableNames.length === 0) {
     return { ...executionParams, document };
@@ -122,7 +127,7 @@ function prefixExecutionParams(prefix: string, executionParams: ExecutionParams)
   });
 
   const prefixedVariables = variableNames.reduce((acc, name) => {
-    acc[prefix + name] = executionParams.variables[name];
+    acc[prefix + name] = executionVariables[name];
     return acc;
   }, Object.create(null));
 
@@ -150,9 +155,9 @@ function aliasTopLevelFields(prefix: string, document: DocumentNode): DocumentNo
       };
     },
   };
-  return visit(document, transformer, ({
+  return visit(document, transformer, {
     [Kind.DOCUMENT]: [`definitions`],
-  } as unknown) as VisitorKeyMap<ASTKindToNode>);
+  } as unknown as VisitorKeyMap<ASTKindToNode>);
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { ExecutionResult, GraphQLError } from 'graphql';
 
-import { relocatedError } from '@graphql-tools/utils';
+import { assertSome, relocatedError } from '@graphql-tools/utils';
 
 import { parseKey } from './prefix';
 
@@ -18,11 +18,17 @@ export function splitResult(mergedResult: ExecutionResult, numResults: number): 
   const data = mergedResult.data;
   if (data) {
     Object.keys(data).forEach(prefixedKey => {
-      const { index, originalKey } = parseKey(prefixedKey);
-      if (!splitResults[index].data) {
-        splitResults[index].data = { [originalKey]: data[prefixedKey] };
+      const parsedKey = parseKey(prefixedKey);
+      assertSome(parsedKey, "'parsedKey' should not be null.");
+      const { index, originalKey } = parsedKey;
+      const result = splitResults[index];
+      if (result == null) {
+        return;
+      }
+      if (result.data == null) {
+        result.data = { [originalKey]: data[prefixedKey] };
       } else {
-        splitResults[index].data[originalKey] = data[prefixedKey];
+        result.data[originalKey] = data[prefixedKey];
       }
     });
   }

@@ -24,7 +24,7 @@ export function makeRemoteExecutableSchema({
 
 export function defaultCreateRemoteResolver(
   executor: Executor,
-  subscriber: Subscriber
+  subscriber?: Subscriber | undefined
 ): GraphQLFieldResolver<any, any> {
   return (_parent, _args, context, info) =>
     delegateToSchema({

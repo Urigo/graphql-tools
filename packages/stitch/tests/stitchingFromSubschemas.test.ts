@@ -15,6 +15,7 @@ import { graphql, GraphQLSchema } from 'graphql';
 
 import { delegateToSchema } from '@graphql-tools/delegate';
 import { addMocksToSchema } from '@graphql-tools/mock';
+import { assertSome } from '@graphql-tools/utils';
 
 import { stitchSchemas } from '../src/stitchSchemas';
 
@@ -139,6 +140,7 @@ describe('merging without specifying fragments', () => {
     const result = await graphql(stitchedSchema, query);
 
     expect(result.errors).toBeUndefined();
+    assertSome(result.data)
     expect(result.data.userById.chirps[1].id).not.toBe(null);
     expect(result.data.userById.chirps[1].text).not.toBe(null);
     expect(result.data.userById.chirps[1].author.email).not.toBe(null);

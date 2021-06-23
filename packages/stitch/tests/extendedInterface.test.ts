@@ -1,6 +1,7 @@
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '../src/stitchSchemas';
+import { assertSome } from '@graphql-tools/utils';
 
 describe('extended interfaces', () => {
   test('expands extended interface types for subservices', async () => {
@@ -19,7 +20,7 @@ describe('extended interfaces', () => {
       `,
       resolvers: {
         Query: {
-          slot(obj, args, context, info) {
+          slot() {
             return { __typename: 'Item', id: '23', name: 'The Item' };
           }
         }
@@ -45,7 +46,7 @@ describe('extended interfaces', () => {
         }
       }
     `);
-
+    assertSome(data)
     expect(data.slot).toEqual({ id: '23', name: 'The Item' });
   });
 
@@ -119,7 +120,7 @@ describe('extended interfaces', () => {
         }
       }
     `);
-
+    assertSome(result.data)
     expect(result.data.placement).toEqual({ id: '23', name: 'Item 23' });
   });
 });

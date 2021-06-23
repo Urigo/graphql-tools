@@ -57,12 +57,11 @@ jobs:
       - name: Build
         run: yarn ts:transpile
   test:
-    name: Test on ${{matrix.os}}, Node ${{matrix.node_version}} and GraphQL v${{matrix.graphql_version}}
-    runs-on: ${{matrix.os}}
+    name: Test, Node ${{matrix.node_version}} and GraphQL v${{matrix.graphql_version}}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest] # remove windows to speed up the tests
-        node_version: [10, 16]
+        node_version: [12, 16]
         graphql_version: [14, 15]
     steps:
       - name: Checkout Master

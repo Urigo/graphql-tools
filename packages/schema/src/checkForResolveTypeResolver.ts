@@ -3,7 +3,7 @@ import { GraphQLSchema } from 'graphql';
 import { MapperKind, mapSchema, ValidatorBehavior } from '@graphql-tools/utils';
 
 // If we have any union or interface types throw if no there is no resolveType resolver
-export function checkForResolveTypeResolver(schema: GraphQLSchema, requireResolversForResolveType: ValidatorBehavior) {
+export function checkForResolveTypeResolver(schema: GraphQLSchema, requireResolversForResolveType?: ValidatorBehavior) {
   mapSchema(schema, {
     [MapperKind.ABSTRACT_TYPE]: type => {
       if (!type.resolveType) {

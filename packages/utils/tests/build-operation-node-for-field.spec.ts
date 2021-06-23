@@ -84,7 +84,7 @@ test('should work with Query', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query meQuery {
+      query me_query {
         me {
           id
           name
@@ -131,7 +131,7 @@ test('should work with Query and variables', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query userQuery($id: ID!) {
+      query user_query($id: ID!) {
         user(id: $id) {
           id
           name
@@ -178,7 +178,7 @@ test('should work with Query and complicated variable', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query menuByIngredientsQuery($ingredients: [String!]!) {
+      query menuByIngredients_query($ingredients: [String!]!) {
         menuByIngredients(ingredients: $ingredients) {
           ... on Pizza {
             dough
@@ -211,7 +211,7 @@ test('should work with Union', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query menuQuery {
+      query menu_query {
         menu {
           ... on Pizza {
             dough
@@ -244,7 +244,7 @@ test('should work with mutation', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      mutation addSaladMutation($ingredients: [String!]!) {
+      mutation addSalad_mutation($ingredients: [String!]!) {
         addSalad(ingredients: $ingredients) {
           ... on CaeserSalad {
             ingredients
@@ -271,7 +271,7 @@ test('should work with mutation and unions', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      mutation addRandomFoodMutation {
+      mutation addRandomFood_mutation {
         addRandomFood {
           ... on Pizza {
             dough
@@ -304,9 +304,9 @@ test('should work with Query and nested variables', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query feedQuery($feedCommentsFilter: String!) {
+      query feed_query($feed_comments_filter: String!) {
         feed {
-          comments(filter: $feedCommentsFilter)
+          comments(filter: $feed_comments_filter)
         }
       }
     `)
@@ -324,7 +324,7 @@ test('should be able to ignore using models when requested', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query userQuery($id: ID!) {
+      query user_query($id: ID!) {
         user(id: $id) {
           id
           name
@@ -373,7 +373,7 @@ test('should work with Subscription', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      subscription onFoodSubscription {
+      subscription onFood_subscription {
         onFood {
           ... on Pizza {
             dough
@@ -423,7 +423,7 @@ test('should work with circular ref (default depth limit === 1)', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query aQuery {
+      query a_query {
         a {
           b {
             c {
@@ -465,7 +465,7 @@ test('should work with circular ref (custom depth limit)', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query aQuery {
+      query a_query {
         a {
           b {
             c {
@@ -510,7 +510,7 @@ test('arguments', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query usersQuery($pageInfo: PageInfoInput!) {
+      query users_query($pageInfo: PageInfoInput!) {
         users(pageInfo: $pageInfo) {
           id
           name
@@ -538,7 +538,7 @@ test('selectedFields', async () => {
 
   expect(clean(document)).toEqual(
     clean(/* GraphQL */ `
-      query userQuery($id: ID!) {
+      query user_query($id: ID!) {
         user(id: $id) {
           favoriteFood {
             ... on Pizza {

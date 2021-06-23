@@ -13,7 +13,7 @@ import {
 import { dedentBlockStringValue } from 'graphql/language/blockString.js';
 import { GraphQLParseOptions } from './Interfaces';
 
-export function parseGraphQLSDL(location: string, rawSDL: string, options: GraphQLParseOptions = {}) {
+export function parseGraphQLSDL(location: string | undefined, rawSDL: string, options: GraphQLParseOptions = {}) {
   let document: DocumentNode;
   const sdl: string = rawSDL;
 
@@ -73,10 +73,7 @@ export function getLeadingCommentBlock(node: ASTNode): void | string {
   return comments.length > 0 ? comments.reverse().join('\n') : undefined;
 }
 
-export function transformCommentsToDescriptions(
-  sourceSdl: string,
-  options: GraphQLParseOptions = {}
-): DocumentNode | null {
+export function transformCommentsToDescriptions(sourceSdl: string, options: GraphQLParseOptions = {}): DocumentNode {
   const parsedDoc = parse(sourceSdl, {
     ...options,
     noLocation: false,

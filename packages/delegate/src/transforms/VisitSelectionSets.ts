@@ -13,14 +13,16 @@ import {
   DefinitionNode,
 } from 'graphql';
 
-import { Request, collectFields, GraphQLExecutionContext } from '@graphql-tools/utils';
+import { Request, collectFields, GraphQLExecutionContext, assertSome, Maybe } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext } from '../types';
 
-export default class VisitSelectionSets implements Transform {
-  private readonly visitor: (node: SelectionSetNode, typeInfo: TypeInfo) => SelectionSetNode;
+type VisitSelectionSetsVisitor = (node: SelectionSetNode, typeInfo: TypeInfo) => Maybe<SelectionSetNode>;
 
-  constructor(visitor: (node: SelectionSetNode, typeInfo: TypeInfo) => SelectionSetNode) {
+export default class VisitSelectionSets implements Transform {
+  private readonly visitor: VisitSelectionSetsVisitor;
+
+  constructor(visitor: VisitSelectionSetsVisitor) {
     this.visitor = visitor;
   }
 
@@ -46,7 +48,7 @@ function visitSelectionSets(
   request: Request,
   schema: GraphQLSchema,
   initialType: GraphQLOutputType,
-  visitor: (node: SelectionSetNode, typeInfo: TypeInfo) => SelectionSetNode
+  visitor: VisitSelectionSetsVisitor
 ): DocumentNode {
   const { document, variables } = request;
 
@@ -74,6 +76,7 @@ function visitSelectionSets(
         : operation.operation === 'mutation'
         ? schema.getMutationType()
         : schema.getSubscriptionType();
+    assertSome(type);
 
     const fields = collectFields(
       partialExecutionContext,

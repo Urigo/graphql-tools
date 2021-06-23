@@ -1,5 +1,6 @@
 import { wrapSchema, FilterTypes } from '@graphql-tools/wrap';
 import { graphql, GraphQLSchema, GraphQLNamedType } from 'graphql';
+import { assertSome } from '@graphql-tools/utils';
 import { bookingSchema } from './fixtures/schemas';
 
 describe('FilterTypes', () => {
@@ -62,6 +63,7 @@ describe('FilterTypes', () => {
       `,
     );
     expect(result.errors).toBeDefined();
+    assertSome(result.errors)
     expect(result.errors.length).toBe(1);
     expect(result.errors[0].message).toBe(
       'Cannot query field "customer" on type "Booking".',

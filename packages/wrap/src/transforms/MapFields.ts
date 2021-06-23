@@ -1,6 +1,6 @@
 import { GraphQLSchema } from 'graphql';
 
-import { Request, FieldNodeMappers, ExecutionResult } from '@graphql-tools/utils';
+import { Request, FieldNodeMappers, ExecutionResult, assertSome } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
@@ -8,11 +8,11 @@ import { ObjectValueTransformerMap, ErrorsTransformer } from '../types';
 
 import TransformCompositeFields from './TransformCompositeFields';
 
-export default class MapFields implements Transform {
+export default class MapFields<TContext> implements Transform<any, TContext> {
   private fieldNodeTransformerMap: FieldNodeMappers;
   private objectValueTransformerMap?: ObjectValueTransformerMap;
   private errorsTransformer?: ErrorsTransformer;
-  private transformer: TransformCompositeFields;
+  private transformer: TransformCompositeFields<TContext> | undefined;
 
   constructor(
     fieldNodeTransformerMap: FieldNodeMappers,
@@ -24,12 +24,18 @@ export default class MapFields implements Transform {
     this.errorsTransformer = errorsTransformer;
   }
 
+  private _getTransformer() {
+    assertSome(this.transformer);
+    return this.transformer;
+  }
+
   public transformSchema(
     originalWrappingSchema: GraphQLSchema,
-    subschemaConfig: SubschemaConfig,
+    subschemaConfig: SubschemaConfig<any, any, any, TContext>,
     transformedSchema?: GraphQLSchema
   ): GraphQLSchema {
     const subscriptionTypeName = originalWrappingSchema.getSubscriptionType()?.name;
+    const objectValueTransformerMap = this.objectValueTransformerMap;
     this.transformer = new TransformCompositeFields(
       () => undefined,
       (typeName, fieldName, fieldNode, fragments, transformationContext) => {
@@ -45,7 +51,7 @@ export default class MapFields implements Transform {
 
         return fieldNodeTransformer(fieldNode, fragments, transformationContext);
       },
-      this.objectValueTransformerMap != null
+      objectValueTransformerMap != null
         ? (data, transformationContext) => {
             if (data == null) {
               return data;
@@ -60,7 +66,7 @@ export default class MapFields implements Transform {
               }
             }
 
-            const transformer = this.objectValueTransformerMap[typeName];
+            const transformer = objectValueTransformerMap[typeName];
             if (transformer == null) {
               return data;
             }
@@ -78,7 +84,7 @@ export default class MapFields implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): Request {
-    return this.transformer.transformRequest(originalRequest, delegationContext, transformationContext);
+    return this._getTransformer().transformRequest(originalRequest, delegationContext, transformationContext);
   }
 
   public transformResult(
@@ -86,6 +92,6 @@ export default class MapFields implements Transform {
     delegationContext: DelegationContext,
     transformationContext: Record<string, any>
   ): ExecutionResult {
-    return this.transformer.transformResult(originalResult, delegationContext, transformationContext);
+    return this._getTransformer().transformResult(originalResult, delegationContext, transformationContext);
   }
 }

@@ -30,6 +30,12 @@ export interface StitchingDirectivesOptions {
   pathToDirectivesInExtensions?: Array<string>;
 }
 
+type Complete<T> = {
+  [P in keyof Required<T>]: Exclude<Pick<T, P> extends Required<Pick<T, P>> ? T[P] : T[P] | undefined, undefined>;
+};
+
+export type StitchingDirectivesFinalOptions = Complete<StitchingDirectivesOptions>;
+
 export interface MergedTypeResolverInfo extends ParsedMergeArgsExpr {
   fieldName: string;
   returnsList: boolean;

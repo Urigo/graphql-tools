@@ -19,9 +19,9 @@ import { ExecutionParams, ExecutionResult, Executor, Request, Subscriber, TypeMa
 import { Subschema } from './Subschema';
 import { OBJECT_SUBSCHEMA_SYMBOL, FIELD_SUBSCHEMA_MAP_SYMBOL, UNPATHED_ERRORS_SYMBOL } from './symbols';
 
-export type SchemaTransform = (
+export type SchemaTransform<TContext = Record<any, string>> = (
   originalWrappingSchema: GraphQLSchema,
-  subschemaConfig: SubschemaConfig,
+  subschemaConfig: SubschemaConfig<any, any, any, TContext>,
   transformedSchema?: GraphQLSchema
 ) => GraphQLSchema;
 export type RequestTransform<T = Record<string, any>> = (
@@ -35,30 +35,32 @@ export type ResultTransform<T = Record<string, any>> = (
   transformationContext: T
 ) => ExecutionResult;
 
-export interface Transform<T = Record<string, any>> {
-  transformSchema?: SchemaTransform;
+export interface Transform<T = any, TContext = Record<string, any>> {
+  transformSchema?: SchemaTransform<TContext>;
   transformRequest?: RequestTransform<T>;
   transformResult?: ResultTransform<T>;
 }
 
-export interface DelegationContext {
-  subschema: GraphQLSchema | SubschemaConfig;
-  subschemaConfig: SubschemaConfig;
+export interface DelegationContext<TContext = Record<string, any>> {
+  subschema: GraphQLSchema | SubschemaConfig<any, any, any, TContext>;
+  subschemaConfig?: SubschemaConfig<any, any, any, TContext>;
   targetSchema: GraphQLSchema;
   operation: OperationTypeNode;
   fieldName: string;
   args: Record<string, any>;
-  context: Record<string, any>;
+  context?: TContext;
   info: GraphQLResolveInfo;
-  rootValue?: Record<string, any>,
+  rootValue?: Record<string, any>;
   returnType: GraphQLOutputType;
   onLocatedError?: (originalError: GraphQLError) => GraphQLError;
-  transforms: Array<Transform>;
+  transforms: Array<Transform<any, TContext>>;
   transformedSchema: GraphQLSchema;
   skipTypeMerging: boolean;
 }
 
-export type DelegationBinding = (delegationContext: DelegationContext) => Array<Transform>;
+export type DelegationBinding<TContext = Record<string, any>> = (
+  delegationContext: DelegationContext<TContext>
+) => Array<Transform<any, TContext>>;
 
 export interface IDelegateToSchemaOptions<TContext = Record<string, any>, TArgs = Record<string, any>> {
   schema: GraphQLSchema | SubschemaConfig<any, any, any, TContext>;
@@ -73,17 +75,16 @@ export interface IDelegateToSchemaOptions<TContext = Record<string, any>, TArgs 
   context?: TContext;
   info: GraphQLResolveInfo;
   rootValue?: Record<string, any>;
-  transforms?: Array<Transform>;
+  transforms?: Array<Transform<any, TContext>>;
   transformedSchema?: GraphQLSchema;
   skipValidation?: boolean;
   skipTypeMerging?: boolean;
-  binding?: DelegationBinding;
+  binding?: DelegationBinding<TContext>;
 }
 
 export interface IDelegateRequestOptions<TContext = Record<string, any>, TArgs = Record<string, any>>
-  extends Omit<IDelegateToSchemaOptions<TContext, TArgs>, 'info'> {
+  extends IDelegateToSchemaOptions<TContext, TArgs> {
   request: Request;
-  info?: GraphQLResolveInfo;
 }
 
 export interface ICreateRequestFromInfo {
@@ -112,13 +113,13 @@ export interface ICreateRequest {
 export interface MergedTypeInfo<TContext = Record<string, any>> {
   typeName: string;
   selectionSet?: SelectionSetNode;
-  targetSubschemas: Map<Subschema, Array<Subschema>>;
-  uniqueFields: Record<string, Subschema>;
-  nonUniqueFields: Record<string, Array<Subschema>>;
-  typeMaps: Map<GraphQLSchema | SubschemaConfig, TypeMap>;
-  selectionSets: Map<Subschema, SelectionSetNode>;
-  fieldSelectionSets: Map<Subschema, Record<string, SelectionSetNode>>;
-  resolvers: Map<Subschema, MergedTypeResolver<TContext>>;
+  targetSubschemas: Map<Subschema<any, any, any, TContext>, Array<Subschema<any, any, any, TContext>>>;
+  uniqueFields: Record<string, Subschema<any, any, any, TContext>>;
+  nonUniqueFields: Record<string, Array<Subschema<any, any, any, TContext>>>;
+  typeMaps: Map<GraphQLSchema | SubschemaConfig<any, any, any, TContext>, TypeMap>;
+  selectionSets: Map<Subschema<any, any, any, TContext>, SelectionSetNode>;
+  fieldSelectionSets: Map<Subschema<any, any, any, TContext>, Record<string, SelectionSetNode>>;
+  resolvers: Map<Subschema<any, any, any, TContext>, MergedTypeResolver<TContext>>;
 }
 
 export interface ICreateProxyingResolverOptions<TContext = Record<string, any>> {
@@ -140,7 +141,7 @@ export interface BatchingOptions<K = any, V = any, C = K> {
 export interface SubschemaConfig<K = any, V = any, C = K, TContext = Record<string, any>> {
   schema: GraphQLSchema;
   createProxyingResolver?: CreateProxyingResolverFn<TContext>;
-  transforms?: Array<Transform>;
+  transforms?: Array<Transform<any, TContext>>;
   merge?: Record<string, MergedTypeConfig<any, any, TContext>>;
   rootValue?: Record<string, any>;
   executor?: Executor<TContext>;
@@ -149,14 +150,16 @@ export interface SubschemaConfig<K = any, V = any, C = K, TContext = Record<stri
   batchingOptions?: BatchingOptions<K, V, C>;
 }
 
-export interface MergedTypeConfig<K = any, V = any, TContext = Record<string, any>> extends MergedTypeEntryPoint<K, V, TContext> {
+export interface MergedTypeConfig<K = any, V = any, TContext = Record<string, any>>
+  extends MergedTypeEntryPoint<K, V, TContext> {
   entryPoints?: Array<MergedTypeEntryPoint>;
   fields?: Record<string, MergedFieldConfig>;
   computedFields?: Record<string, { selectionSet?: string }>;
   canonical?: boolean;
 }
 
-export interface MergedTypeEntryPoint<K = any, V = any, TContext = Record<string, any>> extends MergedTypeResolverOptions<K, V> {
+export interface MergedTypeEntryPoint<K = any, V = any, TContext = Record<string, any>>
+  extends MergedTypeResolverOptions<K, V> {
   selectionSet?: string;
   key?: (originalResult: any) => K;
   resolve?: MergedTypeResolver<TContext>;
@@ -186,9 +189,9 @@ export type MergedTypeResolver<TContext = Record<string, any>> = (
 
 export interface StitchingInfo<TContext = Record<string, any>> {
   subschemaMap: Map<GraphQLSchema | SubschemaConfig<any, any, any, TContext>, Subschema<any, any, any, TContext>>;
-  selectionSetsByType: Record<string, SelectionSetNode>;
+  selectionSetsByType: Record<string, SelectionSetNode> | undefined;
   selectionSetsByField: Record<string, Record<string, SelectionSetNode>>;
-  dynamicSelectionSetsByField: Record<string, Record<string, Array<(node: FieldNode) => SelectionSetNode>>>;
+  dynamicSelectionSetsByField: Record<string, Record<string, Array<(node: FieldNode) => SelectionSetNode>>> | undefined;
   mergedTypes: Record<string, MergedTypeInfo<TContext>>;
 }
 

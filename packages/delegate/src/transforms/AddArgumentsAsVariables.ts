@@ -12,7 +12,7 @@ import {
   VariableDefinitionNode,
 } from 'graphql';
 
-import { Request, serializeInputValue, updateArgument } from '@graphql-tools/utils';
+import { Maybe, Request, serializeInputValue, updateArgument, assertSome } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext } from '../types';
 
@@ -63,7 +63,7 @@ function addVariablesToRootField(
   ) as Array<FragmentDefinitionNode>;
 
   const newOperations = operations.map((operation: OperationDefinitionNode) => {
-    const variableDefinitionMap: Record<string, VariableDefinitionNode> = operation.variableDefinitions.reduce(
+    const variableDefinitionMap: Record<string, VariableDefinitionNode> = (operation.variableDefinitions ?? []).reduce(
       (prev, def) => ({
         ...prev,
         [def.variable.name.value]: def,
@@ -71,7 +71,7 @@ function addVariablesToRootField(
       {}
     );
 
-    let type: GraphQLObjectType | null | undefined;
+    let type: Maybe<GraphQLObjectType>;
     if (operation.operation === 'subscription') {
       type = targetSchema.getSubscriptionType();
     } else if (operation.operation === 'mutation') {
@@ -79,9 +79,12 @@ function addVariablesToRootField(
     } else {
       type = targetSchema.getQueryType();
     }
+
+    assertSome(type);
+
     const newSelectionSet: Array<SelectionNode> = [];
 
-    operation.selectionSet.selections.forEach((selection: SelectionNode) => {
+    for (const selection of operation.selectionSet.selections) {
       if (selection.kind === Kind.FIELD) {
         const argumentNodes = selection.arguments ?? [];
         const argumentNodeMap: Record<string, ArgumentNode> = argumentNodes.reduce(
@@ -106,7 +109,7 @@ function addVariablesToRootField(
       } else {
         newSelectionSet.push(selection);
       }
-    });
+    }
 
     return {
       ...operation,

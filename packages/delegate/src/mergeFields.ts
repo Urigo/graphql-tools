@@ -118,7 +118,8 @@ const buildDelegationPlan = memoize3(function (
 
     const existingSubschema = nonUniqueSubschemas.find(s => delegationMap.has(s));
     if (existingSubschema != null) {
-      delegationMap.get(existingSubschema).push(fieldNode);
+      // It is okay we previously explicitly check whether the map has the element.
+      delegationMap.get(existingSubschema)!.push(fieldNode);
     } else {
       delegationMap.set(nonUniqueSubschemas[0], [fieldNode]);
     }
@@ -153,9 +154,9 @@ export function mergeFields(
   typeName: string,
   object: any,
   fieldNodes: Array<FieldNode>,
-  sourceSubschemaOrSourceSubschemas: Subschema | Array<Subschema>,
-  targetSubschemas: Array<Subschema>,
-  context: Record<string, any>,
+  sourceSubschemaOrSourceSubschemas: Subschema<any, any, any, any> | Array<Subschema<any, any, any, any>>,
+  targetSubschemas: Array<Subschema<any, any, any, any>>,
+  context: any,
   info: GraphQLResolveInfo
 ): any {
   if (!fieldNodes.length) {
@@ -177,30 +178,35 @@ export function mergeFields(
 
   const resultMap: Map<ValueOrPromise<any>, SelectionSetNode> = new Map();
   delegationMap.forEach((selectionSet: SelectionSetNode, s: Subschema) => {
-    const resolver = mergedTypeInfo.resolvers.get(s);
-    const valueOrPromise = new ValueOrPromise(() => resolver(object, context, info, s, selectionSet)).catch(error => error);
+    // TODO: Verify whether it is safe that resolver always exists.
+    const resolver = mergedTypeInfo.resolvers.get(s)!;
+    const valueOrPromise = new ValueOrPromise(() => resolver(object, context, info, s, selectionSet)).catch(
+      error => error
+    );
     resultMap.set(valueOrPromise, selectionSet);
   });
 
-  return ValueOrPromise.all(Array.from(resultMap.keys())).then(results =>
-    mergeFields(
-      mergedTypeInfo,
-      typeName,
-      mergeExternalObjects(
-        info.schema,
-        responsePathAsArray(info.path),
-        object.__typename,
-        object,
-        results,
-        Array.from(resultMap.values())
-      ),
-      unproxiableFieldNodes,
-      combineSubschemas(sourceSubschemaOrSourceSubschemas, proxiableSubschemas),
-      nonProxiableSubschemas,
-      context,
-      info
+  return ValueOrPromise.all(Array.from(resultMap.keys()))
+    .then(results =>
+      mergeFields(
+        mergedTypeInfo,
+        typeName,
+        mergeExternalObjects(
+          info.schema,
+          responsePathAsArray(info.path),
+          object.__typename,
+          object,
+          results,
+          Array.from(resultMap.values())
+        ),
+        unproxiableFieldNodes,
+        combineSubschemas(sourceSubschemaOrSourceSubschemas, proxiableSubschemas),
+        nonProxiableSubschemas,
+        context,
+        info
+      )
     )
-  ).resolve();
+    .resolve();
 }
 
 const subschemaTypesContainSelectionSet = memoize3(function (
@@ -239,7 +245,7 @@ function typesContainSelectionSet(types: Array<GraphQLObjectType>, selectionSet:
           selection.selectionSet
         );
       }
-    } else if (selection.kind === Kind.INLINE_FRAGMENT && selection.typeCondition.name.value === types[0].name) {
+    } else if (selection.kind === Kind.INLINE_FRAGMENT && selection.typeCondition?.name.value === types[0].name) {
       return typesContainSelectionSet(types, selection.selectionSet);
     }
   }

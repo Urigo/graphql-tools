@@ -1,6 +1,5 @@
 import {
   GraphQLSchema,
-  GraphQLType,
   DocumentNode,
   typeFromAST,
   TypeInfo,
@@ -16,7 +15,7 @@ import {
   NamedTypeNode,
 } from 'graphql';
 
-import { Request, MapperKind, mapSchema, transformInputValue } from '@graphql-tools/utils';
+import { Maybe, Request, MapperKind, mapSchema, transformInputValue, assertSome } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
 
@@ -24,9 +23,9 @@ import { InputFieldTransformer, InputFieldNodeTransformer, InputObjectNodeTransf
 
 export default class TransformInputObjectFields implements Transform {
   private readonly inputFieldTransformer: InputFieldTransformer;
-  private readonly inputFieldNodeTransformer: InputFieldNodeTransformer;
-  private readonly inputObjectNodeTransformer: InputObjectNodeTransformer;
-  private transformedSchema: GraphQLSchema;
+  private readonly inputFieldNodeTransformer: InputFieldNodeTransformer | undefined;
+  private readonly inputObjectNodeTransformer: InputObjectNodeTransformer | undefined;
+  private transformedSchema: GraphQLSchema | undefined;
   private mapping: Record<string, Record<string, string>>;
 
   constructor(
@@ -38,6 +37,11 @@ export default class TransformInputObjectFields implements Transform {
     this.inputFieldNodeTransformer = inputFieldNodeTransformer;
     this.inputObjectNodeTransformer = inputObjectNodeTransformer;
     this.mapping = {};
+  }
+
+  private _getTransformedSchema() {
+    assertSome(this.transformedSchema);
+    return this.transformedSchema;
   }
 
   public transformSchema(
@@ -141,18 +145,19 @@ export default class TransformInputObjectFields implements Transform {
   private transformDocument(
     document: DocumentNode,
     mapping: Record<string, Record<string, string>>,
-    inputFieldNodeTransformer: InputFieldNodeTransformer,
-    inputObjectNodeTransformer: InputObjectNodeTransformer,
+    inputFieldNodeTransformer: InputFieldNodeTransformer | undefined,
+    inputObjectNodeTransformer: InputObjectNodeTransformer | undefined,
     request: Request,
     delegationContext?: DelegationContext
   ): DocumentNode {
-    const typeInfo = new TypeInfo(this.transformedSchema);
+    const typeInfo = new TypeInfo(this._getTransformedSchema());
     const newDocument: DocumentNode = visit(
       document,
       visitWithTypeInfo(typeInfo, {
         leave: {
-          [Kind.OBJECT]: (node: ObjectValueNode): ObjectValueNode => {
-            const parentType: GraphQLType = typeInfo.getInputType() as GraphQLInputObjectType;
+          [Kind.OBJECT]: (node: ObjectValueNode): ObjectValueNode | undefined => {
+            // The casting is kind of legit here as we are in a visitor
+            const parentType = typeInfo.getInputType() as Maybe<GraphQLInputObjectType>;
             if (parentType != null) {
               const parentTypeName = parentType.name;
               const newInputFields: Array<ObjectFieldNode> = [];

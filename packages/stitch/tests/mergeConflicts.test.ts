@@ -1,5 +1,25 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { stitchSchemas } from '@graphql-tools/stitch';
+import { GraphQLInputObjectType, GraphQLObjectType, GraphQLInterfaceType, } from 'graphql';
+
+function assertGraphQLObjectType(input: unknown): asserts input is GraphQLObjectType {
+  if (input instanceof GraphQLObjectType) {
+    return
+  }
+  throw new Error("Expected GraphQLObjectType.")
+}
+function assertGraphQLInterfaceType(input: unknown): asserts input is GraphQLInterfaceType {
+  if (input instanceof GraphQLInterfaceType) {
+    return
+  }
+  throw new Error("Expected GraphQLInterfaceType.")
+}
+function assertGraphQLInputObjectType(input: unknown): asserts input is GraphQLInputObjectType {
+  if (input instanceof GraphQLInputObjectType) {
+    return
+  }
+  throw new Error("Expected GraphQLInputObjectType.")
+}
 
 describe('merge conflict handlers', () => {
   const listings1Schema = makeExecutableSchema({
@@ -69,12 +89,17 @@ describe('merge conflict handlers', () => {
         }
       },
     });
-
-    expect(gatewaySchema.getType('Listing').description).toEqual('A type');
-    expect(gatewaySchema.getType('IListing').description).toEqual('An interface');
-    expect(gatewaySchema.getType('ListingInput').description).toEqual('An input');
-    expect(gatewaySchema.getType('Listing').getFields().id.description).toEqual('type identifier');
-    expect(gatewaySchema.getType('IListing').getFields().id.description).toEqual('interface identifier');
-    expect(gatewaySchema.getType('ListingInput').getFields().id.description).toEqual('input identifier');
+    const Listing = gatewaySchema.getType('Listing')
+    assertGraphQLObjectType(Listing)
+    const IListing = gatewaySchema.getType('IListing')
+    assertGraphQLInterfaceType(IListing)
+    const ListingInput = gatewaySchema.getType('ListingInput')
+    assertGraphQLInputObjectType(ListingInput)
+    expect(Listing.description).toEqual('A type');
+    expect(IListing.description).toEqual('An interface');
+    expect(ListingInput.description).toEqual('An input');
+    expect(Listing.getFields().id.description).toEqual('type identifier');
+    expect(IListing.getFields().id.description).toEqual('interface identifier');
+    expect(ListingInput.getFields().id.description).toEqual('input identifier');
   });
 });

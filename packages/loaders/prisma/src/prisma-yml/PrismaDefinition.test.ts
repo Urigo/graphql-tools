@@ -77,7 +77,7 @@ type User @model {
   });
   test('load yml with secret and env var', async () => {
     const secret = 'this-is-a-long-secret';
-    process.env.MY_TEST_SECRET = secret;
+    process.env['MY_TEST_SECRET'] = secret;
     const yml = `\
 service: jj
 stage: dev
@@ -127,7 +127,7 @@ type User @model {
 }
 `;
     const { definition, env } = makeDefinition(yml, datamodel, {});
-    const envPath = path.join(definition.definitionDir, '.env');
+    const envPath = path.join(definition.definitionDir!, '.env');
 
     fs.mkdirSync(path.dirname(envPath), { recursive: true });
     fs.writeFileSync(envPath, `MY_DOT_ENV_SECRET=this-is-very-secret,and-comma,seperated`);
@@ -241,7 +241,7 @@ type User @model {
 }
 `;
     const { definition, env } = makeDefinition(yml, datamodel);
-    const envPath = path.join(definition.definitionDir, '.env');
+    const envPath = path.join(definition.definitionDir!, '.env');
 
     fs.mkdirSync(path.dirname(envPath), { recursive: true });
     fs.writeFileSync(envPath, `MY_DOT_ENV_SECRET=this-is-very-secret,and-comma,seperated`);

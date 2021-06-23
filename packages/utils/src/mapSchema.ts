@@ -40,6 +40,7 @@ import {
   IDefaultValueIteratorFn,
   ArgumentMapper,
   EnumValueMapper,
+  SchemaFieldMapperTypes,
 } from './Interfaces';
 
 import { rewireTypes } from './rewire';
@@ -351,17 +352,17 @@ function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMap
 
       if (isObjectType(originalType)) {
         newTypeMap[typeName] = new GraphQLObjectType({
-          ...((config as unknown) as GraphQLObjectTypeConfig<any, any>),
+          ...(config as unknown as GraphQLObjectTypeConfig<any, any>),
           fields: newFieldConfigMap,
         });
       } else if (isInterfaceType(originalType)) {
         newTypeMap[typeName] = new GraphQLInterfaceType({
-          ...((config as unknown) as GraphQLInterfaceTypeConfig<any, any>),
+          ...(config as unknown as GraphQLInterfaceTypeConfig<any, any>),
           fields: newFieldConfigMap,
         });
       } else {
         newTypeMap[typeName] = new GraphQLInputObjectType({
-          ...((config as unknown) as GraphQLInputObjectTypeConfig),
+          ...(config as unknown as GraphQLInputObjectTypeConfig),
           fields: newFieldConfigMap,
         });
       }
@@ -431,16 +432,17 @@ function getTypeMapper(schema: GraphQLSchema, schemaMapper: SchemaMapper, typeNa
   let typeMapper: NamedTypeMapper | undefined;
   const stack = [...specifiers];
   while (!typeMapper && stack.length > 0) {
-    const next = stack.pop();
+    // It is safe to use the ! operator here as we check the length.
+    const next = stack.pop()!;
     typeMapper = schemaMapper[next] as NamedTypeMapper;
   }
 
   return typeMapper != null ? typeMapper : null;
 }
 
-function getFieldSpecifiers(schema: GraphQLSchema, typeName: string): Array<MapperKind> {
+function getFieldSpecifiers(schema: GraphQLSchema, typeName: string): SchemaFieldMapperTypes {
   const type = schema.getType(typeName);
-  const specifiers = [MapperKind.FIELD];
+  const specifiers: SchemaFieldMapperTypes = [MapperKind.FIELD];
 
   if (isObjectType(type)) {
     specifiers.push(MapperKind.COMPOSITE_FIELD, MapperKind.OBJECT_FIELD);
@@ -472,11 +474,13 @@ function getFieldMapper<F extends GraphQLFieldConfig<any, any> | GraphQLInputFie
   let fieldMapper: GenericFieldMapper<F> | undefined;
   const stack = [...specifiers];
   while (!fieldMapper && stack.length > 0) {
-    const next = stack.pop();
-    fieldMapper = schemaMapper[next] as GenericFieldMapper<F>;
+    // It is safe to use the ! operator here as we check the length.
+    const next = stack.pop()!;
+    // TODO: fix this as unknown cast
+    fieldMapper = schemaMapper[next] as unknown as GenericFieldMapper<F>;
   }
 
-  return fieldMapper != null ? fieldMapper : null;
+  return fieldMapper ?? null;
 }
 
 function getArgumentMapper(schemaMapper: SchemaMapper): ArgumentMapper | null {

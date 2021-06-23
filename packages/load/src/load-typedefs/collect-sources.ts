@@ -6,6 +6,7 @@ import {
   getDocumentNodeFromSchema,
   Loader,
   ResolverGlobs,
+  isSome,
 } from '@graphql-tools/utils';
 import { isSchema, Kind } from 'graphql';
 import isGlob from 'is-glob';
@@ -53,7 +54,7 @@ export async function collectSources<TOptions>({
       options,
       addSource,
       addGlob,
-      queue: queue.add,
+      queue: queue.add as AddToQueue<void>,
     });
   }
 
@@ -67,7 +68,7 @@ export async function collectSources<TOptions>({
       globOptions,
       pointerOptionMap,
       addSource,
-      queue: queue.add,
+      queue: queue.add as AddToQueue<void>,
     });
   }
 
@@ -154,7 +155,7 @@ function createHelpers<T>({
   }) => {
     sources.push(source);
 
-    if (!noCache) {
+    if (!noCache && options.cache) {
       options.cache[pointer] = source;
     }
   };
@@ -195,10 +196,12 @@ async function addGlobsToLoaders({
     if (!loader) {
       throw new Error(`unable to find loader for glob "${glob}"`);
     }
-    if (!loadersForGlobs.has(loader)) {
-      loadersForGlobs.set(loader, { globs: [], ignores: [] });
+    let resolverGlobs = loadersForGlobs.get(loader);
+    if (!isSome(resolverGlobs)) {
+      resolverGlobs = { globs: [], ignores: [] };
+      loadersForGlobs.set(loader, resolverGlobs);
     }
-    loadersForGlobs.get(loader)[type].push(glob);
+    resolverGlobs[type].push(glob);
   }
 }
 
@@ -216,7 +219,11 @@ function addGlobsToLoadersSync({
   for (const glob of globs) {
     let loader;
     for (const candidateLoader of options.loaders) {
-      if (candidateLoader.resolveGlobs && candidateLoader.canLoadSync(glob, options)) {
+      if (
+        isSome(candidateLoader.resolveGlobsSync) &&
+        isSome(candidateLoader.canLoadSync) &&
+        candidateLoader.canLoadSync(glob, options)
+      ) {
         loader = candidateLoader;
         break;
       }
@@ -224,10 +231,12 @@ function addGlobsToLoadersSync({
     if (!loader) {
       throw new Error(`unable to find loader for glob "${glob}"`);
     }
-    if (!loadersForGlobs.has(loader)) {
-      loadersForGlobs.set(loader, { globs: [], ignores: [] });
+    let resolverGlobs = loadersForGlobs.get(loader);
+    if (!isSome(resolverGlobs)) {
+      resolverGlobs = { globs: [], ignores: [] };
+      loadersForGlobs.set(loader, resolverGlobs);
     }
-    loadersForGlobs.get(loader)[type].push(glob);
+    resolverGlobs[type].push(glob);
   }
 }
 
@@ -237,12 +246,19 @@ async function collectPathsFromGlobs(globs: string[], options: LoadTypedefsOptio
   const loadersForGlobs: Map<Loader, ResolverGlobs> = new Map();
 
   await addGlobsToLoaders({ options, loadersForGlobs, globs, type: 'globs' });
-  await addGlobsToLoaders({ options, loadersForGlobs, globs: asArray(options.ignore), type: 'ignores' });
+  await addGlobsToLoaders({
+    options,
+    loadersForGlobs,
+    globs: isSome(options.ignore) ? asArray(options.ignore) : [],
+    type: 'ignores',
+  });
 
   for await (const [loader, globsAndIgnores] of loadersForGlobs.entries()) {
-    const resolvedPaths = await loader.resolveGlobs(globsAndIgnores, options);
-    if (resolvedPaths) {
-      paths.push(...resolvedPaths);
+    if (isSome(loader.resolveGlobs)) {
+      const resolvedPaths = await loader.resolveGlobs(globsAndIgnores, options);
+      if (resolvedPaths) {
+        paths.push(...resolvedPaths);
+      }
     }
   }
 
@@ -255,12 +271,19 @@ function collectPathsFromGlobsSync(globs: string[], options: LoadTypedefsOptions
   const loadersForGlobs: Map<Loader, ResolverGlobs> = new Map();
 
   addGlobsToLoadersSync({ options, loadersForGlobs, globs, type: 'globs' });
-  addGlobsToLoadersSync({ options, loadersForGlobs, globs: asArray(options.ignore), type: 'ignores' });
+  addGlobsToLoadersSync({
+    options,
+    loadersForGlobs,
+    globs: isSome(options.ignore) ? asArray(options.ignore) : [],
+    type: 'ignores',
+  });
 
   for (const [loader, globsAndIgnores] of loadersForGlobs.entries()) {
-    const resolvedPaths = loader.resolveGlobsSync(globsAndIgnores, options);
-    if (resolvedPaths) {
-      paths.push(...resolvedPaths);
+    if (isSome(loader.resolveGlobsSync)) {
+      const resolvedPaths = loader.resolveGlobsSync(globsAndIgnores, options);
+      if (resolvedPaths) {
+        paths.push(...resolvedPaths);
+      }
     }
   }
 
@@ -421,6 +444,8 @@ function collectCustomLoader<T>(
 ) {
   if (pointerOptions.loader) {
     return queue(async () => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore TODO options.cwd is possibly undefined, but it seems like no test covers this path
       const loader = await useCustomLoader(pointerOptions.loader, options.cwd);
       const result = await loader(pointer, { ...options, ...pointerOptions }, pointerOptionMap);
 
@@ -441,6 +466,8 @@ function collectCustomLoaderSync<T>(
 ) {
   if (pointerOptions.loader) {
     return queue(() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore TODO options.cwd is possibly undefined, but it seems like no test covers this path
       const loader = useCustomLoaderSync(pointerOptions.loader, options.cwd);
       const result = loader(pointer, { ...options, ...pointerOptions }, pointerOptionMap);
 

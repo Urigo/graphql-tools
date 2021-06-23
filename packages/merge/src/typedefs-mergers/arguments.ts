@@ -1,13 +1,13 @@
 import { InputValueDefinitionNode } from 'graphql';
 import { Config } from '.';
-import { compareNodes } from '@graphql-tools/utils';
+import { compareNodes, isSome } from '@graphql-tools/utils';
 
 export function mergeArguments(
   args1: InputValueDefinitionNode[],
   args2: InputValueDefinitionNode[],
-  config: Config
+  config?: Config
 ): InputValueDefinitionNode[] {
-  const result = deduplicateArguments([].concat(args2, args1).filter(a => a));
+  const result = deduplicateArguments([...args2, ...args1].filter(isSome));
   if (config && config.sort) {
     result.sort(compareNodes);
   }

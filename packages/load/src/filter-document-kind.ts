@@ -1,10 +1,10 @@
-import { debugLog } from '@graphql-tools/utils';
 import { DocumentNode, DefinitionNode, Kind } from 'graphql';
+import { env } from 'process';
 
 /**
  * @internal
  */
-export const filterKind = (content: DocumentNode, filterKinds: null | string[]) => {
+export const filterKind = (content: DocumentNode | undefined, filterKinds: null | string[]) => {
   if (content && content.definitions && content.definitions.length && filterKinds && filterKinds.length > 0) {
     const invalidDefinitions: DefinitionNode[] = [];
     const validDefinitions: DefinitionNode[] = [];
@@ -18,7 +18,9 @@ export const filterKind = (content: DocumentNode, filterKinds: null | string[]) 
 
     if (invalidDefinitions.length > 0) {
       invalidDefinitions.forEach(d => {
-        debugLog(`Filtered document of kind ${d.kind} due to filter policy (${filterKinds.join(', ')})`);
+        if (env['DEBUG']) {
+          console.error(`Filtered document of kind ${d.kind} due to filter policy (${filterKinds.join(', ')})`);
+        }
       });
     }
 

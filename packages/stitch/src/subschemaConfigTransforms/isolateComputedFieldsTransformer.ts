@@ -18,18 +18,19 @@ export function isolateComputedFieldsTransformer(subschemaConfig: SubschemaConfi
     baseSchemaTypes[typeName] = mergedTypeConfig;
 
     if (mergedTypeConfig.computedFields) {
-      mergedTypeConfig.fields = mergedTypeConfig.fields ?? Object.create(null);
+      const mergeConfigFields = mergedTypeConfig.fields ?? Object.create(null);
       Object.entries(mergedTypeConfig.computedFields).forEach(([fieldName, mergedFieldConfig]) => {
         console.warn(
           `The "computedFields" setting is deprecated. Update your @graphql-tools/stitching-directives package, and/or update static merged type config to "${typeName}.fields.${fieldName} = { selectionSet: '${mergedFieldConfig.selectionSet}', computed: true }"`
         );
-        mergedTypeConfig.fields[fieldName] = {
-          ...(mergedTypeConfig.fields[fieldName] ?? {}),
+        mergeConfigFields[fieldName] = {
+          ...(mergeConfigFields[fieldName] ?? {}),
           ...mergedFieldConfig,
           computed: true,
         };
       });
       delete mergedTypeConfig.computedFields;
+      mergedTypeConfig.fields = mergeConfigFields;
     }
 
     if (mergedTypeConfig.fields) {
@@ -82,13 +83,13 @@ function filterBaseSubschema(
   const filteredSchema = pruneSchema(
     filterSchema({
       schema,
-      objectFieldFilter: (typeName, fieldName) => !isolatedSchemaTypes[typeName]?.fields[fieldName],
+      objectFieldFilter: (typeName, fieldName) => !isolatedSchemaTypes[typeName]?.fields?.[fieldName],
       interfaceFieldFilter: (typeName, fieldName) => {
         if (!typesForInterface[typeName]) {
           typesForInterface[typeName] = getImplementingTypes(typeName, schema);
         }
         return !typesForInterface[typeName].some(
-          implementingTypeName => isolatedSchemaTypes[implementingTypeName]?.fields[fieldName]
+          implementingTypeName => isolatedSchemaTypes[implementingTypeName]?.fields?.[fieldName]
         );
       },
     })
@@ -122,26 +123,35 @@ function filterBaseSubschema(
   };
 
   const remainingTypes = filteredSchema.getTypeMap();
-  Object.keys(filteredSubschema.merge).forEach(mergeType => {
-    if (!remainingTypes[mergeType]) {
-      delete filteredSubschema.merge[mergeType];
-    }
-  });
+  const mergeConfig = filteredSubschema.merge;
+  if (mergeConfig) {
+    Object.keys(mergeConfig).forEach(mergeType => {
+      if (!remainingTypes[mergeType]) {
+        delete mergeConfig[mergeType];
+      }
+    });
 
-  if (!Object.keys(filteredSubschema.merge).length) {
-    delete filteredSubschema.merge;
+    if (!Object.keys(mergeConfig).length) {
+      delete filteredSubschema.merge;
+    }
   }
 
   return filteredSubschema;
 }
 
-function filterIsolatedSubschema(subschemaConfig: SubschemaConfig): SubschemaConfig {
+type IsolatedSubschemaInput = Exclude<SubschemaConfig, 'merge'> & {
+  merge: Exclude<SubschemaConfig['merge'], null | undefined>;
+};
+
+function filterIsolatedSubschema(subschemaConfig: IsolatedSubschemaInput): SubschemaConfig {
   const rootFields: Record<string, boolean> = {};
 
   Object.values(subschemaConfig.merge).forEach(mergedTypeConfig => {
     const entryPoints = mergedTypeConfig.entryPoints ?? [mergedTypeConfig];
     entryPoints.forEach(entryPoint => {
-      rootFields[entryPoint.fieldName] = true;
+      if (entryPoint.fieldName != null) {
+        rootFields[entryPoint.fieldName] = true;
+      }
     });
   });
 
@@ -150,7 +160,7 @@ function filterIsolatedSubschema(subschemaConfig: SubschemaConfig): SubschemaCon
     (subschemaConfig.schema.getType(typeName) as GraphQLObjectType).getInterfaces().forEach(int => {
       Object.keys((subschemaConfig.schema.getType(int.name) as GraphQLInterfaceType).getFields()).forEach(
         intFieldName => {
-          if (subschemaConfig.merge[typeName].fields[intFieldName]) {
+          if (subschemaConfig.merge[typeName].fields?.[intFieldName]) {
             interfaceFields[int.name] = interfaceFields[int.name] || {};
             interfaceFields[int.name][intFieldName] = true;
           }
@@ -163,7 +173,7 @@ function filterIsolatedSubschema(subschemaConfig: SubschemaConfig): SubschemaCon
     filterSchema({
       schema: subschemaConfig.schema,
       rootFieldFilter: (operation, fieldName) => operation === 'Query' && rootFields[fieldName] != null,
-      objectFieldFilter: (typeName, fieldName) => subschemaConfig.merge[typeName]?.fields[fieldName] != null,
+      objectFieldFilter: (typeName, fieldName) => subschemaConfig.merge[typeName]?.fields?.[fieldName] != null,
       interfaceFieldFilter: (typeName, fieldName) => interfaceFields[typeName]?.[fieldName] != null,
     })
   );

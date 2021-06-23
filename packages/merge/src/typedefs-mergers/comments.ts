@@ -20,12 +20,16 @@ export function resetComments(): void {
 }
 
 export function collectComment(node: NamedDefinitionNode): void {
-  const entityName = node.name.value;
+  const entityName = node.name?.value;
+  if (entityName == null) {
+    return;
+  }
+
   pushComment(node, entityName);
 
   switch (node.kind) {
     case 'EnumTypeDefinition':
-      node.values.forEach(value => {
+      node.values?.forEach(value => {
         pushComment(value, entityName, value.name.value);
       });
       break;

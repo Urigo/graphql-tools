@@ -17,7 +17,7 @@ export function isMockList(obj: any): obj is MockList {
  */
 export class MockList {
   private readonly len: number | Array<number>;
-  private readonly wrappedFunction: () => unknown;
+  private readonly wrappedFunction: undefined | (() => unknown);
 
   /**
    * @param length Either the exact length of items to return or an inclusive

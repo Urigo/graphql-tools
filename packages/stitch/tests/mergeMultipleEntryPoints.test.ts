@@ -1,5 +1,6 @@
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from '@graphql-tools/schema';
+import { assertSome } from '@graphql-tools/utils';
 import { stitchSchemas } from '../src/stitchSchemas';
 
 describe('merge on multiple keys', () => {
@@ -124,7 +125,7 @@ describe('merge on multiple keys', () => {
         }
       }
     `);
-
+    assertSome(data)
     expect(data.productsByKey).toEqual(result);
   });
 
@@ -140,7 +141,7 @@ describe('merge on multiple keys', () => {
         }
       }
     `);
-
+    assertSome(data)
     expect(data.productsByUpc).toEqual(result);
   });
 
@@ -156,7 +157,7 @@ describe('merge on multiple keys', () => {
         }
       }
     `);
-
+    assertSome(data)
     expect(data.productsById).toEqual(result);
   });
 });

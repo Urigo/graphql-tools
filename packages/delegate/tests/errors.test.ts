@@ -33,6 +33,19 @@ describe('Errors', () => {
   });
 
   describe('checkResultAndHandleErrors', () => {
+    const fakeInfo: GraphQLResolveInfo = {
+      fieldName: "foo",
+      fieldNodes: [],
+      returnType: {} as any,
+      parentType: {} as any,
+      path: {prev: undefined, key: "foo", typename: undefined },
+      schema: {} as any,
+      fragments: {},
+      rootValue: {},
+      operation: {} as any,
+      variableValues: {}
+    }
+
     test('persists single error', () => {
       const result = {
         errors: [new GraphQLError('Test error')],
@@ -41,8 +54,9 @@ describe('Errors', () => {
         checkResultAndHandleErrors(
           result,
           {},
-          ({} as unknown) as GraphQLResolveInfo,
+          fakeInfo,
           'responseKey',
+          {} as any,
         );
       } catch (e) {
         expect(e.message).toEqual('Test error');
@@ -58,8 +72,9 @@ describe('Errors', () => {
         checkResultAndHandleErrors(
           result,
           {},
-          ({} as unknown) as GraphQLResolveInfo,
+          fakeInfo,
           'responseKey',
+          {} as any
         );
       } catch (e) {
         expect(e.message).toEqual('Test error');
@@ -76,8 +91,9 @@ describe('Errors', () => {
         checkResultAndHandleErrors(
           result,
           {},
-          ({} as unknown) as GraphQLResolveInfo,
+          fakeInfo,
           'responseKey',
+          {} as any
         );
       } catch (e) {
         expect(e.message).toEqual('Error1\nError2');

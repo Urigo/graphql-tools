@@ -100,7 +100,7 @@ describe('works with complex transforms', () => {
               context,
               info,
               transforms: [queryTransform],
-              returnType: new GraphQLList(new GraphQLList(info.schema.getType('Book')))
+              returnType: new GraphQLList(new GraphQLList(info.schema.getType('Book')!))
             }),
           },
         },

@@ -1,6 +1,6 @@
-import { ITypeDefinitions } from '@graphql-tools/utils';
-import { GraphQLSchema, isSchema, graphql } from 'graphql';
-import { buildSchemaFromTypeDefinitions } from '@graphql-tools/schema';
+import { TypeSource } from '@graphql-tools/utils';
+import { GraphQLSchema, isSchema, graphql, buildASTSchema } from 'graphql';
+import { mergeTypeDefs } from '@graphql-tools/merge';
 import { addMocksToSchema } from './addMocksToSchema';
 import { IMockServer, IMocks } from './types';
 
@@ -16,15 +16,11 @@ import { IMockServer, IMocks } from './types';
  * overwritten to provide mock data. This can be used to mock some parts of the
  * server and not others.
  */
-export function mockServer(
-  schema: GraphQLSchema | ITypeDefinitions,
-  mocks: IMocks,
-  preserveResolvers = false
-): IMockServer {
+export function mockServer(schema: TypeSource, mocks: IMocks, preserveResolvers = false): IMockServer {
   let mySchema: GraphQLSchema;
   if (!isSchema(schema)) {
     // TODO: provide useful error messages here if this fails
-    mySchema = buildSchemaFromTypeDefinitions(schema);
+    mySchema = buildASTSchema(mergeTypeDefs(schema));
   } else {
     mySchema = schema;
   }
