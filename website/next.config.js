@@ -18,5 +18,8 @@ module.exports = withBundleAnalyzer(
   withGuildDocs({
     i18n,
     getRoutes,
+    eslint: {
+      ignoreDuringBuilds: true,
+    },
   })
 );
