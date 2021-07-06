@@ -105,10 +105,11 @@ This example has the entire type definition in one string and all resolvers in o
 
 ## Extending Types
 
-It's easy to add additional fields to existing types using the `extend` keyword.  Using `extend` is particularly useful in avoiding a large list of fields on root Queries and Mutations.  You can use it like this:
+It's easy to add additional fields to existing types using the `extend` keyword. Using `extend` is particularly useful in avoiding a large list of fields on root Queries and Mutations. You can use it like this:
 
 ```js
-const typeDefs = [`
+const typeDefs = [
+  `
   schema {
     query: Query
   }
@@ -120,7 +121,8 @@ const typeDefs = [`
   type Bar {
     id
   }
-  `, `
+  `,
+  `
   type Foo {
     id: String!
   }
@@ -128,7 +130,8 @@ const typeDefs = [`
   extend type Query {
     foos: [Foo]!
   }
-`]
+`,
+];
 ```
 
 If one of the types extended needs a resolver you can use `makeExecutableSchema` like this:
@@ -138,22 +141,22 @@ const barsResolver = {
   Query: {
     bars(parent, args, context, info) {
       // ...
-    }
-  }
+    },
+  },
 };
 
 const foosResolver = {
   Query: {
     foos(parent, args, context, info) {
       // ...
-    }
-  }
-}
+    },
+  },
+};
 
 const schema = makeExecutableSchema({
   typeDefs,
-  resolvers: [barsResolver, foosResolver]
-})
+  resolvers: [barsResolver, foosResolver],
+});
 ```
 
 ## Learning the GraphQL schema language
@@ -161,8 +164,10 @@ const schema = makeExecutableSchema({
 The official documentation on graphql.org now has [a section about GraphQL schemas](http://graphql.org/learn/schema/) which explains all of the different schema features and how to use them with the schema language.
 
 The type definitions must define a query type, which means a minimal schema would look something like this:
+
 ```js
-const typeDefs = [`
+const typeDefs = [
+  `
   schema {
     query: RootQuery
   }
@@ -170,7 +175,8 @@ const typeDefs = [`
   type RootQuery {
     aNumber: Int
   }
-`];
+`,
+];
 ```
 
 ## Descriptions & Deprecations
@@ -233,11 +239,12 @@ const jsSchema = makeExecutableSchema({
 - `parseOptions` is an optional argument which allows customization of parse when specifying `typeDefs` as a string.
 
 - `resolverValidationOptions` is an optional argument with the following properties, each of which can be set to `error`, `warn`, or `ignore`:
+
   - `requireResolversForArgs` will cause `makeExecutableSchema` to throw an error (`error`) or issue a warning (`warn`)unless a resolver is defined for every field with arguments. The default is `ignore`, causing this validator to be skipped.
 
   - `requireResolversForNonScalar` require a resolver for every non-scalar field. Default is `ignore`.
 
-  - `requireResolversForAllFields` asserts that *all* fields have valid resolvers. This option cannot be set in combination with the previous two validators. Default is `ignore`.
+  - `requireResolversForAllFields` asserts that _all_ fields have valid resolvers. This option cannot be set in combination with the previous two validators. Default is `ignore`.
 
   - `requireResolversForResolveType` will require a `resolveType()` method for Interface and Union types. This can be passed in with the field resolvers as `__resolveType()`. Default is `ignore`.
 
@@ -246,4 +253,7 @@ const jsSchema = makeExecutableSchema({
 - `inheritResolversFromInterfaces` GraphQL Objects that implement interfaces will inherit missing resolvers from their interface types defined in the `resolvers` object.
 
 - `schemaTransforms` is an optional argument _(empty array by default)_ and should be an array of schema transformation functions, essentially designed to enable the use of [directive-based functional schema transformation](/docs/schema-directives/)
+<<<<<<< HEAD:website/docs/guides/generate-schema.mdx
 
+=======
+>>>>>>> f2ae31b0f4a36b1e3bc92ac3a265f6c25e4069f9:website/docs/generate-schema.md

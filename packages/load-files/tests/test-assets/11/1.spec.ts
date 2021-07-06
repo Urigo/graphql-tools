@@ -1,3 +1,3 @@
-function foo() {}
+function bar(..._args: any[]) {}
 
-foo('dummy', () => {});
+bar('dummy', () => {});

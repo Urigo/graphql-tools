@@ -142,9 +142,9 @@ export function mockGraphQLServer({
     // 2) MULTIPART RESPONSE: a multipart response (when @stream or @defer directives are used)
     // 3) PUSH: a stream of events to push back down the client for a subscription
     if (result.type === 'RESPONSE') {
-      const headers = {};
+      const headers = new Map<string, string>();
       // We set the provided status and headers and just the send the payload back to the client
-      result.headers.forEach(({ name, value }) => (headers[name] = value));
+      result.headers.forEach(({ name, value }) => headers.set(name, value));
       return [result.status, result.payload, headers];
     } else {
       return [500, 'Not implemented'];

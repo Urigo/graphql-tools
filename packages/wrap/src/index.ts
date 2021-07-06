@@ -3,6 +3,5 @@ export { defaultCreateProxyingResolver, generateProxyingResolvers } from './gene
 
 export * from './transforms/index';
 
-export { makeRemoteExecutableSchema, defaultCreateRemoteResolver } from './makeRemoteExecutableSchema';
 export * from './types';
 export * from './introspect';

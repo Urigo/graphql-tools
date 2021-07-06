@@ -35,7 +35,7 @@ describe('merging using type merging', () => {
 
   accountsSchemaTypes._Key = new GraphQLScalarType({
     name: '_Key',
-  });
+  } as any);
   accountsSchemaTypes.Query = new GraphQLObjectType({
     name: 'Query',
     fields: () => ({
@@ -50,7 +50,7 @@ describe('merging using type merging', () => {
             type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(accountsSchemaTypes._Key)))
           },
         },
-        resolve: (_root, { keys }) => keys.map((key: Record<string, any>) => users.find(u => u.id === key.id)),
+        resolve: (_root, { keys }) => keys.map((key: Record<string, any>) => users.find(u => u.id === key['id'])),
         extensions: {
           directives: {
             merge: {},
@@ -138,7 +138,7 @@ describe('merging using type merging', () => {
           keys: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(inventorySchemaTypes.ProductKey))) }
         },
         resolve: (_root, { keys }) => {
-          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key.upc) }));
+          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key['upc']) }));
         },
         extensions: {
           directives: {
@@ -204,7 +204,7 @@ describe('merging using type merging', () => {
             defaultValue: 2,
           },
         },
-        resolve: (_root, args) => products.slice(0, args.first),
+        resolve: (_root, args) => products.slice(0, args['first']),
       },
       _productsByUpc: {
         type: new GraphQLList(productsSchemaTypes.Product),

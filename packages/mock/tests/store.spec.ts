@@ -250,7 +250,7 @@ describe('MockStore', () => {
 
   it('should be able to generate a list of Object type', () => {
     const store = createMockStore({ schema });
-    const friends = store.get('User', '123', 'friends');
+    const friends = store.get('User', '123', 'friends') as any[];
 
     expect(friends).toBeInstanceOf(Array);
     expect(friends[0]).toHaveProperty('$ref');

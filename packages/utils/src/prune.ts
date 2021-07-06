@@ -46,18 +46,18 @@ export function pruneSchema(schema: GraphQLSchema, options: PruneSchemaOptions =
     implementations: Object.create(null),
   };
 
-  Object.keys(schema.getTypeMap()).forEach(typeName => {
+  for (const typeName in schema.getTypeMap()) {
     const type = schema.getType(typeName);
     if (type && 'getInterfaces' in type) {
-      type.getInterfaces().forEach(iface => {
+      for (const iface of type.getInterfaces()) {
         const implementations = getImplementations(pruningContext, iface);
         if (implementations == null) {
           pruningContext.implementations[iface.name] = Object.create(null);
         }
         pruningContext.implementations[iface.name][type.name] = true;
-      });
+      }
     }
-  });
+  }
 
   visitTypes(pruningContext, schema);
 
@@ -115,35 +115,36 @@ function visitOutputType(
 
   if (isObjectType(type) || isInterfaceType(type)) {
     const fields = type.getFields();
-    Object.keys(fields).forEach(fieldName => {
+    for (const fieldName in fields) {
       const field = fields[fieldName];
       const namedType = getNamedType(field.type) as NamedOutputType;
       visitOutputType(visitedTypes, pruningContext, namedType);
 
-      const args = field.args;
-      args.forEach(arg => {
+      for (const arg of field.args) {
         const type = getNamedType(arg.type) as NamedInputType;
         visitInputType(visitedTypes, pruningContext, type);
-      });
-    });
+      }
+    }
 
     if (isInterfaceType(type)) {
       const implementations = getImplementations(pruningContext, type);
       if (implementations) {
-        Object.keys(implementations).forEach(typeName => {
+        for (const typeName in implementations) {
           visitOutputType(visitedTypes, pruningContext, pruningContext.schema.getType(typeName) as NamedOutputType);
-        });
+        }
       }
     }
 
     if ('getInterfaces' in type) {
-      type.getInterfaces().forEach(type => {
-        visitOutputType(visitedTypes, pruningContext, type);
-      });
+      for (const iFace of type.getInterfaces()) {
+        visitOutputType(visitedTypes, pruningContext, iFace);
+      }
     }
   } else if (isUnionType(type)) {
     const types = type.getTypes();
-    types.forEach(type => visitOutputType(visitedTypes, pruningContext, type));
+    for (const type of types) {
+      visitOutputType(visitedTypes, pruningContext, type);
+    }
   }
 }
 
@@ -171,31 +172,33 @@ function visitInputType(
 
   if (isInputObjectType(type)) {
     const fields = type.getFields();
-    Object.keys(fields).forEach(fieldName => {
+    for (const fieldName in fields) {
       const field = fields[fieldName];
       const namedType = getNamedType(field.type) as NamedInputType;
       visitInputType(visitedTypes, pruningContext, namedType);
-    });
+    }
   }
 }
 
 function visitTypes(pruningContext: PruningContext, schema: GraphQLSchema): void {
-  Object.keys(schema.getTypeMap()).forEach(typeName => {
+  for (const typeName in schema.getTypeMap()) {
     if (!typeName.startsWith('__')) {
       pruningContext.unusedTypes[typeName] = true;
     }
-  });
+  }
 
   const visitedTypes: Record<string, boolean> = Object.create(null);
 
   const rootTypes = [schema.getQueryType(), schema.getMutationType(), schema.getSubscriptionType()].filter(isSome);
 
-  rootTypes.forEach(rootType => visitOutputType(visitedTypes, pruningContext, rootType));
+  for (const rootType of rootTypes) {
+    visitOutputType(visitedTypes, pruningContext, rootType);
+  }
 
-  schema.getDirectives().forEach(directive => {
-    directive.args.forEach(arg => {
+  for (const directive of schema.getDirectives()) {
+    for (const arg of directive.args) {
       const type = getNamedType(arg.type) as NamedInputType;
       visitInputType(visitedTypes, pruningContext, type);
-    });
-  });
+    }
+  }
 }

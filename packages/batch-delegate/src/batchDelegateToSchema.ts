@@ -2,7 +2,7 @@ import { BatchDelegateOptions } from './types';
 
 import { getLoader } from './getLoader';
 
-export function batchDelegateToSchema(options: BatchDelegateOptions): any {
+export function batchDelegateToSchema<TContext = any>(options: BatchDelegateOptions<TContext>): any {
   const key = options.key;
   if (key == null) {
     return null;

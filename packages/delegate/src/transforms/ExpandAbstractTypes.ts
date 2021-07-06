@@ -50,7 +50,7 @@ function extractPossibleTypes(sourceSchema: GraphQLSchema, targetSchema: GraphQL
   const typeMap = sourceSchema.getTypeMap();
   const possibleTypesMap: Record<string, Array<string>> = Object.create(null);
   const interfaceExtensionsMap: Record<string, Record<string, boolean>> = Object.create(null);
-  Object.keys(typeMap).forEach(typeName => {
+  for (const typeName in typeMap) {
     const type = typeMap[typeName];
     if (isAbstractType(type)) {
       const targetType = targetSchema.getType(typeName);
@@ -58,12 +58,14 @@ function extractPossibleTypes(sourceSchema: GraphQLSchema, targetSchema: GraphQL
       if (isInterfaceType(type) && isInterfaceType(targetType)) {
         const targetTypeFields = targetType.getFields();
         const extensionFields: Record<string, boolean> = Object.create(null);
-        Object.keys(type.getFields()).forEach((fieldName: string) => {
+        let isExtensionFieldsEmpty = true;
+        for (const fieldName in type.getFields()) {
           if (!targetTypeFields[fieldName]) {
             extensionFields[fieldName] = true;
+            isExtensionFieldsEmpty = false;
           }
-        });
-        if (Object.keys(extensionFields).length) {
+        }
+        if (!isExtensionFieldsEmpty) {
           interfaceExtensionsMap[typeName] = extensionFields;
         }
       }
@@ -75,21 +77,21 @@ function extractPossibleTypes(sourceSchema: GraphQLSchema, targetSchema: GraphQL
           .map(impl => impl.name);
       }
     }
-  });
+  }
   return { possibleTypesMap, interfaceExtensionsMap };
 }
 
 function flipMapping(mapping: Record<string, Array<string>>): Record<string, Array<string>> {
   const result: Record<string, Array<string>> = Object.create(null);
-  Object.keys(mapping).forEach(typeName => {
+  for (const typeName in mapping) {
     const toTypeNames = mapping[typeName];
-    toTypeNames.forEach(toTypeName => {
+    for (const toTypeName of toTypeNames) {
       if (!(toTypeName in result)) {
         result[toTypeName] = [];
       }
       result[toTypeName].push(typeName);
-    });
-  });
+    }
+  }
   return result;
 }
 
@@ -135,12 +137,12 @@ function expandAbstractTypes(
   const newFragments: Array<FragmentDefinitionNode> = [];
   const fragmentReplacements: Record<string, Array<{ fragmentName: string; typeName: string }>> = Object.create(null);
 
-  fragments.forEach((fragment: FragmentDefinitionNode) => {
+  for (const fragment of fragments) {
     newFragments.push(fragment);
     const possibleTypes = possibleTypesMap[fragment.typeCondition.name.value];
     if (possibleTypes != null) {
       fragmentReplacements[fragment.name.value] = [];
-      possibleTypes.forEach(possibleTypeName => {
+      for (const possibleTypeName of possibleTypes) {
         const name = generateFragmentName(possibleTypeName);
         existingFragmentNames.push(name);
         const newFragment: FragmentDefinitionNode = {
@@ -164,9 +166,9 @@ function expandAbstractTypes(
           fragmentName: name,
           typeName: possibleTypeName,
         });
-      });
+      }
     }
-  });
+  }
 
   const newDocument = {
     ...document,
@@ -184,12 +186,12 @@ function expandAbstractTypes(
           const parentType: GraphQLNamedType = getNamedType(maybeType);
           const interfaceExtension = interfaceExtensionsMap[parentType.name];
           const interfaceExtensionFields = [] as Array<SelectionNode>;
-          node.selections.forEach((selection: SelectionNode) => {
+          for (const selection of node.selections) {
             if (selection.kind === Kind.INLINE_FRAGMENT) {
               if (selection.typeCondition != null) {
                 const possibleTypes = possibleTypesMap[selection.typeCondition.name.value];
                 if (possibleTypes != null) {
-                  possibleTypes.forEach(possibleType => {
+                  for (const possibleType of possibleTypes) {
                     const maybePossibleType = targetSchema.getType(possibleType);
                     if (
                       maybePossibleType != null &&
@@ -197,13 +199,13 @@ function expandAbstractTypes(
                     ) {
                       addedSelections.push(generateInlineFragment(possibleType, selection.selectionSet));
                     }
-                  });
+                  }
                 }
               }
             } else if (selection.kind === Kind.FRAGMENT_SPREAD) {
               const fragmentName = selection.name.value;
               if (fragmentName in fragmentReplacements) {
-                fragmentReplacements[fragmentName].forEach(replacement => {
+                for (const replacement of fragmentReplacements[fragmentName]) {
                   const typeName = replacement.typeName;
                   const maybeReplacementType = targetSchema.getType(typeName);
                   if (maybeReplacementType != null && implementsAbstractType(targetSchema, parentType, maybeType)) {
@@ -215,7 +217,7 @@ function expandAbstractTypes(
                       },
                     });
                   }
-                });
+                }
               }
             } else if (
               interfaceExtension != null &&
@@ -224,7 +226,7 @@ function expandAbstractTypes(
             ) {
               interfaceExtensionFields.push(selection);
             }
-          });
+          }
 
           if (parentType.name in reversePossibleTypesMap) {
             addedSelections.push({
@@ -239,14 +241,14 @@ function expandAbstractTypes(
           if (interfaceExtensionFields.length) {
             const possibleTypes = possibleTypesMap[parentType.name];
             if (possibleTypes != null) {
-              possibleTypes.forEach(possibleType => {
+              for (const possibleType of possibleTypes) {
                 addedSelections.push(
                   generateInlineFragment(possibleType, {
                     kind: Kind.SELECTION_SET,
                     selections: interfaceExtensionFields,
                   })
                 );
-              });
+              }
 
               newSelections = newSelections.filter(
                 (selection: SelectionNode) =>

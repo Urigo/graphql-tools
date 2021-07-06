@@ -4,6 +4,7 @@ import { getExtNameFromFilePath } from './libs/extname';
 import createVisitor, { PluckedContent } from './visitor';
 import traverse from '@babel/traverse';
 import { freeText } from './utils';
+import { Source } from 'graphql';
 
 /**
  * Additional options for determining how a file is parsed.
@@ -128,7 +129,7 @@ export const gqlPluckFromCodeString = async (
   filePath: string,
   code: string,
   options: GraphQLTagPluckOptions = {}
-): Promise<string> => {
+): Promise<Source[]> => {
   validate({ code, options });
 
   const fileExt = extractExtension(filePath);
@@ -137,9 +138,7 @@ export const gqlPluckFromCodeString = async (
     code = await pluckVueFileScript(code);
   }
 
-  return parseCode({ code, filePath, options })
-    .map(t => t.content)
-    .join('\n\n');
+  return parseCode({ code, filePath, options }).map(t => new Source(t.content, filePath, t.loc.start));
 };
 
 /**
@@ -155,7 +154,7 @@ export const gqlPluckFromCodeStringSync = (
   filePath: string,
   code: string,
   options: GraphQLTagPluckOptions = {}
-): string => {
+): Source[] => {
   validate({ code, options });
 
   const fileExt = extractExtension(filePath);
@@ -164,9 +163,7 @@ export const gqlPluckFromCodeStringSync = (
     code = pluckVueFileScriptSync(code);
   }
 
-  return parseCode({ code, filePath, options })
-    .map(t => t.content)
-    .join('\n\n');
+  return parseCode({ code, filePath, options }).map(t => new Source(t.content, filePath, t.loc.start));
 };
 
 export function parseCode({

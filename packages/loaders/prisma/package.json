@@ -32,7 +32,6 @@
   "dependencies": {
     "@graphql-tools/url-loader": "^6.8.2",
     "@graphql-tools/utils": "^7.0.0",
-    "@types/http-proxy-agent": "^4.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/jsonwebtoken": "^8.5.0",

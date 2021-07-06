@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import * as path from 'path';
 import { CodeFileLoader } from '../src';
 import { parse } from 'graphql';
@@ -11,7 +12,7 @@ describe('loadFromCodeFile', () => {
         noRequire: true,
         cwd: __dirname
       });
-      const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+      const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
       expect(doc).toBeFalsy();
     } catch (e) {
@@ -24,9 +25,9 @@ describe('loadFromCodeFile', () => {
       noRequire: true,
       cwd: __dirname
     });
-    const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+    const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 
   it('should consider options.cwd', async () => {
@@ -34,9 +35,9 @@ describe('loadFromCodeFile', () => {
       cwd: path.resolve(__dirname, 'test-files'),
       noRequire: true,
     });
-    const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+    const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 
   it('should load a TypeScript file using decorator', async () => {
@@ -44,18 +45,18 @@ describe('loadFromCodeFile', () => {
       noRequire: true,
       cwd: __dirname
     });
-    const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+    const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 
   it('should support string interpolation', async () => {
     const loaded = await loader.load('./test-files/string-interpolation.js', {
       cwd: __dirname
     });
-    const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+    const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 });
 
@@ -68,9 +69,9 @@ describe('loadFromCodeFileSync', () => {
         noRequire: true,
         cwd: __dirname
       });
-      const doc = loaded.document ? loaded.document : parse(loaded.rawSDL);
+      const doc = loaded?.document ? loaded?.document : parse(loaded?.rawSDL!);
 
-      expect(doc.kind).toEqual('Document');
+      expect(doc?.kind).toEqual('Document');
     }).toThrowError('Syntax Error: Unexpected Name "InvalidGetUser"')
   });
 
@@ -79,9 +80,9 @@ describe('loadFromCodeFileSync', () => {
       noRequire: true,
       cwd: __dirname
     });
-    const doc = loaded.document;
+    const doc = loaded?.document;
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 
   it('should consider options.cwd', () => {
@@ -89,9 +90,9 @@ describe('loadFromCodeFileSync', () => {
       cwd: path.resolve(__dirname, 'test-files'),
       noRequire: true,
     });
-    const doc = loaded.document;
+    const doc = loaded?.document;
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 
   it('should support string interpolation', () => {
@@ -99,8 +100,8 @@ describe('loadFromCodeFileSync', () => {
       cwd: __dirname
     });
 
-    const doc = loaded.document;
+    const doc = loaded?.document;
 
-    expect(doc.kind).toEqual('Document');
+    expect(doc?.kind).toEqual('Document');
   });
 });

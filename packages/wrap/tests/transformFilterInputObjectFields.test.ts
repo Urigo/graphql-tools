@@ -67,7 +67,7 @@ describe('FilterInputObjectFields', () => {
 
     const result = await graphql(transformedSchema, query);
     assertSome(result.data)
-    expect(result.data.test.field1).toBe('field1');
-    expect(result.data.test.field2).toBe('field2');
+    expect(result.data['test'].field1).toBe('field1');
+    expect(result.data['test'].field2).toBe('field2');
   });
 });

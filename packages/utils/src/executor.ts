@@ -1,39 +1,50 @@
 import { DocumentNode, GraphQLResolveInfo } from 'graphql';
 import { ExecutionResult } from './Interfaces';
 
-export interface ExecutionParams<TArgs extends Record<string, any> = Record<string, any>, TContext = any> {
+type MaybePromise<T> = Promise<T> | T;
+type MaybeAsyncIterableIterator<T> = AsyncIterableIterator<T> | T;
+
+export interface ExecutionParams<
+  TArgs extends Record<string, any> = Record<string, any>,
+  TContext = any,
+  TRootValue = any,
+  TExtensions = Record<string, any>
+> {
   document: DocumentNode;
   variables?: TArgs;
-  extensions?: Record<string, any>;
+  extensions?: TExtensions;
   context?: TContext;
   info?: GraphQLResolveInfo;
+  rootValue?: TRootValue;
+  operationName?: string;
 }
 
-export type AsyncExecutor<TBaseContext = Record<string, any>> = <
-  TReturn = Record<string, any>,
+export type AsyncExecutor<TBaseContext = Record<string, any>, TBaseExtensions = Record<string, any>> = <
+  TReturn = any,
   TArgs = Record<string, any>,
-  TContext extends TBaseContext = TBaseContext
+  TContext extends TBaseContext = TBaseContext,
+  TRoot = any,
+  TExtensions extends TBaseExtensions = TBaseExtensions
 >(
-  params: ExecutionParams<TArgs, TContext>
-) => Promise<ExecutionResult<TReturn>>;
-export type SyncExecutor<TBaseContext = Record<string, any>> = <
-  TReturn = Record<string, any>,
+  params: ExecutionParams<TArgs, TContext, TRoot, TExtensions>
+) => Promise<MaybeAsyncIterableIterator<ExecutionResult<TReturn>>>;
+
+export type SyncExecutor<TBaseContext = Record<string, any>, TBaseExtensions = Record<string, any>> = <
+  TReturn = any,
   TArgs = Record<string, any>,
-  TContext extends TBaseContext = TBaseContext
+  TContext extends TBaseContext = TBaseContext,
+  TRoot = any,
+  TExtensions extends TBaseExtensions = TBaseExtensions
 >(
-  params: ExecutionParams<TArgs, TContext>
+  params: ExecutionParams<TArgs, TContext, TRoot, TExtensions>
 ) => ExecutionResult<TReturn>;
-export type Executor<TBaseContext = Record<string, any>> = <
-  TReturn = Record<string, any>,
+
+export type Executor<TBaseContext = Record<string, any>, TBaseExtensions = Record<string, any>> = <
+  TReturn = any,
   TArgs = Record<string, any>,
-  TContext extends TBaseContext = TBaseContext
+  TContext extends TBaseContext = TBaseContext,
+  TRoot = any,
+  TExtensions extends TBaseExtensions = TBaseExtensions
 >(
-  params: ExecutionParams<TArgs, TContext>
-) => ExecutionResult<TReturn> | Promise<ExecutionResult<TReturn>>;
-export type Subscriber<TBaseContext = Record<string, any>> = <
-  TReturn = Record<string, any>,
-  TArgs = Record<string, any>,
-  TContext extends TBaseContext = TBaseContext
->(
-  params: ExecutionParams<TArgs, TContext>
-) => Promise<AsyncIterableIterator<ExecutionResult<TReturn>> | ExecutionResult<TReturn>>;
+  params: ExecutionParams<TArgs, TContext, TRoot, TExtensions>
+) => MaybePromise<MaybeAsyncIterableIterator<ExecutionResult<TReturn>>>;

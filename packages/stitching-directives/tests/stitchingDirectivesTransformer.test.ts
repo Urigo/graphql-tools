@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { print } from 'graphql';
 
 import { makeExecutableSchema } from '@graphql-tools/schema';
@@ -31,8 +32,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    expect(transformedSubschemaConfig.merge.User.selectionSet).toEqual(print(parseSelectionSet('{ id }')));
-    expect(transformedSubschemaConfig.merge.User.fieldName).toEqual('_user');
+    expect(transformedSubschemaConfig.merge?.['User'].selectionSet).toEqual(print(parseSelectionSet('{ id }')));
+    expect(transformedSubschemaConfig.merge?.['User'].fieldName).toEqual('_user');
   });
 
   test('adds type selection sets when returns union', () => {
@@ -60,8 +61,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    expect(transformedSubschemaConfig.merge.User.selectionSet).toEqual(print(parseSelectionSet('{ id }')));
-    expect(transformedSubschemaConfig.merge.User.fieldName).toEqual('_entity');
+    expect(transformedSubschemaConfig.merge?.['User'].selectionSet).toEqual(print(parseSelectionSet('{ id }')));
+    expect(transformedSubschemaConfig.merge?.['User'].fieldName).toEqual('_entity');
   });
 
   test('adds type selection sets when returns interface', () => {
@@ -91,8 +92,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    expect(transformedSubschemaConfig.merge.User.selectionSet).toEqual(print(parseSelectionSet('{ id }')));
-    expect(transformedSubschemaConfig.merge.User.fieldName).toEqual('_entity');
+    expect(transformedSubschemaConfig.merge?.['User'].selectionSet).toEqual(print(parseSelectionSet('{ id }')));
+    expect(transformedSubschemaConfig.merge?.['User'].fieldName).toEqual('_entity');
   });
 
   test('adds type selection sets when returns list', () => {
@@ -117,7 +118,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       relations: [
@@ -168,7 +169,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       relationSets: [
@@ -233,7 +234,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult: { nestedField: null } = {
       nestedField: null
@@ -271,9 +272,9 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    expect(transformedSubschemaConfig.merge.User.fields.name.selectionSet).toEqual(print(parseSelectionSet('{ id }')));
-    expect(transformedSubschemaConfig.merge.User.fields.name.computed).toEqual(true);
-    expect(transformedSubschemaConfig.merge.User.fieldName).toEqual('_user');
+    expect(transformedSubschemaConfig.merge?.['User']?.fields?.['name']?.selectionSet).toEqual(print(parseSelectionSet('{ id }')));
+    expect(transformedSubschemaConfig.merge?.['User']?.fields?.['name']?.computed).toEqual(true);
+    expect(transformedSubschemaConfig.merge?.['User'].fieldName).toEqual('_user');
   });
 
   test('adds args function when used without arguments', () => {
@@ -299,7 +300,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -338,7 +339,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -377,7 +378,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -416,7 +417,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -459,7 +460,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -501,7 +502,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -539,9 +540,9 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    expect(transformedSubschemaConfig.merge.User.selectionSet).toEqual(`{\n  id\n}`);
+    expect(transformedSubschemaConfig.merge?.['User'].selectionSet).toEqual(`{\n  id\n}`);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -578,7 +579,7 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const argsFn = transformedSubschemaConfig.merge.User.args;
+    const argsFn = transformedSubschemaConfig.merge?.['User'].args!;
 
     const originalResult = {
       id: '5',
@@ -624,8 +625,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const keyFn = transformedSubschemaConfig.merge.User.key;
-    const argsFromKeysFn = transformedSubschemaConfig.merge.User.argsFromKeys;
+    const keyFn = transformedSubschemaConfig.merge?.['User'].key!;
+    const argsFromKeysFn = transformedSubschemaConfig.merge?.['User'].argsFromKeys!;
 
     const originalResult = {
       id: '5',
@@ -670,8 +671,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const keyFn = transformedSubschemaConfig.merge.User.key;
-    const argsFromKeysFn = transformedSubschemaConfig.merge.User.argsFromKeys;
+    const keyFn = transformedSubschemaConfig.merge?.['User'].key!;
+    const argsFromKeysFn = transformedSubschemaConfig.merge?.['User'].argsFromKeys!;
 
     const originalResult = {
       __typename: 'User',
@@ -721,8 +722,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const keyFn = transformedSubschemaConfig.merge.User.key;
-    const argsFromKeysFn = transformedSubschemaConfig.merge.User.argsFromKeys;
+    const keyFn = transformedSubschemaConfig.merge?.['User'].key!;
+    const argsFromKeysFn = transformedSubschemaConfig.merge?.['User'].argsFromKeys!;
 
     const originalResult = {
       __typename: 'User',
@@ -768,8 +769,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const keyFn = transformedSubschemaConfig.merge.User.key;
-    const argsFromKeysFn = transformedSubschemaConfig.merge.User.argsFromKeys;
+    const keyFn = transformedSubschemaConfig.merge?.['User'].key!;
+    const argsFromKeysFn = transformedSubschemaConfig.merge?.['User'].argsFromKeys!;
 
     const originalResult = {
       id: '5',
@@ -812,8 +813,8 @@ describe('type merging directives', () => {
 
     const transformedSubschemaConfig = stitchingDirectivesTransformer(subschemaConfig);
 
-    const keyFn = transformedSubschemaConfig.merge.User.key;
-    const argsFromKeysFn = transformedSubschemaConfig.merge.User.argsFromKeys;
+    const keyFn = transformedSubschemaConfig.merge?.['User'].key!;
+    const argsFromKeysFn = transformedSubschemaConfig.merge?.['User'].argsFromKeys!;
 
     const originalResult = {
       id: '5',

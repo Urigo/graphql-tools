@@ -33,6 +33,7 @@ import {
   GraphQLDirective,
   isNamedType,
   isDirective,
+  isObjectType,
 } from 'graphql';
 import { rewireTypes } from './rewire';
 
@@ -50,35 +51,44 @@ export function addTypes(
 
   const config = schema.toConfig();
 
-  const originalTypeMap = {};
-  config.types.forEach(type => {
+  const originalTypeMap: Record<string, GraphQLNamedType> = {};
+  for (const type of config.types) {
     originalTypeMap[type.name] = type;
-  });
+  }
 
-  const originalDirectiveMap = {};
-  config.directives.forEach(directive => {
+  const originalDirectiveMap: Record<string, GraphQLDirective> = {};
+  for (const directive of config.directives) {
     originalDirectiveMap[directive.name] = directive;
-  });
+  }
 
-  newTypesOrDirectives.forEach(newTypeOrDirective => {
+  for (const newTypeOrDirective of newTypesOrDirectives) {
     if (isNamedType(newTypeOrDirective)) {
       originalTypeMap[newTypeOrDirective.name] = newTypeOrDirective;
     } else if (isDirective(newTypeOrDirective)) {
       originalDirectiveMap[newTypeOrDirective.name] = newTypeOrDirective;
     }
-  });
+  }
 
-  const { typeMap, directives } = rewireTypes(
-    originalTypeMap,
-    Object.keys(originalDirectiveMap).map(directiveName => originalDirectiveMap[directiveName])
-  );
+  const { typeMap, directives } = rewireTypes(originalTypeMap, Object.values(originalDirectiveMap));
 
   return new GraphQLSchema({
     ...config,
-    query: queryTypeName ? (typeMap[queryTypeName] as GraphQLObjectType) : undefined,
-    mutation: mutationTypeName ? (typeMap[mutationTypeName] as GraphQLObjectType) : undefined,
-    subscription: subscriptionTypeName != null ? (typeMap[subscriptionTypeName] as GraphQLObjectType) : undefined,
-    types: Object.keys(typeMap).map(typeName => typeMap[typeName]),
+    query: getObjectTypeFromTypeMap(typeMap, queryTypeName),
+    mutation: getObjectTypeFromTypeMap(typeMap, mutationTypeName),
+    subscription: getObjectTypeFromTypeMap(typeMap, subscriptionTypeName),
+    types: Object.values(typeMap),
     directives,
   });
+}
+
+export function getObjectTypeFromTypeMap(
+  typeMap: Record<string, GraphQLNamedType>,
+  typeName?: string
+): GraphQLObjectType | undefined {
+  if (typeName) {
+    const maybeObjectType = typeMap[typeName];
+    if (isObjectType(maybeObjectType)) {
+      return maybeObjectType;
+    }
+  }
 }

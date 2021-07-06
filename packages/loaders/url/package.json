@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@types/extract-files": "8.1.0",
-    "@types/ws": "7.4.5",
+    "@types/ws": "7.4.6",
     "graphql-upload": "12.0.0",
     "mock-http": "1.1.0",
     "mock-socket": "9.0.3"
@@ -45,8 +45,9 @@
     "@graphql-tools/delegate": "^7.0.1",
     "@graphql-tools/utils": "^7.9.0",
     "@graphql-tools/wrap": "^7.0.4",
-    "@microsoft/fetch-event-source": "2.0.1",
-    "@types/websocket": "1.0.2",
+    "@ardatan/fetch-event-source": "2.0.2",
+    "@n1ru4l/graphql-live-query": "0.7.1",
+    "@types/websocket": "1.0.3",
     "abort-controller": "3.0.0",
     "cross-fetch": "3.1.4",
     "extract-files": "11.0.0",
@@ -60,7 +61,8 @@
     "sync-fetch": "0.3.0",
     "tslib": "~2.3.0",
     "valid-url": "1.0.9",
-    "ws": "7.5.0"
+    "ws": "7.5.2",
+    "value-or-promise": "1.0.10"
   },
   "publishConfig": {
     "access": "public",

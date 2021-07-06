@@ -98,8 +98,8 @@ describe('merge conflict handlers', () => {
     expect(Listing.description).toEqual('A type');
     expect(IListing.description).toEqual('An interface');
     expect(ListingInput.description).toEqual('An input');
-    expect(Listing.getFields().id.description).toEqual('type identifier');
-    expect(IListing.getFields().id.description).toEqual('interface identifier');
-    expect(ListingInput.getFields().id.description).toEqual('input identifier');
+    expect(Listing.getFields()['id'].description).toEqual('type identifier');
+    expect(IListing.getFields()['id'].description).toEqual('interface identifier');
+    expect(ListingInput.getFields()['id'].description).toEqual('input identifier');
   });
 });

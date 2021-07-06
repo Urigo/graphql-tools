@@ -1,7 +1,4 @@
 import {
-  GraphQLSchema,
-  GraphQLFieldResolver,
-  BuildSchemaOptions,
   GraphQLInputFieldConfig,
   GraphQLFieldConfig,
   FieldNode,
@@ -13,18 +10,7 @@ import {
   GraphQLEnumValueConfig,
 } from 'graphql';
 import { DelegationContext } from '@graphql-tools/delegate';
-import { Executor, Subscriber, Request, Maybe } from '@graphql-tools/utils';
-
-export interface IMakeRemoteExecutableSchemaOptions<TContext = Record<string, any>> {
-  schema: GraphQLSchema | string;
-  executor: Executor<TContext>;
-  subscriber?: Subscriber<TContext>;
-  createResolver?: (
-    executor: Executor<TContext>,
-    subscriber?: Subscriber<TContext> | undefined
-  ) => GraphQLFieldResolver<any, TContext>;
-  buildSchemaOptions?: BuildSchemaOptions;
-}
+import { Request, Maybe } from '@graphql-tools/utils';
 
 export type InputFieldTransformer = (
   typeName: string,

@@ -17,7 +17,7 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
     fragments: info.fragments,
   } as unknown as GraphQLExecutionContext;
 
-  info.fieldNodes.forEach(fieldNode => {
+  for (const fieldNode of info.fieldNodes) {
     if (fieldNode.selectionSet) {
       subFieldNodes = collectFields(
         partialExecutionContext,
@@ -27,13 +27,13 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
         visitedFragmentNames
       );
     }
-  });
+  }
 
   // TODO: Verify whether it is safe that extensions always exists.
   const stitchingInfo: Maybe<StitchingInfo> = info.schema.extensions?.['stitchingInfo'];
   const selectionSetsByField = stitchingInfo?.selectionSetsByField;
 
-  Object.keys(subFieldNodes).forEach(responseName => {
+  for (const responseName in subFieldNodes) {
     const fieldName = subFieldNodes[responseName][0].name.value;
     const fieldSelectionSet = selectionSetsByField?.[typeName]?.[fieldName];
     if (fieldSelectionSet != null) {
@@ -45,7 +45,7 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
         visitedFragmentNames
       );
     }
-  });
+  }
 
   return subFieldNodes;
 }
@@ -65,12 +65,12 @@ export const getFieldsNotInSubschema = memoizeInfoAnd2Objects(function (
   const subFieldNodes = collectSubFields(info, typeName);
 
   let fieldsNotInSchema: Array<FieldNode> = [];
-  Object.keys(subFieldNodes).forEach(responseName => {
+  for (const responseName in subFieldNodes) {
     const fieldName = subFieldNodes[responseName][0].name.value;
     if (!(fieldName in fields)) {
       fieldsNotInSchema = fieldsNotInSchema.concat(subFieldNodes[responseName]);
     }
-  });
+  }
 
   return fieldsNotInSchema;
 });

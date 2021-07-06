@@ -27,15 +27,15 @@ export function generateProxyingResolvers<TContext>(
   };
 
   const resolvers = {};
-  // @ts-expect-error: Object.keys typings suck.
-  Object.keys(operationTypes).forEach((operation: OperationTypeNode) => {
+  for (const operationAsString in operationTypes) {
+    const operation = operationAsString as OperationTypeNode;
     const rootType = operationTypes[operation];
     if (rootType != null) {
       const typeName = rootType.name;
       const fields = rootType.getFields();
 
       resolvers[typeName] = {};
-      Object.keys(fields).forEach(fieldName => {
+      for (const fieldName in fields) {
         const proxyingResolver = createProxyingResolver({
           subschemaConfig,
           transformedSchema,
@@ -56,9 +56,9 @@ export function generateProxyingResolvers<TContext>(
             resolve: finalResolver,
           };
         }
-      });
+      }
     }
-  });
+  }
 
   return resolvers;
 }

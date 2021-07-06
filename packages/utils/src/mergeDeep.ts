@@ -10,7 +10,7 @@ export function mergeDeep<T extends object, S extends any[]>(
   ...sources: S
 ): T & UnboxIntersection<UnionToIntersection<BoxedTupleTypes<S>>> & any {
   if (isScalarType(target)) {
-    return target as any;
+    return target;
   }
   const output = {};
   Object.setPrototypeOf(output, Object.create(Object.getPrototypeOf(target)));
@@ -19,12 +19,12 @@ export function mergeDeep<T extends object, S extends any[]>(
       const outputPrototype = Object.getPrototypeOf(output);
       const sourcePrototype = Object.getPrototypeOf(source);
       if (sourcePrototype) {
-        Object.getOwnPropertyNames(sourcePrototype).forEach(key => {
+        for (const key of Object.getOwnPropertyNames(sourcePrototype)) {
           const descriptor = Object.getOwnPropertyDescriptor(sourcePrototype, key);
           if (isSome(descriptor)) {
             Object.defineProperty(outputPrototype, key, descriptor);
           }
-        });
+        }
       }
 
       for (const key in source) {

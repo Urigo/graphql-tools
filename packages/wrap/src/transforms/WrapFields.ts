@@ -89,14 +89,14 @@ export default class WrapFields<TContext> implements Transform<WrapFieldsTransfo
     );
 
     const newTargetFieldConfigMap: GraphQLFieldConfigMap<any, any> = Object.create(null);
-    Object.keys(targetFieldConfigMap).forEach(fieldName => {
+    for (const fieldName in targetFieldConfigMap) {
       const field = targetFieldConfigMap[fieldName];
       const newField: GraphQLFieldConfig<any, any> = {
         ...field,
         resolve: defaultMergedResolver,
       };
       newTargetFieldConfigMap[fieldName] = newField;
-    });
+    }
 
     let wrapIndex = this.numWraps - 1;
     let wrappingTypeName = this.wrappingTypeNames[wrapIndex];
@@ -181,7 +181,7 @@ function collectFields(
   visitedFragmentNames = {}
 ): Array<FieldNode> {
   if (selectionSet != null) {
-    selectionSet.selections.forEach(selection => {
+    for (const selection of selectionSet.selections) {
       switch (selection.kind) {
         case Kind.FIELD:
           fields.push(selection);
@@ -201,7 +201,7 @@ function collectFields(
           // unreachable
           break;
       }
-    });
+    }
   }
 
   return fields;
@@ -242,7 +242,7 @@ function hoistFieldNodes({
 
   if (index < path.length) {
     const pathSegment = path[index];
-    collectFields(fieldNode.selectionSet, fragments).forEach((possibleFieldNode: FieldNode) => {
+    for (const possibleFieldNode of collectFields(fieldNode.selectionSet, fragments)) {
       if (possibleFieldNode.name.value === pathSegment) {
         const newWrappingPath = wrappingPath.concat([alias]);
 
@@ -259,9 +259,9 @@ function hoistFieldNodes({
           })
         );
       }
-    });
+    }
   } else {
-    collectFields(fieldNode.selectionSet, fragments).forEach((possibleFieldNode: FieldNode) => {
+    for (const possibleFieldNode of collectFields(fieldNode.selectionSet, fragments)) {
       if (!fieldNames || fieldNames.includes(possibleFieldNode.name.value)) {
         const nextIndex = transformationContext.nextIndex;
         transformationContext.nextIndex++;
@@ -272,7 +272,7 @@ function hoistFieldNodes({
         };
         newFieldNodes.push(aliasFieldNode(possibleFieldNode, indexingAlias));
       }
-    });
+    }
   }
 
   return newFieldNodes;
@@ -285,22 +285,22 @@ export function dehoistValue(originalValue: any, context: WrapFieldsTransformati
 
   const newValue = Object.create(null);
 
-  Object.keys(originalValue).forEach(alias => {
+  for (const alias in originalValue) {
     let obj = newValue;
 
     const path = context.paths[alias];
     if (path == null) {
       newValue[alias] = originalValue[alias];
-      return;
+      continue;
     }
 
     const pathToField = path.pathToField;
     const fieldAlias = path.alias;
-    pathToField.forEach(key => {
+    for (const key of pathToField) {
       obj = obj[key] = obj[key] || Object.create(null);
-    });
+    }
     obj[fieldAlias] = originalValue[alias];
-  });
+  }
 
   return newValue;
 }
@@ -320,20 +320,20 @@ function dehoistErrors(
     }
 
     let newPath: Array<string | number> = [];
-    originalPath.forEach(pathSegment => {
+    for (const pathSegment of originalPath) {
       if (typeof pathSegment !== 'string') {
         newPath.push(pathSegment);
-        return;
+        continue;
       }
 
       const path = context.paths[pathSegment];
       if (path == null) {
         newPath.push(pathSegment);
-        return;
+        continue;
       }
 
       newPath = newPath.concat(path.pathToField, [path.alias]);
-    });
+    }
 
     return relocatedError(error, newPath);
   });

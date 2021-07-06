@@ -194,7 +194,8 @@ export function stitchingDirectivesTransformer(
     });
 
     if (subschemaConfig.merge) {
-      Object.entries(subschemaConfig.merge).forEach(([typeName, mergedTypeConfig]) => {
+      for (const typeName in subschemaConfig.merge) {
+        const mergedTypeConfig = subschemaConfig.merge[typeName];
         if (mergedTypeConfig.selectionSet) {
           const selectionSet = parseSelectionSet(mergedTypeConfig.selectionSet, { noLocation: true });
           if (selectionSet) {
@@ -206,8 +207,9 @@ export function stitchingDirectivesTransformer(
           }
         }
         if (mergedTypeConfig.fields) {
-          Object.entries(mergedTypeConfig.fields).forEach(([fieldName, fieldConfig]) => {
-            if (!fieldConfig.selectionSet) return;
+          for (const fieldName in mergedTypeConfig.fields) {
+            const fieldConfig = mergedTypeConfig.fields[fieldName];
+            if (!fieldConfig.selectionSet) continue;
 
             const selectionSet = parseSelectionSet(fieldConfig.selectionSet, { noLocation: true });
             if (selectionSet) {
@@ -223,30 +225,27 @@ export function stitchingDirectivesTransformer(
                 computedFieldSelectionSets[typeName][fieldName] = selectionSet;
               }
             }
-          });
+          }
         }
-      });
+      }
     }
 
     const allSelectionSetsByType: Record<string, Array<SelectionSetNode>> = Object.create(null);
 
-    Object.entries(selectionSetsByType).forEach(([typeName, selectionSet]) => {
-      if (allSelectionSetsByType[typeName] == null) {
-        allSelectionSetsByType[typeName] = [selectionSet];
-      } else {
+    for (const typeName in selectionSetsByType) {
+      allSelectionSetsByType[typeName] = allSelectionSetsByType[typeName] || [];
+      const selectionSet = selectionSetsByType[typeName];
+      allSelectionSetsByType[typeName].push(selectionSet);
+    }
+
+    for (const typeName in computedFieldSelectionSets) {
+      const selectionSets = computedFieldSelectionSets[typeName];
+      for (const i in selectionSets) {
+        allSelectionSetsByType[typeName] = allSelectionSetsByType[typeName] || [];
+        const selectionSet = selectionSets[i];
         allSelectionSetsByType[typeName].push(selectionSet);
       }
-    });
-
-    Object.entries(computedFieldSelectionSets).forEach(([typeName, selectionSets]) => {
-      Object.values(selectionSets).forEach(selectionSet => {
-        if (allSelectionSetsByType[typeName] == null) {
-          allSelectionSetsByType[typeName] = [selectionSet];
-        } else {
-          allSelectionSetsByType[typeName].push(selectionSet);
-        }
-      });
-    });
+    }
 
     mapSchema(schema, {
       [MapperKind.OBJECT_FIELD]: (fieldConfig, fieldName) => {
@@ -272,9 +271,9 @@ export function stitchingDirectivesTransformer(
             const lastArgName = argNames.pop();
             mergeArgsExpr = returnsList ? `${lastArgName}: [[${keyExpr}]]` : `${lastArgName}: ${keyExpr}`;
 
-            argNames.reverse().forEach(argName => {
+            for (const argName of argNames.reverse()) {
               mergeArgsExpr = `${argName}: { ${mergeArgsExpr} }`;
-            });
+            }
           }
 
           const typeNames: Array<string> = directiveArgumentMap.types;
@@ -307,7 +306,8 @@ export function stitchingDirectivesTransformer(
       },
     });
 
-    Object.entries(selectionSetsByType).forEach(([typeName, selectionSet]) => {
+    for (const typeName in selectionSetsByType) {
+      const selectionSet = selectionSetsByType[typeName];
       const mergeConfig: Record<string, MergedTypeConfig<any, any, any>> = newSubschemaConfig.merge ??
       Object.create(null);
       newSubschemaConfig.merge = mergeConfig;
@@ -319,9 +319,10 @@ export function stitchingDirectivesTransformer(
       const mergeTypeConfig = mergeConfig[typeName];
 
       mergeTypeConfig.selectionSet = print(selectionSet);
-    });
+    }
 
-    Object.entries(computedFieldSelectionSets).forEach(([typeName, selectionSets]) => {
+    for (const typeName in computedFieldSelectionSets) {
+      const selectionSets = computedFieldSelectionSets[typeName];
       const mergeConfig: Record<string, MergedTypeConfig<any, any, any>> = newSubschemaConfig.merge ??
       Object.create(null);
       newSubschemaConfig.merge = mergeConfig;
@@ -334,16 +335,19 @@ export function stitchingDirectivesTransformer(
       const mergeTypeConfigFields: Record<string, MergedFieldConfig> = mergeTypeConfig.fields ?? Object.create(null);
       mergeTypeConfig.fields = mergeTypeConfigFields;
 
-      Object.entries(selectionSets).forEach(([fieldName, selectionSet]) => {
+      for (const fieldName in selectionSets) {
+        const selectionSet = selectionSets[fieldName];
         const fieldConfig: MergedFieldConfig = mergeTypeConfigFields[fieldName] ?? Object.create(null);
         mergeTypeConfigFields[fieldName] = fieldConfig;
 
         fieldConfig.selectionSet = print(selectionSet);
         fieldConfig.computed = true;
-      });
-    });
+      }
+    }
 
-    Object.entries(mergedTypesResolversInfo).forEach(([typeName, mergedTypeResolverInfo]) => {
+    for (const typeName in mergedTypesResolversInfo) {
+      const mergedTypeResolverInfo = mergedTypesResolversInfo[typeName];
+
       const mergeConfig: Record<string, MergedTypeConfig<any, any, any>> = newSubschemaConfig.merge ??
       Object.create(null);
       newSubschemaConfig.merge = mergeConfig;
@@ -362,9 +366,10 @@ export function stitchingDirectivesTransformer(
       } else {
         mergeTypeConfig.args = generateArgsFn(mergedTypeResolverInfo);
       }
-    });
+    }
 
-    Object.entries(canonicalTypesInfo).forEach(([typeName, canonicalTypeInfo]) => {
+    for (const typeName in canonicalTypesInfo) {
+      const canonicalTypeInfo = canonicalTypesInfo[typeName];
       const mergeConfig: Record<string, MergedTypeConfig<any, any, any>> = newSubschemaConfig.merge ??
       Object.create(null);
       newSubschemaConfig.merge = mergeConfig;
@@ -382,14 +387,14 @@ export function stitchingDirectivesTransformer(
       if (canonicalTypeInfo.fields) {
         const mergeTypeConfigFields: Record<string, MergedFieldConfig> = mergeTypeConfig.fields ?? Object.create(null);
         mergeTypeConfig.fields = mergeTypeConfigFields;
-        Object.keys(canonicalTypeInfo.fields).forEach(fieldName => {
+        for (const fieldName in canonicalTypeInfo.fields) {
           if (mergeTypeConfigFields[fieldName] == null) {
             mergeTypeConfigFields[fieldName] = Object.create(null);
           }
           mergeTypeConfigFields[fieldName].canonical = true;
-        });
+        }
       }
-    });
+    }
 
     return newSubschemaConfig;
   };
@@ -402,17 +407,17 @@ function forEachConcreteType(
   fn: (typeName: string) => void
 ) {
   if (isInterfaceType(type)) {
-    getImplementingTypes(type.name, schema).forEach(typeName => {
+    for (const typeName of getImplementingTypes(type.name, schema)) {
       if (typeNames == null || typeNames.includes(typeName)) {
         fn(typeName);
       }
-    });
+    }
   } else if (isUnionType(type)) {
-    type.getTypes().forEach(({ name: typeName }) => {
+    for (const { name: typeName } of type.getTypes()) {
       if (typeNames == null || typeNames.includes(typeName)) {
         fn(typeName);
       }
-    });
+    }
   } else if (isObjectType(type)) {
     fn(type.name);
   }
@@ -428,23 +433,24 @@ function generateArgsFromKeysFn(
   const { expansions, args } = mergedTypeResolverInfo;
   return (keys: ReadonlyArray<any>): Record<string, any> => {
     const newArgs = mergeDeep({}, args);
-    expansions?.forEach(expansion => {
-      const mappingInstructions = expansion.mappingInstructions;
-      const expanded: Array<any> = [];
-      keys.forEach(key => {
-        let newValue = mergeDeep({}, expansion.valuePath);
-        mappingInstructions.forEach(mappingInstruction => {
-          const { destinationPath, sourcePath } = mappingInstruction;
-          if (destinationPath.length) {
-            addProperty(newValue, destinationPath, getProperty(key, sourcePath));
-          } else {
-            newValue = getProperty(key, sourcePath);
+    if (expansions) {
+      for (const expansion of expansions) {
+        const mappingInstructions = expansion.mappingInstructions;
+        const expanded: Array<any> = [];
+        for (const key of keys) {
+          let newValue = mergeDeep({}, expansion.valuePath);
+          for (const { destinationPath, sourcePath } of mappingInstructions) {
+            if (destinationPath.length) {
+              addProperty(newValue, destinationPath, getProperty(key, sourcePath));
+            } else {
+              newValue = getProperty(key, sourcePath);
+            }
           }
-        });
-        expanded.push(newValue);
-      });
-      addProperty(newArgs, expansion.valuePath, expanded);
-    });
+          expanded.push(newValue);
+        }
+        addProperty(newArgs, expansion.valuePath, expanded);
+      }
+    }
     return newArgs;
   };
 }
@@ -455,17 +461,19 @@ function generateArgsFn(mergedTypeResolverInfo: MergedTypeResolverInfo): (origin
   return (originalResult: any): Record<string, any> => {
     const newArgs = mergeDeep({}, args);
     const filteredResult = getProperties(originalResult, usedProperties);
-    mappingInstructions?.forEach(mappingInstruction => {
-      const { destinationPath, sourcePath } = mappingInstruction;
-      addProperty(newArgs, destinationPath, getProperty(filteredResult, sourcePath));
-    });
+    if (mappingInstructions) {
+      for (const mappingInstruction of mappingInstructions) {
+        const { destinationPath, sourcePath } = mappingInstruction;
+        addProperty(newArgs, destinationPath, getProperty(filteredResult, sourcePath));
+      }
+    }
     return newArgs;
   };
 }
 
 function buildKeyExpr(key: Array<string>): string {
   let mergedObject = {};
-  key.forEach(keyDef => {
+  for (const keyDef of key) {
     let [aliasOrKeyPath, keyPath] = keyDef.split(':');
     let aliasPath: string;
     if (keyPath == null) {
@@ -478,11 +486,11 @@ function buildKeyExpr(key: Array<string>): string {
     assertSome(lastAliasPart);
     let object: Record<string, unknown> = { [lastAliasPart]: `$key.${keyPath}` };
 
-    aliasParts.reverse().forEach(aliasPart => {
+    for (const aliasPart of aliasParts.reverse()) {
       object = { [aliasPart]: object };
-    });
+    }
     mergedObject = mergeDeep(mergedObject, object);
-  });
+  }
 
   return JSON.stringify(mergedObject).replace(/"/g, '');
 }
@@ -490,12 +498,12 @@ function buildKeyExpr(key: Array<string>): string {
 function mergeSelectionSets(...selectionSets: Array<SelectionSetNode>): SelectionSetNode {
   const normalizedSelections: Record<string, SelectionNode> = Object.create(null);
 
-  selectionSets.forEach(selectionSet => {
-    selectionSet.selections.forEach(selection => {
+  for (const selectionSet of selectionSets) {
+    for (const selection of selectionSet.selections) {
       const normalizedSelection = print(selection);
       normalizedSelections[normalizedSelection] = selection;
-    });
-  });
+    }
+  }
 
   const newSelectionSet = {
     kind: Kind.SELECTION_SET,
@@ -512,17 +520,17 @@ function forEachConcreteTypeName(
   fn: (typeName: string) => void
 ): void {
   if (isInterfaceType(returnType)) {
-    getImplementingTypes(returnType.name, schema).forEach(typeName => {
+    for (const typeName of getImplementingTypes(returnType.name, schema)) {
       if (typeNames == null || typeNames.includes(typeName)) {
         fn(typeName);
       }
-    });
+    }
   } else if (isUnionType(returnType)) {
-    returnType.getTypes().forEach(type => {
+    for (const type of returnType.getTypes()) {
       if (typeNames == null || typeNames.includes(type.name)) {
         fn(type.name);
       }
-    });
+    }
   } else if (isObjectType(returnType) && (typeNames == null || typeNames.includes(returnType.name))) {
     fn(returnType.name);
   }

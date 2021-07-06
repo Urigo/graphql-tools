@@ -57,10 +57,10 @@ export function visitData(data: any, enter?: ValueVisitor, leave?: ValueVisitor)
     const newData = enter != null ? enter(data) : data;
 
     if (newData != null) {
-      Object.keys(newData).forEach(key => {
+      for (const key in newData) {
         const value = newData[key];
         newData[key] = visitData(value, enter, leave);
-      });
+      }
     }
 
     return leave != null ? leave(newData) : newData;
@@ -195,10 +195,12 @@ function visitObjectValue(
   if (errors != null) {
     sortedErrors = sortErrorsByPathSegment(errors, pathIndex);
     errorMap = sortedErrors.errorMap;
-    sortedErrors.unpathedErrors.forEach(error => errorInfo.unpathedErrors.add(error));
+    for (const error of sortedErrors.unpathedErrors) {
+      errorInfo.unpathedErrors.add(error);
+    }
   }
 
-  Object.keys(fieldNodeMap).forEach(responseKey => {
+  for (const responseKey in fieldNodeMap) {
     const subFieldNodes = fieldNodeMap[responseKey];
     const fieldName = subFieldNodes[0].name.value;
     const fieldType = fieldName === '__typename' ? TypeNameMetaFieldDef.type : fieldMap[fieldName].type;
@@ -226,7 +228,7 @@ function visitObjectValue(
     );
 
     updateObject(newObject, responseKey, newValue, typeVisitorMap, fieldName);
-  });
+  }
 
   const oldTypename = newObject.__typename;
   if (oldTypename != null) {
@@ -353,11 +355,11 @@ function visitFieldValue(
 function sortErrorsByPathSegment(errors: ReadonlyArray<GraphQLError>, pathIndex: number): SortedErrors {
   const errorMap = Object.create(null);
   const unpathedErrors: Set<GraphQLError> = new Set();
-  errors.forEach(error => {
+  for (const error of errors) {
     const pathSegment = error.path?.[pathIndex];
     if (pathSegment == null) {
       unpathedErrors.add(error);
-      return;
+      continue;
     }
 
     if (pathSegment in errorMap) {
@@ -365,7 +367,7 @@ function sortErrorsByPathSegment(errors: ReadonlyArray<GraphQLError>, pathIndex:
     } else {
       errorMap[pathSegment] = [error];
     }
-  });
+  }
 
   return {
     errorMap,
@@ -380,7 +382,7 @@ function addPathSegmentInfo(
   errors: ReadonlyArray<GraphQLError> = [],
   errorInfo: ErrorInfo
 ) {
-  errors.forEach(error => {
+  for (const error of errors) {
     const segmentInfo = {
       type,
       fieldName,
@@ -392,7 +394,7 @@ function addPathSegmentInfo(
     } else {
       pathSegmentsInfo.push(segmentInfo);
     }
-  });
+  }
 }
 
 function collectSubFields(
@@ -403,11 +405,11 @@ function collectSubFields(
   let subFieldNodes: Record<string, Array<FieldNode>> = Object.create(null);
   const visitedFragmentNames = Object.create(null);
 
-  fieldNodes.forEach(fieldNode => {
+  for (const fieldNode of fieldNodes) {
     if (fieldNode.selectionSet) {
       subFieldNodes = collectFields(exeContext, type, fieldNode.selectionSet, subFieldNodes, visitedFragmentNames);
     }
-  });
+  }
 
   return subFieldNodes;
 }

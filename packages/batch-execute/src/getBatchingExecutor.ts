@@ -5,7 +5,7 @@ import { createBatchingExecutor } from './createBatchingExecutor';
 import { memoize2of4 } from './memoize';
 
 export const getBatchingExecutor = memoize2of4(function (
-  _context: Record<string, any> = self ?? window ?? global,
+  _context: Record<string, any>,
   executor: Executor,
   dataLoaderOptions?: DataLoader.Options<any, any, any> | undefined,
   extensionsReducer?:

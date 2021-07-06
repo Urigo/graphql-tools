@@ -96,9 +96,9 @@ export function getDirectives(
 
   const result: DirectiveUseMap = {};
 
-  astNodes.forEach(astNode => {
+  for (const astNode of astNodes) {
     if (astNode.directives) {
-      astNode.directives.forEach(directiveNode => {
+      for (const directiveNode of astNode.directives) {
         const schemaDirective = schemaDirectiveMap[directiveNode.name.value];
         if (schemaDirective) {
           if (schemaDirective.isRepeatable) {
@@ -108,9 +108,9 @@ export function getDirectives(
             result[schemaDirective.name] = getArgumentValues(schemaDirective, directiveNode);
           }
         }
-      });
+      }
     }
-  });
+  }
 
   return result;
 }

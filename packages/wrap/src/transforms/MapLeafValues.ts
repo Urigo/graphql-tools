@@ -8,7 +8,6 @@ import {
   FragmentDefinitionNode,
   VariableDefinitionNode,
   ArgumentNode,
-  GraphQLArgument,
   FieldNode,
   valueFromAST,
   isLeafType,
@@ -62,14 +61,14 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
   ): GraphQLSchema {
     this.originalWrappingSchema = originalWrappingSchema;
     const typeMap = originalWrappingSchema.getTypeMap();
-    Object.keys(typeMap).forEach(typeName => {
+    for (const typeName in typeMap) {
       const type = typeMap[typeName];
       if (!typeName.startsWith('__')) {
         if (isLeafType(type)) {
           this.resultVisitorMap[typeName] = (value: any) => this.outputValueTransformer(typeName, value);
         }
       }
-    });
+    }
     this.typeInfo = new TypeInfo(originalWrappingSchema);
     return originalWrappingSchema;
   }
@@ -142,7 +141,7 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
 
       return {
         ...newOperation,
-        variableDefinitions: Object.keys(variableDefinitionMap).map(varName => variableDefinitionMap[varName]),
+        variableDefinitions: Object.values(variableDefinitionMap),
       };
     });
   }
@@ -165,7 +164,7 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
           Object.create(null)
         );
 
-        targetField.args.forEach((argument: GraphQLArgument) => {
+        for (const argument of targetField.args) {
           const argName = argument.name;
           const argType = argument.type;
 
@@ -188,11 +187,11 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
               return newValue === undefined ? v : newValue;
             })
           );
-        });
+        }
 
         return {
           ...field,
-          arguments: Object.keys(argumentNodeMap).map(argName => argumentNodeMap[argName]),
+          arguments: Object.values(argumentNodeMap),
         };
       }
     }

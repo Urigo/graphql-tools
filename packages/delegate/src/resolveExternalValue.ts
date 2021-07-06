@@ -161,17 +161,17 @@ function resolveExternalListMember(
   }
 }
 
-const reportedErrors: WeakMap<GraphQLError, boolean> = new Map();
+const reportedErrors = new WeakMap<GraphQLError, boolean>();
 
 function reportUnpathedErrorsViaNull(unpathedErrors: Array<GraphQLError>) {
   if (unpathedErrors.length) {
     const unreportedErrors: Array<GraphQLError> = [];
-    unpathedErrors.forEach(error => {
+    for (const error of unpathedErrors) {
       if (!reportedErrors.has(error)) {
         unreportedErrors.push(error);
         reportedErrors.set(error, true);
       }
-    });
+    }
 
     if (unreportedErrors.length) {
       if (unreportedErrors.length === 1) {

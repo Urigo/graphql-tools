@@ -1,6 +1,6 @@
 // adapted from https://github.com/gatsbyjs/gatsby/blob/master/packages/gatsby-source-graphql/src/batching/merge-queries.js
 
-export function createPrefix(index: number): string {
+export function createPrefix(index: string): string {
   return `graphqlTools${index}_`;
 }
 

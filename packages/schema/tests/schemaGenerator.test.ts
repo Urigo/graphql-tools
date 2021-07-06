@@ -20,6 +20,7 @@ import {
   DocumentNode,
   GraphQLBoolean,
   graphqlSync,
+  GraphQLFieldResolver,
 } from 'graphql';
 
 import {
@@ -372,9 +373,9 @@ describe('generating schema from shorthand', () => {
         },
       },
     });
-    const extensions = jsSchema.getQueryType()?.getFields().foo.extensions;
+    const extensions = jsSchema.getQueryType()?.getFields()['foo'].extensions;
     expect(extensions).toHaveProperty('verbose');
-    expect(extensions!.verbose).toBe(true);
+    expect(extensions!['verbose']).toBe(true);
   });
 
   test('properly deduplicates the array of type DefinitionNodes', () => {
@@ -835,7 +836,7 @@ describe('generating schema from shorthand', () => {
         }
       `;
       const result = graphqlSync(jsSchema, testQuery);
-      expect(result.data!.foo.aField).toBe(false);
+      expect(result.data!['foo'].aField).toBe(false);
       jsSchema = addResolversToSchema({
         schema: jsSchema,
         resolvers: {
@@ -989,7 +990,7 @@ describe('generating schema from shorthand', () => {
   `;
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.post.something).toEqual(testValue);
+        expect(result.data!['post'].something).toEqual(testValue);
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1059,7 +1060,7 @@ describe('generating schema from shorthand', () => {
   `;
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.post.something).toEqual(testDate.getTime());
+        expect(result.data!['post'].something).toEqual(testDate.getTime());
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1161,9 +1162,9 @@ describe('generating schema from shorthand', () => {
 
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.redColor).toEqual('RED');
-        expect(result.data!.blueColor).toEqual('BLUE');
-        expect(result.data!.numericEnum).toEqual('TEST');
+        expect(result.data!['redColor']).toEqual('RED');
+        expect(result.data!['blueColor']).toEqual('BLUE');
+        expect(result.data!['numericEnum']).toEqual('TEST');
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1220,9 +1221,9 @@ describe('generating schema from shorthand', () => {
 
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.red).toEqual(resolveFunctions.Color.RED);
-        expect(result.data!.blue).toEqual(resolveFunctions.Color.BLUE);
-        expect(result.data!.num).toEqual(resolveFunctions.NumericEnum.TEST);
+        expect(result.data!['red']).toEqual(resolveFunctions.Color.RED);
+        expect(result.data!['blue']).toEqual(resolveFunctions.Color.BLUE);
+        expect(result.data!['num']).toEqual(resolveFunctions.NumericEnum.TEST);
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1266,7 +1267,7 @@ describe('generating schema from shorthand', () => {
 
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.red).toEqual(resolveFunctions.Color.RED);
+        expect(result.data!['red']).toEqual(resolveFunctions.Color.RED);
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1317,7 +1318,7 @@ describe('generating schema from shorthand', () => {
 
       const resultPromise = graphql(jsSchema, testQuery);
       return resultPromise.then((result) => {
-        expect(result.data!.red).toEqual('override');
+        expect(result.data!['red']).toEqual('override');
         expect(result.errors).toEqual(undefined);
       });
     });
@@ -1365,7 +1366,7 @@ describe('generating schema from shorthand', () => {
 
     const resultPromise = graphql(jsSchema, testQuery);
     return resultPromise.then((result) => {
-      expect(result.data!.red).toEqual('#EA3232');
+      expect(result.data!['red']).toEqual('#EA3232');
       expect(result.errors).toEqual(undefined);
     });
   });
@@ -2028,13 +2029,13 @@ describe('can specify lexical parser options', () => {
     const parsedQuery = parse(query, { experimentalFragmentVariables: true });
 
     const hoist = (document: DocumentNode) => {
-      let variableDefs: Array<VariableDefinitionNode> = [];
+      const variableDefs: Array<VariableDefinitionNode> = [];
 
-      document.definitions.forEach((def) => {
-        if (def.kind === Kind.FRAGMENT_DEFINITION) {
-          variableDefs = variableDefs.concat(def.variableDefinitions!);
+      for (const def of document.definitions) {
+        if (def.kind === Kind.FRAGMENT_DEFINITION && def.variableDefinitions) {
+          variableDefs.push(...def.variableDefinitions);
         }
-      });
+      }
 
       return {
         kind: Kind.DOCUMENT,

@@ -2,7 +2,6 @@ import {
   getDescription,
   StringValueNode,
   FieldDefinitionNode,
-  InputValueDefinitionNode,
   ASTNode,
   NameNode,
   TypeNode,
@@ -29,24 +28,26 @@ export function collectComment(node: NamedDefinitionNode): void {
 
   switch (node.kind) {
     case 'EnumTypeDefinition':
-      node.values?.forEach(value => {
-        pushComment(value, entityName, value.name.value);
-      });
+      if (node.values) {
+        for (const value of node.values) {
+          pushComment(value, entityName, value.name.value);
+        }
+      }
       break;
 
     case 'ObjectTypeDefinition':
     case 'InputObjectTypeDefinition':
     case 'InterfaceTypeDefinition':
       if (node.fields) {
-        node.fields.forEach((field: FieldDefinitionNode | InputValueDefinitionNode) => {
+        for (const field of node.fields) {
           pushComment(field, entityName, field.name.value);
 
           if (isFieldDefinitionNode(field) && field.arguments) {
-            field.arguments.forEach(arg => {
+            for (const arg of field.arguments) {
               pushComment(arg, entityName, field.name.value, arg.name.value);
-            });
+            }
           }
-        });
+        }
       }
       break;
   }

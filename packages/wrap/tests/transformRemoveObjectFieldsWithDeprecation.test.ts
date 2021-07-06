@@ -24,8 +24,8 @@ describe('RemoveObjectFieldsWithDeprecation', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeDefined();
-    expect(fields.second).toBeUndefined();
+    expect(fields['first']).toBeDefined();
+    expect(fields['second']).toBeUndefined();
   });
 
   test('removes deprecated fields by reason regex', async () => {
@@ -39,7 +39,7 @@ describe('RemoveObjectFieldsWithDeprecation', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeUndefined();
-    expect(fields.second).toBeUndefined();
+    expect(fields['first']).toBeUndefined();
+    expect(fields['second']).toBeUndefined();
   });
 });

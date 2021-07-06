@@ -54,7 +54,7 @@ describe('delegateToSchema', () => {
     );
 
     assertSome(result.data)
-    expect(result.data.delegateToSchema).toEqual('test');
+    expect(result.data['delegateToSchema']).toEqual('test');
   });
 
   test('should work even where there are default fields', async () => {
@@ -101,7 +101,7 @@ describe('delegateToSchema', () => {
     );
 
     assertSome(result.data)
-    expect(result.data.delegateToSchema).toEqual('test');
+    expect(result.data['delegateToSchema']).toEqual('test');
   });
 
   test('should work even when there are variables', async () => {
@@ -153,6 +153,6 @@ describe('delegateToSchema', () => {
     );
 
     assertSome(result.data)
-    expect(result.data.delegateToSchema).toEqual('test');
+    expect(result.data['delegateToSchema']).toEqual('test');
   });
 });

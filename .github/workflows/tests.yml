@@ -31,7 +31,7 @@ jobs:
       - name: Lint
         run: yarn lint
   build:
-    name: Build on ${{matrix.os}} GraphQL v${{matrix.graphql_version}}
+    name: Type Check on GraphQL v${{matrix.graphql_version}}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,9 +55,9 @@ jobs:
       - name: Install Dependencies using Yarn
         run: yarn install --ignore-engines && git checkout yarn.lock
       - name: Build
-        run: yarn ts:transpile
+        run: yarn ts:check
   test:
-    name: Test, Node ${{matrix.node_version}} and GraphQL v${{matrix.graphql_version}}
+    name: Unit Test on Node ${{matrix.node_version}} and GraphQL v${{matrix.graphql_version}}
     runs-on: ubuntu-latest
     strategy:
       matrix:

@@ -50,7 +50,7 @@ function visitSelectionSet(
     }
 
     if (parentTypeName in selectionSetsByField) {
-      node.selections.forEach(selection => {
+      for (const selection of node.selections) {
         if (selection.kind === Kind.FIELD) {
           const name = selection.name.value;
           const selectionSet = selectionSetsByField[parentTypeName][name];
@@ -58,35 +58,35 @@ function visitSelectionSet(
             addSelectionsToMap(newSelections, selectionSet);
           }
         }
-      });
+      }
     }
 
     if (parentTypeName in dynamicSelectionSetsByField) {
-      node.selections.forEach(selection => {
+      for (const selection of node.selections) {
         if (selection.kind === Kind.FIELD) {
           const name = selection.name.value;
           const dynamicSelectionSets = dynamicSelectionSetsByField[parentTypeName][name];
           if (dynamicSelectionSets != null) {
-            dynamicSelectionSets.forEach(selectionSetFn => {
+            for (const selectionSetFn of dynamicSelectionSets) {
               const selectionSet = selectionSetFn(selection);
               if (selectionSet != null) {
                 addSelectionsToMap(newSelections, selectionSet);
               }
-            });
+            }
           }
         }
-      });
+      }
     }
 
     return {
       ...node,
-      selections: Array.from(newSelections.values()),
+      selections: [...newSelections.values()],
     };
   }
 }
 
 const addSelectionsToMap = memoize2(function (map: Map<string, SelectionNode>, selectionSet: SelectionSetNode): void {
-  selectionSet.selections.forEach(selection => {
+  for (const selection of selectionSet.selections) {
     map.set(print(selection), selection);
-  });
+  }
 });

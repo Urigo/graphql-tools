@@ -110,10 +110,10 @@ describe('merging using type merging', () => {
 
     expect(result.errors).toBeUndefined();
     assertSome(result.data)
-    expect(result.data.userById.__typename).toBe('User');
-    expect(result.data.userById.chirps[1].id).not.toBe(null);
-    expect(result.data.userById.chirps[1].text).not.toBe(null);
-    expect(result.data.userById.chirps[1].author.email).not.toBe(null);
+    expect(result.data['userById'].__typename).toBe('User');
+    expect(result.data['userById'].chirps[1].id).not.toBe(null);
+    expect(result.data['userById'].chirps[1].text).not.toBe(null);
+    expect(result.data['userById'].chirps[1].author.email).not.toBe(null);
   });
 
   test("handle top level failures on subschema queries", async() => {
@@ -426,7 +426,7 @@ describe('Merged associations', () => {
       }
     `);
       assertSome(data)
-    expect(data.posts).toEqual([{
+    expect(data['posts']).toEqual([{
       title: 'Post 55',
       network: { domain: 'network57.com' },
       sections: ['News']
@@ -531,10 +531,10 @@ describe('merging using type merging when renaming', () => {
 
     expect(result.errors).toBeUndefined();
     assertSome(result.data)
-    expect(result.data.User_userById.__typename).toBe('Gateway_User');
-    expect(result.data.User_userById.chirps[1].id).not.toBe(null);
-    expect(result.data.User_userById.chirps[1].text).not.toBe(null);
-    expect(result.data.User_userById.chirps[1].author.email).not.toBe(null);
+    expect(result.data['User_userById'].__typename).toBe('Gateway_User');
+    expect(result.data['User_userById'].chirps[1].id).not.toBe(null);
+    expect(result.data['User_userById'].chirps[1].text).not.toBe(null);
+    expect(result.data['User_userById'].chirps[1].author.email).not.toBe(null);
   });
 });
 
@@ -622,7 +622,7 @@ describe('external object annotation with batchDelegateToSchema', () => {
       `,
     )
     assertSome(data)
-    expect(data.posts).toEqual([
+    expect(data['posts']).toEqual([
       {
         network: { id: '57', domains: [{ id: '60', name: 'network57.com' }] },
       },

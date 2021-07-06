@@ -127,21 +127,23 @@ export function astFromSchema(
     subscription: undefined,
   };
 
-  let nodes: Array<SchemaDefinitionNode | SchemaExtensionNode> = [];
+  const nodes: Array<SchemaDefinitionNode | SchemaExtensionNode> = [];
   if (schema.astNode != null) {
     nodes.push(schema.astNode);
   }
   if (schema.extensionASTNodes != null) {
-    nodes = nodes.concat(schema.extensionASTNodes);
+    for (const extensionASTNode of schema.extensionASTNodes) {
+      nodes.push(extensionASTNode);
+    }
   }
 
-  nodes.forEach(node => {
+  for (const node of nodes) {
     if (node.operationTypes) {
-      node.operationTypes.forEach(operationTypeDefinitionNode => {
+      for (const operationTypeDefinitionNode of node.operationTypes) {
         operationTypeMap[operationTypeDefinitionNode.operation] = operationTypeDefinitionNode;
-      });
+      }
     }
-  });
+  }
 
   const rootTypeMap: Record<OperationTypeNode, Maybe<GraphQLObjectType>> = {
     query: schema.getQueryType(),
@@ -149,7 +151,7 @@ export function astFromSchema(
     subscription: schema.getSubscriptionType(),
   };
 
-  Object.keys(operationTypeMap).forEach(operationTypeNode => {
+  for (const operationTypeNode in operationTypeMap) {
     if (rootTypeMap[operationTypeNode] != null) {
       if (operationTypeMap[operationTypeNode] != null) {
         operationTypeMap[operationTypeNode].type = astFromType(rootTypeMap[operationTypeNode]);
@@ -161,7 +163,7 @@ export function astFromSchema(
         };
       }
     }
-  });
+  }
 
   const operationTypes = Object.values(operationTypeMap).filter(isSome);
 
@@ -598,7 +600,7 @@ export function makeDirectiveNode(
   const directiveArguments: Array<ArgumentNode> = [];
 
   if (directive != null) {
-    directive.args.forEach(arg => {
+    for (const arg of directive.args) {
       const argName = arg.name;
       const argValue = args[argName];
       if (argValue !== undefined) {
@@ -614,9 +616,10 @@ export function makeDirectiveNode(
           });
         }
       }
-    });
+    }
   } else {
-    Object.entries(args).forEach(([argName, argValue]) => {
+    for (const argName in args) {
+      const argValue = args[argName];
       const value = astFromValueUntyped(argValue);
       if (value) {
         directiveArguments.push({
@@ -628,7 +631,7 @@ export function makeDirectiveNode(
           value,
         });
       }
-    });
+    }
   }
 
   return {
@@ -646,15 +649,16 @@ export function makeDirectiveNodes(
   directiveValues: Record<string, any>
 ): Array<DirectiveNode> {
   const directiveNodes: Array<DirectiveNode> = [];
-  Object.entries(directiveValues).forEach(([directiveName, arrayOrSingleValue]) => {
+  for (const directiveName in directiveValues) {
+    const arrayOrSingleValue = directiveValues[directiveName];
     const directive = schema?.getDirective(directiveName);
     if (Array.isArray(arrayOrSingleValue)) {
-      arrayOrSingleValue.forEach(value => {
+      for (const value of arrayOrSingleValue) {
         directiveNodes.push(makeDirectiveNode(directiveName, value, directive));
-      });
+      }
     } else {
       directiveNodes.push(makeDirectiveNode(directiveName, arrayOrSingleValue, directive));
     }
-  });
+  }
   return directiveNodes;
 }

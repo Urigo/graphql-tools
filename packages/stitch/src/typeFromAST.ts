@@ -165,11 +165,11 @@ function makeValues(nodes: ReadonlyArray<InputValueDefinitionNode>): GraphQLFiel
 
 function makeDirective(node: DirectiveDefinitionNode): GraphQLDirective {
   const locations: Array<DirectiveLocationEnum> = [];
-  node.locations.forEach(location => {
+  for (const location of node.locations) {
     if (location.value in DirectiveLocation) {
       locations.push(location.value as DirectiveLocationEnum);
     }
-  });
+  }
   return new GraphQLDirective({
     name: node.name.value,
     description: node.description != null ? node.description.value : null,

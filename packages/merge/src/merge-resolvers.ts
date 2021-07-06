@@ -1,4 +1,4 @@
-import { IResolvers, mergeDeep } from '@graphql-tools/utils';
+import { IResolvers, Maybe, mergeDeep } from '@graphql-tools/utils';
 
 /**
  * Additional options for merging resolvers
@@ -37,7 +37,7 @@ export interface MergeResolversOptions {
  * ```
  */
 export function mergeResolvers<TSource, TContext>(
-  resolversDefinitions: IResolvers<TSource, TContext> | IResolvers<TSource, TContext>[],
+  resolversDefinitions: Maybe<IResolvers<TSource, TContext>> | Maybe<Maybe<IResolvers<TSource, TContext>>[]>,
   options?: MergeResolversOptions
 ): IResolvers<TSource, TContext> {
   if (!resolversDefinitions || (Array.isArray(resolversDefinitions) && resolversDefinitions.length === 0)) {
@@ -49,7 +49,7 @@ export function mergeResolvers<TSource, TContext>(
   }
 
   if (resolversDefinitions.length === 1) {
-    return resolversDefinitions[0];
+    return resolversDefinitions[0] || {};
   }
 
   const resolvers = new Array<IResolvers<TSource, TContext>>();
@@ -58,19 +58,21 @@ export function mergeResolvers<TSource, TContext>(
     if (Array.isArray(resolversDefinition)) {
       resolversDefinition = mergeResolvers(resolversDefinition);
     }
-    if (typeof resolversDefinition === 'object') {
+    if (typeof resolversDefinition === 'object' && resolversDefinition) {
       resolvers.push(resolversDefinition);
     }
   }
   const result = resolvers.reduce(mergeDeep, {});
 
-  options?.exclusions?.forEach(exclusion => {
-    const [typeName, fieldName] = exclusion.split('.');
-    if (!fieldName || fieldName === '*') {
-      delete result[typeName];
-    } else if (result[typeName]) {
-      delete result[typeName][fieldName];
+  if (options?.exclusions) {
+    for (const exclusion of options.exclusions) {
+      const [typeName, fieldName] = exclusion.split('.');
+      if (!fieldName || fieldName === '*') {
+        delete result[typeName];
+      } else if (result[typeName]) {
+        delete result[typeName][fieldName];
+      }
     }
-  });
+  }
   return result;
 }

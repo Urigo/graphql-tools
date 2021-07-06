@@ -89,7 +89,7 @@ describe('batch delegation within basic stitching example', () => {
 
     expect(numCalls).toEqual(1);
     expect(result.errors).toBeUndefined();
-    expect(result.data!.trendingChirps[0].chirpedAtUser.email).not.toBe(null);
+    expect(result.data!['trendingChirps'][0].chirpedAtUser.email).not.toBe(null);
   });
 
   test('works with key arrays', async () => {

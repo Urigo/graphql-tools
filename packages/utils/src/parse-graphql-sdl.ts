@@ -15,10 +15,9 @@ import { GraphQLParseOptions } from './Interfaces';
 
 export function parseGraphQLSDL(location: string | undefined, rawSDL: string, options: GraphQLParseOptions = {}) {
   let document: DocumentNode;
-  const sdl: string = rawSDL;
 
   try {
-    if (options.commentDescriptions && sdl.includes('#')) {
+    if (options.commentDescriptions && rawSDL.includes('#')) {
       document = transformCommentsToDescriptions(rawSDL, options);
 
       // If noLocation=true, we need to make sure to print and parse it again, to remove locations,
@@ -28,10 +27,10 @@ export function parseGraphQLSDL(location: string | undefined, rawSDL: string, op
         document = parse(print(document), options);
       }
     } else {
-      document = parse(new GraphQLSource(sdl, location), options);
+      document = parse(new GraphQLSource(rawSDL, location), options);
     }
   } catch (e) {
-    if (e.message.includes('EOF') && sdl.replace(/(\#[^*]*)/g, '').trim() === '') {
+    if (e.message.includes('EOF') && rawSDL.replace(/(\#[^*]*)/g, '').trim() === '') {
       document = {
         kind: Kind.DOCUMENT,
         definitions: [],
@@ -42,6 +41,7 @@ export function parseGraphQLSDL(location: string | undefined, rawSDL: string, op
   }
 
   return {
+    rawSDL,
     location,
     document,
   };

@@ -14,7 +14,7 @@ import {
 
 import DataLoader from 'dataloader';
 
-import { ExecutionParams, ExecutionResult, Executor, Request, Subscriber, TypeMap } from '@graphql-tools/utils';
+import { ExecutionParams, ExecutionResult, Executor, Request, TypeMap } from '@graphql-tools/utils';
 
 import { Subschema } from './Subschema';
 import { OBJECT_SUBSCHEMA_SYMBOL, FIELD_SUBSCHEMA_MAP_SYMBOL, UNPATHED_ERRORS_SYMBOL } from './symbols';
@@ -56,6 +56,7 @@ export interface DelegationContext<TContext = Record<string, any>> {
   transforms: Array<Transform<any, TContext>>;
   transformedSchema: GraphQLSchema;
   skipTypeMerging: boolean;
+  operationName?: string;
 }
 
 export type DelegationBinding<TContext = Record<string, any>> = (
@@ -77,7 +78,7 @@ export interface IDelegateToSchemaOptions<TContext = Record<string, any>, TArgs 
   rootValue?: Record<string, any>;
   transforms?: Array<Transform<any, TContext>>;
   transformedSchema?: GraphQLSchema;
-  skipValidation?: boolean;
+  validateRequest?: boolean;
   skipTypeMerging?: boolean;
   binding?: DelegationBinding<TContext>;
 }
@@ -143,9 +144,7 @@ export interface SubschemaConfig<K = any, V = any, C = K, TContext = Record<stri
   createProxyingResolver?: CreateProxyingResolverFn<TContext>;
   transforms?: Array<Transform<any, TContext>>;
   merge?: Record<string, MergedTypeConfig<any, any, TContext>>;
-  rootValue?: Record<string, any>;
   executor?: Executor<TContext>;
-  subscriber?: Subscriber<TContext>;
   batch?: boolean;
   batchingOptions?: BatchingOptions<K, V, C>;
 }
@@ -189,9 +188,9 @@ export type MergedTypeResolver<TContext = Record<string, any>> = (
 
 export interface StitchingInfo<TContext = Record<string, any>> {
   subschemaMap: Map<GraphQLSchema | SubschemaConfig<any, any, any, TContext>, Subschema<any, any, any, TContext>>;
-  selectionSetsByType: Record<string, SelectionSetNode> | undefined;
+  selectionSetsByType: Record<string, SelectionSetNode>;
   selectionSetsByField: Record<string, Record<string, SelectionSetNode>>;
-  dynamicSelectionSetsByField: Record<string, Record<string, Array<(node: FieldNode) => SelectionSetNode>>> | undefined;
+  dynamicSelectionSetsByField: Record<string, Record<string, Array<(node: FieldNode) => SelectionSetNode>>>;
   mergedTypes: Record<string, MergedTypeInfo<TContext>>;
 }
 

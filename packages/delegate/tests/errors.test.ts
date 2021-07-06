@@ -11,7 +11,7 @@ import { delegateToSchema, defaultMergedResolver } from '../src';
 
 class ErrorWithExtensions extends GraphQLError {
   constructor(message: string, code: string) {
-    super(message, null, null, null, null, null, { code });
+    super(message, null as any, null, null, null, null, { code });
   }
 }
 
@@ -38,7 +38,7 @@ describe('Errors', () => {
       fieldNodes: [],
       returnType: {} as any,
       parentType: {} as any,
-      path: {prev: undefined, key: "foo", typename: undefined },
+      path: {prev: undefined, key: "foo", typename: undefined } as any,
       schema: {} as any,
       fragments: {},
       rootValue: {},
@@ -100,9 +100,10 @@ describe('Errors', () => {
         expect(e.originalError).toBeDefined();
         expect(e.originalError.errors).toBeDefined();
         expect(e.originalError.errors).toHaveLength(result.errors.length);
-        result.errors.forEach((error, i) => {
+        for (const i in result.errors) {
+          const error = result.errors[i];
           expect(e.originalError.errors[i]).toEqual(error);
-        });
+        }
       }
     });
 
@@ -119,7 +120,7 @@ describe('Errors', () => {
           }
         `;
 
-        const unpathedError = locatedError(new Error('TestError'), undefined, ["_entities", 7, "name"]);
+        const unpathedError = locatedError(new Error('TestError'), undefined as any, ["_entities", 7, "name"]);
 
         const remoteSchema = makeExecutableSchema({
           typeDefs,
@@ -184,7 +185,7 @@ describe('Errors', () => {
           }
         `;
 
-        const unpathedError = locatedError(new Error('TestError'), undefined, ["_entities", 7, "name"]);
+        const unpathedError = locatedError(new Error('TestError'), undefined as any, ["_entities", 7, "name"]);
 
         const remoteSchema = makeExecutableSchema({
           typeDefs,

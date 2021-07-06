@@ -129,12 +129,12 @@ function buildOperationAndCollectVariables({
   const operationName = `${fieldName}_${kind}`;
 
   if (field.args) {
-    field.args.forEach(arg => {
+    for (const arg of field.args) {
       const argName = arg.name;
       if (!argNames || argNames.includes(argName)) {
         addOperationVariable(resolveVariable(arg, argName));
       }
-    });
+    }
   }
 
   return {

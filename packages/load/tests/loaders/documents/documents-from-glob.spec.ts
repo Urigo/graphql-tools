@@ -34,9 +34,10 @@ describe('documentsFromGlob', () => {
       const result = await load(glob, {
         loaders: [new CodeFileLoader()]
       });
-      const operations = separateOperations(result[0].document);
+      const { document } = result[0];
+      const operations = document && separateOperations(document);
 
-      expect(Object.keys(operations)).toHaveLength(2);
+      expect(operations && Object.keys(operations)).toHaveLength(2);
     });
 
     test(`Should load GraphQL documents that match custom settings`, async () => {
@@ -57,9 +58,10 @@ describe('documentsFromGlob', () => {
         ]
       });
 
-      const operations = separateOperations(result[0].document);
+      const { document } = result[0];
+      const operations = document && separateOperations(document);
 
-      expect(Object.keys(operations)).toHaveLength(1);
+      expect(operations && Object.keys(operations)).toHaveLength(1);
     });
 
     test(`Should throw on syntax errors`, async () => {

@@ -2,9 +2,9 @@ import { getNamedType, GraphQLOutputType, GraphQLList } from 'graphql';
 import { delegateToSchema, MergedTypeResolver, MergedTypeResolverOptions } from '@graphql-tools/delegate';
 import { batchDelegateToSchema } from '@graphql-tools/batch-delegate';
 
-export function createMergedTypeResolver(
+export function createMergedTypeResolver<TContext = any>(
   mergedTypeResolverOptions: MergedTypeResolverOptions
-): MergedTypeResolver | undefined {
+): MergedTypeResolver<TContext> | undefined {
   const { fieldName, argsFromKeys, valuesFromResults, args } = mergedTypeResolverOptions;
 
   if (argsFromKeys != null) {

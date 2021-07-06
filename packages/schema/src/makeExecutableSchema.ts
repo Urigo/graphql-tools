@@ -1,4 +1,4 @@
-import { buildASTSchema } from 'graphql';
+import { buildASTSchema, buildSchema, GraphQLSchema } from 'graphql';
 
 import { pruneSchema } from '@graphql-tools/utils';
 import { addResolversToSchema } from './addResolversToSchema';
@@ -101,8 +101,18 @@ export function makeExecutableSchema<TContext = any>({
     schemaTransforms.push(pruneSchema);
   }
 
-  const mergedTypeDefs = mergeTypeDefs(typeDefs, parseOptions);
-  const schemaFromTypeDefs = buildASTSchema(mergedTypeDefs, parseOptions);
+  let schemaFromTypeDefs: GraphQLSchema;
+
+  if (parseOptions?.commentDescriptions) {
+    const mergedTypeDefs = mergeTypeDefs(typeDefs, {
+      ...parseOptions,
+      commentDescriptions: true,
+    });
+    schemaFromTypeDefs = buildSchema(mergedTypeDefs, parseOptions);
+  } else {
+    const mergedTypeDefs = mergeTypeDefs(typeDefs, parseOptions);
+    schemaFromTypeDefs = buildASTSchema(mergedTypeDefs, parseOptions);
+  }
 
   return schemaTransforms.reduce((schema, schemaTransform) => schemaTransform(schema), schemaFromTypeDefs);
 }

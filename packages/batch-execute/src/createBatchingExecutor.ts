@@ -18,7 +18,10 @@ export function createBatchingExecutor(
   ) => Record<string, any> = defaultExtensionsReducer
 ): Executor {
   const loader = new DataLoader(createLoadFn(executor, extensionsReducer), dataLoaderOptions);
-  return (executionParams: ExecutionParams) => loader.load(executionParams);
+  return (executionParams: ExecutionParams) =>
+    executionParams.info?.operation.operation === 'subscription'
+      ? executor(executionParams)
+      : loader.load(executionParams);
 }
 
 function createLoadFn(
@@ -51,20 +54,18 @@ function createLoadFn(
       }
     }
 
-    const executionResults: Array<ValueOrPromise<ExecutionResult>> = [];
-    execBatches.forEach(execBatch => {
+    const executionResults: Array<ValueOrPromise<ExecutionResult>> = execBatches.map(execBatch => {
       const mergedExecutionParams = mergeExecutionParams(execBatch, extensionsReducer);
-      executionResults.push(new ValueOrPromise(() => executor(mergedExecutionParams)));
+      return new ValueOrPromise(() => executor(mergedExecutionParams) as ExecutionResult);
     });
 
     return ValueOrPromise.all(executionResults)
-      .then(resultBatches => {
-        let results: Array<ExecutionResult> = [];
-        resultBatches.forEach((resultBatch, index) => {
-          results = [...results, ...splitResult(resultBatch!, execBatches[index].length)];
-        });
-        return results;
-      })
+      .then(resultBatches =>
+        resultBatches.reduce(
+          (results, resultBatch, index) => results.concat(splitResult(resultBatch, execBatches[index].length)),
+          new Array<ExecutionResult<Record<string, any>>>()
+        )
+      )
       .resolve();
   };
 }

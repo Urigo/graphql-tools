@@ -9,10 +9,7 @@ import { getSourcePaths } from './getSourcePaths';
 
 type VariablePaths = Record<string, Array<string | number>>;
 
-export function parseMergeArgsExpr(
-  mergeArgsExpr: string,
-  selectionSet?: SelectionSetNode,
-): ParsedMergeArgsExpr {
+export function parseMergeArgsExpr(mergeArgsExpr: string, selectionSet?: SelectionSetNode): ParsedMergeArgsExpr {
   const { mergeArgsExpr: newMergeArgsExpr, expansionExpressions } = preparseMergeArgsExpr(mergeArgsExpr);
 
   const inputValue = parseValue(`{ ${newMergeArgsExpr} }`, { noLocation: true });
@@ -32,15 +29,15 @@ export function parseMergeArgsExpr(
   }
 
   const expansionRegEx = new RegExp(`^${EXPANSION_PREFIX}[0-9]+$`);
-  Object.keys(variablePaths).forEach(variableName => {
+  for (const variableName in variablePaths) {
     if (!variableName.match(expansionRegEx)) {
       throw new Error('Expansions cannot be mixed with single key declarations.');
     }
-  });
+  }
 
   const expansions: Array<Expansion> = [];
   const sourcePaths: Array<Array<string>> = [];
-  Object.keys(expansionExpressions).forEach(variableName => {
+  for (const variableName in expansionExpressions) {
     const str = expansionExpressions[variableName];
     const valuePath = variablePaths[variableName];
     const { inputValue: expansionInputValue, variablePaths: expansionVariablePaths } = extractVariables(
@@ -57,12 +54,13 @@ export function parseMergeArgsExpr(
 
     sourcePaths.push(...getSourcePaths(mappingInstructions, selectionSet));
 
+    assertNotWithinList(valuePath);
     expansions.push({
-      valuePath: assertNotWithinList(valuePath),
+      valuePath,
       value,
       mappingInstructions,
     });
-  });
+  }
 
   const usedProperties = propertyTreeFromPaths(sourcePaths);
 
@@ -71,23 +69,24 @@ export function parseMergeArgsExpr(
 
 function getMappingInstructions(variablePaths: VariablePaths): Array<MappingInstruction> {
   const mappingInstructions: Array<MappingInstruction> = [];
-  Object.entries(variablePaths).forEach(([keyPath, valuePath]) => {
+  for (const keyPath in variablePaths) {
+    const valuePath = variablePaths[keyPath];
     const splitKeyPath = keyPath.split(KEY_DELIMITER).slice(1);
 
+    assertNotWithinList(valuePath);
     mappingInstructions.push({
-      destinationPath: assertNotWithinList(valuePath),
+      destinationPath: valuePath,
       sourcePath: splitKeyPath,
     });
-  });
+  }
 
   return mappingInstructions;
 }
 
-function assertNotWithinList(path: Array<string | number>): Array<string> {
-  path.forEach(pathSegment => {
+function assertNotWithinList(path: Array<string | number>): asserts path is string[] {
+  for (const pathSegment of path) {
     if (typeof pathSegment === 'number') {
       throw new Error('Insertions cannot be made into a list.');
     }
-  });
-  return path as Array<string>;
+  }
 }

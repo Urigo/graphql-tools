@@ -72,7 +72,9 @@ export function observableToAsyncIterable<T>(observable: Observable<T>): AsyncIt
     if (listening) {
       listening = false;
       subscription.unsubscribe();
-      pullQueue.forEach(resolve => resolve({ value: undefined, done: true }));
+      for (const resolve of pullQueue) {
+        resolve({ value: undefined, done: true });
+      }
       pullQueue.length = 0;
       pushQueue.length = 0;
     }

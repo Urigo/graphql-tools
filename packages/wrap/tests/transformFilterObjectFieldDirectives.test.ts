@@ -23,10 +23,10 @@ describe('FilterObjectFieldDirectives', () => {
       ],
     });
 
-    const fields = transformedSchema.getType('Query').getFields();
-    expect(fields.alpha.astNode.directives.length).toEqual(0);
-    expect(fields.bravo.astNode.directives.length).toEqual(1);
-    expect(fields.charlie.astNode.directives.length).toEqual(0);
-    expect(fields.delta.astNode.directives.length).toEqual(1);
+    const fields = transformedSchema.getQueryType()?.getFields();
+    expect(fields?.['alpha']?.astNode?.directives?.length).toEqual(0);
+    expect(fields?.['bravo']?.astNode?.directives?.length).toEqual(1);
+    expect(fields?.['charlie']?.astNode?.directives?.length).toEqual(0);
+    expect(fields?.['delta']?.astNode?.directives?.length).toEqual(1);
   });
 });

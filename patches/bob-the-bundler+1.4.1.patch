@@ -1,0 +1,22 @@
+diff --git a/node_modules/bob-the-bundler/dist/commands/build.js b/node_modules/bob-the-bundler/dist/commands/build.js
+index e1c8d4e..cb9fa6a 100644
+--- a/node_modules/bob-the-bundler/dist/commands/build.js
++++ b/node_modules/bob-the-bundler/dist/commands/build.js
+@@ -87,7 +87,7 @@ async function buildSingle({ distDir, distPath = '' }) {
+     // generates
+     const commonOutputOptions = {
+         preferConst: true,
+-        sourcemap: true,
++        sourcemap: false,
+     };
+     const generates = [
+         {
+@@ -148,7 +148,7 @@ async function build({ packagePath, cwd, pkg, fullName, config, reporter, distDi
+     // generates
+     const commonOutputOptions = {
+         preferConst: true,
+-        sourcemap: true,
++        sourcemap: false,
+     };
+     const generates = [
+         {

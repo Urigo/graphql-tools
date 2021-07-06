@@ -33,16 +33,16 @@ function createWrappingSchema(
       const config = type.toConfig();
 
       const fieldConfigMap = config.fields;
-      Object.keys(fieldConfigMap).forEach(fieldName => {
+      for (const fieldName in fieldConfigMap) {
         const field = fieldConfigMap[fieldName];
         if (field == null) {
-          return;
+          continue;
         }
         fieldConfigMap[fieldName] = {
           ...field,
           ...proxyingResolvers[type.name]?.[fieldName],
         };
-      });
+      }
 
       return new GraphQLObjectType(config);
     },
@@ -50,14 +50,14 @@ function createWrappingSchema(
       const config = type.toConfig();
       config.isTypeOf = undefined;
 
-      Object.keys(config.fields).forEach(fieldName => {
+      for (const fieldName in config.fields) {
         const field = config.fields[fieldName];
         if (field == null) {
-          return;
+          continue;
         }
         field.resolve = defaultMergedResolver;
         field.subscribe = undefined;
-      });
+      }
 
       return new GraphQLObjectType(config);
     },

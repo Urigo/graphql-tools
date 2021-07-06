@@ -45,7 +45,7 @@ export function stitchSchemas<TContext = Record<string, any>>({
     throw new Error('Expected `resolverValidationOptions` to be an object');
   }
 
-  let transformedSubschemas: Array<Subschema<any, any, any, TContext>> = [];
+  const transformedSubschemas: Array<Subschema<any, any, any, TContext>> = [];
   const subschemaMap: Map<
     GraphQLSchema | SubschemaConfig<any, any, any, TContext>,
     Subschema<any, any, any, TContext>
@@ -55,24 +55,29 @@ export function stitchSchemas<TContext = Record<string, any>>({
     GraphQLSchema | SubschemaConfig<any, any, any, TContext>
   > = new Map();
 
-  subschemas.forEach(subschemaOrSubschemaArray => {
+  for (const subschemaOrSubschemaArray of subschemas) {
     if (Array.isArray(subschemaOrSubschemaArray)) {
-      subschemaOrSubschemaArray.forEach(s => {
-        transformedSubschemas = transformedSubschemas.concat(
-          applySubschemaConfigTransforms(subschemaConfigTransforms, s, subschemaMap, originalSubschemaMap)
-        );
-      });
-    } else {
-      transformedSubschemas = transformedSubschemas.concat(
-        applySubschemaConfigTransforms(
+      for (const s of subschemaOrSubschemaArray) {
+        for (const transformedSubschemaConfig of applySubschemaConfigTransforms(
           subschemaConfigTransforms,
-          subschemaOrSubschemaArray,
+          s,
           subschemaMap,
           originalSubschemaMap
-        )
-      );
+        )) {
+          transformedSubschemas.push(transformedSubschemaConfig);
+        }
+      }
+    } else {
+      for (const transformedSubschemaConfig of applySubschemaConfigTransforms(
+        subschemaConfigTransforms,
+        subschemaOrSubschemaArray,
+        subschemaMap,
+        originalSubschemaMap
+      )) {
+        transformedSubschemas.push(transformedSubschemaConfig);
+      }
     }
-  });
+  }
 
   const extensions: Array<DocumentNode> = [];
   const directives: Array<GraphQLDirective> = [];
@@ -100,9 +105,9 @@ export function stitchSchemas<TContext = Record<string, any>>({
     mergeDirectives,
   });
 
-  Object.keys(directiveMap).forEach(directiveName => {
+  for (const directiveName in directiveMap) {
     directives.push(directiveMap[directiveName]);
-  });
+  }
 
   let stitchingInfo = createStitchingInfo(subschemaMap, typeCandidates, mergeTypes);
 
@@ -127,11 +132,11 @@ export function stitchSchemas<TContext = Record<string, any>>({
     extensions: null,
   });
 
-  extensions.forEach(extension => {
+  for (const extension of extensions) {
     schema = extendSchema(schema, extension, {
       commentDescriptions: true,
     });
-  });
+  }
 
   // We allow passing in an array of resolver maps, in which case we merge them
   const resolverMap: IResolvers = mergeResolvers(resolvers);
@@ -157,9 +162,9 @@ export function stitchSchemas<TContext = Record<string, any>>({
 
   schema = addStitchingInfo(schema, stitchingInfo);
 
-  schemaTransforms.forEach(schemaTransform => {
+  for (const schemaTransform of schemaTransforms) {
     schema = schemaTransform(schema);
-  });
+  }
 
   if (pruningOptions) {
     schema = pruneSchema(schema, pruningOptions);
@@ -182,7 +187,7 @@ function applySubschemaConfigTransforms<TContext = Record<string, any>>(
     GraphQLSchema | SubschemaConfig<any, any, any, TContext>
   >
 ): Array<Subschema<any, any, any, TContext>> {
-  let subschemaConfig: SubschemaConfig;
+  let subschemaConfig: SubschemaConfig<any, any, any, TContext>;
   if (isSubschemaConfig(subschemaOrSubschemaConfig)) {
     subschemaConfig = subschemaOrSubschemaConfig;
   } else if (subschemaOrSubschemaConfig instanceof GraphQLSchema) {
@@ -191,24 +196,13 @@ function applySubschemaConfigTransforms<TContext = Record<string, any>>(
     throw new TypeError('Received invalid input.');
   }
 
-  let transformedSubschemaConfigs: Array<SubschemaConfig<any, any, any, TContext>> = [subschemaConfig];
-  subschemaConfigTransforms
-    .concat(subschemaConfigTransformerPresets as Array<SubschemaConfigTransform<TContext>>)
-    .forEach(subschemaConfigTransform => {
-      const mapped: Array<SubschemaConfig<any, any, any, TContext> | Array<SubschemaConfig<any, any, any, TContext>>> =
-        transformedSubschemaConfigs.map(ssConfig => subschemaConfigTransform(ssConfig));
-
-      transformedSubschemaConfigs = mapped.reduce(
-        (acc: Array<SubschemaConfig<any, any, any, TContext>>, configOrList) => {
-          if (Array.isArray(configOrList)) {
-            return acc.concat(configOrList);
-          }
-          acc.push(configOrList);
-          return acc;
-        },
-        []
-      );
-    });
+  const transformedSubschemaConfigs = subschemaConfigTransforms
+    .concat(subschemaConfigTransformerPresets)
+    .reduce(
+      (transformedSubschemaConfigs, subschemaConfigTransform) =>
+        transformedSubschemaConfigs.map(ssConfig => subschemaConfigTransform(ssConfig)).flat(),
+      [subschemaConfig]
+    );
 
   const transformedSubschemas = transformedSubschemaConfigs.map(
     ssConfig => new Subschema<any, any, any, TContext>(ssConfig)
@@ -218,7 +212,9 @@ function applySubschemaConfigTransforms<TContext = Record<string, any>>(
 
   subschemaMap.set(subschemaOrSubschemaConfig, baseSubschema);
 
-  transformedSubschemas.forEach(subschema => originalSubschemaMap.set(subschema, subschemaOrSubschemaConfig));
+  for (const subschema of transformedSubschemas) {
+    originalSubschemaMap.set(subschema, subschemaOrSubschemaConfig);
+  }
 
   return transformedSubschemas;
 }

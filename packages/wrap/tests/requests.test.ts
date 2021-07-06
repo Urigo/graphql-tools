@@ -12,11 +12,11 @@ function removeLocations(value: any): any {
     return value.map((v) => removeLocations(v));
   } else if (typeof value === 'object') {
     const newValue = {};
-    Object.keys(value).forEach((key) => {
+    for (const key in value) {
       if (key !== 'loc') {
         newValue[key] = removeLocations(value[key]);
       }
-    });
+    }
     return newValue;
   }
 
@@ -34,12 +34,13 @@ describe('requests', () => {
           minor
           patch
         }`),
+        targetOperationName: 'test'
       }),
     );
 
     const expectedRequest = removeLocations({
       document: parse(`
-        query {
+        query test {
           version {
             major
             minor
@@ -48,6 +49,7 @@ describe('requests', () => {
         }
       `),
       variables: {},
+      operationName: 'test'
     });
 
     expect(expectedRequest).toMatchObject(request);

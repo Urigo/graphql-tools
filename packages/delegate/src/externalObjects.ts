@@ -41,7 +41,8 @@ export function mergeExternalObjects(
   const results: Array<any> = [];
   let errors: Array<GraphQLError> = [];
 
-  sources.forEach((source, index) => {
+  for (const index in sources) {
+    const source = sources[index];
     if (source instanceof Error || source === null) {
       const selectionSet = selectionSets[index];
       const fieldNodes = collectFields(
@@ -56,7 +57,7 @@ export function mergeExternalObjects(
         Object.create(null)
       );
       const nullResult = {};
-      Object.keys(fieldNodes).forEach(responseKey => {
+      for (const responseKey in fieldNodes) {
         if (source instanceof GraphQLError) {
           nullResult[responseKey] = relocatedError(source, path.concat([responseKey]));
         } else if (source instanceof Error) {
@@ -64,31 +65,24 @@ export function mergeExternalObjects(
         } else {
           nullResult[responseKey] = null;
         }
-      });
+      }
       results.push(nullResult);
     } else {
       errors = errors.concat(source[UNPATHED_ERRORS_SYMBOL]);
       results.push(source);
     }
-  });
+  }
 
   const combinedResult: ExternalObject = results.reduce(mergeDeep, target);
 
-  const newFieldSubschemaMap = target[FIELD_SUBSCHEMA_MAP_SYMBOL] ?? Object.create(null);
-
-  results.forEach((source: ExternalObject) => {
+  const newFieldSubschemaMap = results.reduce((newFieldSubschemaMap, source) => {
     const objectSubschema = source[OBJECT_SUBSCHEMA_SYMBOL];
     const fieldSubschemaMap = source[FIELD_SUBSCHEMA_MAP_SYMBOL];
-    if (fieldSubschemaMap === undefined) {
-      Object.keys(source).forEach(responseKey => {
-        newFieldSubschemaMap[responseKey] = objectSubschema;
-      });
-    } else {
-      Object.keys(source).forEach(responseKey => {
-        newFieldSubschemaMap[responseKey] = fieldSubschemaMap[responseKey] ?? objectSubschema;
-      });
+    for (const responseKey in source) {
+      newFieldSubschemaMap[responseKey] = fieldSubschemaMap?.[responseKey] ?? objectSubschema;
     }
-  });
+    return newFieldSubschemaMap;
+  }, target[FIELD_SUBSCHEMA_MAP_SYMBOL] ?? Object.create(null));
 
   combinedResult[FIELD_SUBSCHEMA_MAP_SYMBOL] = newFieldSubschemaMap;
   combinedResult[OBJECT_SUBSCHEMA_SYMBOL] = target[OBJECT_SUBSCHEMA_SYMBOL];

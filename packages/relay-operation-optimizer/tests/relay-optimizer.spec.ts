@@ -68,7 +68,7 @@ it('can inline @argumentDefinitions/@arguments annotated fragments', async () =>
     const queryDoc = output.find(doc => doc.definitions[0].kind === 'OperationDefinition');
 
     expect(queryDoc).toBeDefined();
-    expect(print(queryDoc)).toBeSimilarGqlDoc(/* GraphQL */ `
+    expect(print(queryDoc!)).toBeSimilarGqlDoc(/* GraphQL */ `
     query user {
       users {
         id
@@ -127,7 +127,7 @@ it('handles unions with interfaces the correct way', async () => {
     const queryDoc = output.find(doc => doc.definitions[0].kind === 'OperationDefinition');
 
     expect(queryDoc).toBeDefined();
-    expect(print(queryDoc)).toBeSimilarGqlDoc(/* GraphQL */ `
+    expect(print(queryDoc!)).toBeSimilarGqlDoc(/* GraphQL */ `
     query user {
       user {
         ... on User {

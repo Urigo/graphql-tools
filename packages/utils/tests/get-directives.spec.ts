@@ -1,6 +1,7 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { getDirectives } from '../src';
 import { assertGraphQLObjectType } from '../../testing/assertion';
+import { GraphQLSchema } from 'graphql';
 
 describe('getDirectives', () => {
   it('should return the correct directives map when no directives specified', () => {
@@ -10,7 +11,7 @@ describe('getDirectives', () => {
       }
     `;
     const schema = makeExecutableSchema({ typeDefs, resolvers: {} }) as GraphQLSchema;
-    const directivesMap = getDirectives(schema, schema.getQueryType());
+    const directivesMap = getDirectives(schema, schema.getQueryType()!);
 
     expect(directivesMap).toEqual({});
   });
@@ -23,7 +24,7 @@ describe('getDirectives', () => {
     `;
 
     const schema = makeExecutableSchema({ typeDefs, resolvers: {} }) as GraphQLSchema;
-    const directivesMap = getDirectives(schema, schema.getQueryType().getFields().test);
+    const directivesMap = getDirectives(schema, schema.getQueryType()!.getFields()['test']);
     expect(directivesMap).toEqual({
       deprecated: {
         reason: 'No longer supported',
@@ -41,7 +42,7 @@ describe('getDirectives', () => {
     `;
 
     const schema = makeExecutableSchema({ typeDefs, resolvers: {} }) as GraphQLSchema;
-    const directivesMap = getDirectives(schema, schema.getQueryType().getFields().test);
+    const directivesMap = getDirectives(schema, schema.getQueryType()!.getFields()['test']);
     expect(directivesMap).toEqual({
       mydir: {},
     });
@@ -57,7 +58,7 @@ describe('getDirectives', () => {
     `;
 
     const schema = makeExecutableSchema({ typeDefs, resolvers: {} }) as GraphQLSchema;
-    const directivesMap = getDirectives(schema, schema.getQueryType().getFields().test);
+    const directivesMap = getDirectives(schema, schema.getQueryType()!.getFields()['test']);
     expect(directivesMap).toEqual({
       mydir: {
         f1: 'test',
@@ -75,7 +76,7 @@ describe('getDirectives', () => {
     `;
 
     const schema = makeExecutableSchema({ typeDefs, resolvers: {} }) as GraphQLSchema;
-    const directivesMap = getDirectives(schema, schema.getQueryType().getFields().test);
+    const directivesMap = getDirectives(schema, schema.getQueryType()!.getFields()['test']);
     expect(directivesMap).toEqual({
       mydir: {},
     });

@@ -1,11 +1,13 @@
 import { Kind, SelectionNode, SelectionSetNode } from 'graphql';
 
 export function pathsFromSelectionSet(selectionSet: SelectionSetNode, path: Array<string> = []): Array<Array<string>> {
-  let paths: Array<Array<string>> = [];
-  selectionSet.selections.forEach(selection => {
-    const addition = pathsFromSelection(selection, path) ?? [];
-    paths = [...paths, ...addition];
-  });
+  const paths: Array<Array<string>> = [];
+  for (const selection of selectionSet.selections) {
+    const additions = pathsFromSelection(selection, path) ?? [];
+    for (const addition of additions) {
+      paths.push(addition);
+    }
+  }
   return paths;
 }
 

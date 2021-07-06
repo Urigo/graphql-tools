@@ -44,25 +44,27 @@ export function getProperties(object: Record<string, any>, propertyTree: Propert
 
   const newObject = Object.create(null);
 
-  Object.entries(propertyTree).forEach(([key, subKey]) => {
+  for (const key in propertyTree) {
+    const subKey = propertyTree[key];
+
     if (subKey == null) {
       newObject[key] = object[key];
-      return;
+      continue;
     }
 
     const prop = object[key];
 
     newObject[key] = deepMap(prop, item => getProperties(item, subKey));
-  });
+  }
 
   return newObject;
 }
 
 export function propertyTreeFromPaths(paths: Array<Array<string>>): PropertyTree {
   const propertyTree = Object.create(null);
-  paths.forEach(path => {
+  for (const path of paths) {
     addProperty(propertyTree, path, null);
-  });
+  }
   return propertyTree;
 }
 

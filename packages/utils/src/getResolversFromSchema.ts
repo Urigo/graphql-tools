@@ -16,7 +16,7 @@ export function getResolversFromSchema(schema: GraphQLSchema): IResolvers {
 
   const typeMap = schema.getTypeMap();
 
-  Object.keys(typeMap).forEach(typeName => {
+  for (const typeName in typeMap) {
     if (!typeName.startsWith('__')) {
       const type = typeMap[typeName];
 
@@ -30,9 +30,9 @@ export function getResolversFromSchema(schema: GraphQLSchema): IResolvers {
         resolvers[typeName] = {};
 
         const values = type.getValues();
-        values.forEach(value => {
+        for (const value of values) {
           resolvers[typeName][value.name] = value.value;
-        });
+        }
       } else if (isInterfaceType(type)) {
         if (type.resolveType != null) {
           resolvers[typeName] = {
@@ -53,20 +53,24 @@ export function getResolversFromSchema(schema: GraphQLSchema): IResolvers {
         }
 
         const fields = type.getFields();
-        Object.keys(fields).forEach(fieldName => {
+        for (const fieldName in fields) {
           const field = fields[fieldName];
           if (field.subscribe != null) {
             resolvers[typeName][fieldName] = resolvers[typeName][fieldName] || {};
             resolvers[typeName][fieldName].subscribe = field.subscribe;
           }
-          if (field.resolve != null && field.resolve?.name !== 'defaultFieldResolver' && field.resolve?.name !== 'defaultMergedResolver') {
+          if (
+            field.resolve != null &&
+            field.resolve?.name !== 'defaultFieldResolver' &&
+            field.resolve?.name !== 'defaultMergedResolver'
+          ) {
             resolvers[typeName][fieldName] = resolvers[typeName][fieldName] || {};
             resolvers[typeName][fieldName].resolve = field.resolve;
           }
-        });
+        }
       }
     }
-  });
+  }
 
   return resolvers;
 }

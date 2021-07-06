@@ -71,7 +71,7 @@ function filterToSchema(
 
   let fragmentSet = Object.create(null);
 
-  operations.forEach((operation: OperationDefinitionNode) => {
+  for (const operation of operations) {
     let type: Maybe<GraphQLObjectType<any, any>>;
     if (operation.operation === 'subscription') {
       type = targetSchema.getSubscriptionType();
@@ -112,7 +112,7 @@ function filterToSchema(
       variableDefinitions,
       selectionSet,
     });
-  });
+  }
 
   const newVariables = usedVariables.reduce((acc, variableName) => {
     const variableValue = variables[variableName];
@@ -278,13 +278,13 @@ function filterSelectionSet(
 function union(...arrays: Array<Array<string>>): Array<string> {
   const cache: Record<string, boolean> = Object.create(null);
   const result: Array<string> = [];
-  arrays.forEach(array => {
-    array.forEach(item => {
+  for (const array of arrays) {
+    for (const item of array) {
       if (!(item in cache)) {
         cache[item] = true;
         result.push(item);
       }
-    });
-  });
+    }
+  }
   return result;
 }

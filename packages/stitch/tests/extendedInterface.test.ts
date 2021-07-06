@@ -47,7 +47,7 @@ describe('extended interfaces', () => {
       }
     `);
     assertSome(data)
-    expect(data.slot).toEqual({ id: '23', name: 'The Item' });
+    expect(data['slot']).toEqual({ id: '23', name: 'The Item' });
   });
 
   test('merges types behind gateway interface extension', async () => {
@@ -63,7 +63,7 @@ describe('extended interfaces', () => {
       `,
       resolvers: {
         Query: {
-          itemById(obj, args, context, info) {
+          itemById(_obj, args, _context, _info) {
             return { id: args.id, name: `Item ${args.id}` };
           }
         }
@@ -84,7 +84,7 @@ describe('extended interfaces', () => {
       `,
       resolvers: {
         Query: {
-          placementById(obj, args, context, info) {
+          placementById(_obj, args, _context, _info) {
             return { __typename: 'Item', id: args.id };
           }
         }
@@ -121,6 +121,6 @@ describe('extended interfaces', () => {
       }
     `);
     assertSome(result.data)
-    expect(result.data.placement).toEqual({ id: '23', name: 'Item 23' });
+    expect(result.data['placement']).toEqual({ id: '23', name: 'Item 23' });
   });
 });

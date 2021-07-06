@@ -30,18 +30,19 @@ export function astFromValueUntyped(value: any): ValueNode | null {
   // the value is not an array, convert the value using the list's item type.
   if (Array.isArray(value)) {
     const valuesNodes: Array<ValueNode> = [];
-    value.forEach(item => {
+    for (const item of value) {
       const itemNode = astFromValueUntyped(item);
       if (itemNode != null) {
         valuesNodes.push(itemNode);
       }
-    });
+    }
     return { kind: Kind.LIST, values: valuesNodes };
   }
 
   if (typeof value === 'object') {
     const fieldNodes: Array<ObjectFieldNode> = [];
-    Object.entries(value).forEach(([fieldName, fieldValue]) => {
+    for (const fieldName in value) {
+      const fieldValue = value[fieldName];
       const ast = astFromValueUntyped(fieldValue);
       if (ast) {
         fieldNodes.push({
@@ -50,7 +51,7 @@ export function astFromValueUntyped(value: any): ValueNode | null {
           value: ast,
         });
       }
-    });
+    }
     return { kind: Kind.OBJECT, fields: fieldNodes };
   }
 

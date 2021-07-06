@@ -79,11 +79,11 @@ export default class TransformCompositeFields<TContext = Record<string, any>> im
   ): Request {
     const document = originalRequest.document;
     const fragments = Object.create(null);
-    document.definitions.forEach(def => {
+    for (const def of document.definitions) {
       if (def.kind === Kind.FRAGMENT_DEFINITION) {
         fragments[def.name.value] = def;
       }
-    });
+    }
     return {
       ...originalRequest,
       document: this.transformDocument(document, fragments, transformationContext),
@@ -135,10 +135,10 @@ export default class TransformCompositeFields<TContext = Record<string, any>> im
     const parentTypeName = parentType.name;
     let newSelections: Array<SelectionNode> = [];
 
-    node.selections.forEach(selection => {
+    for (const selection of node.selections) {
       if (selection.kind !== Kind.FIELD) {
         newSelections.push(selection);
-        return;
+        continue;
       }
 
       const newName = selection.name.value;
@@ -172,25 +172,25 @@ export default class TransformCompositeFields<TContext = Record<string, any>> im
       }
 
       if (transformedSelection == null) {
-        return;
+        continue;
       } else if (Array.isArray(transformedSelection)) {
         newSelections = newSelections.concat(transformedSelection);
-        return;
+        continue;
       } else if (transformedSelection.kind !== Kind.FIELD) {
         newSelections.push(transformedSelection);
-        return;
+        continue;
       }
 
       const typeMapping = this.mapping[parentTypeName];
       if (typeMapping == null) {
         newSelections.push(transformedSelection);
-        return;
+        continue;
       }
 
       const oldName = this.mapping[parentTypeName][newName];
       if (oldName == null) {
         newSelections.push(transformedSelection);
-        return;
+        continue;
       }
 
       newSelections.push({
@@ -204,7 +204,7 @@ export default class TransformCompositeFields<TContext = Record<string, any>> im
           value: transformedSelection.alias?.value ?? newName,
         },
       });
-    });
+    }
 
     return {
       ...node,

@@ -81,17 +81,18 @@ function filterRootFields(
 ): GraphQLObjectType {
   if (rootFieldFilter || argumentFilter) {
     const config = type.toConfig();
-    Object.entries(config.fields).forEach(([fieldName, field]) => {
+    for (const fieldName in config.fields) {
+      const field = config.fields[fieldName];
       if (rootFieldFilter && !rootFieldFilter(operation, fieldName, config.fields[fieldName])) {
         delete config.fields[fieldName];
       } else if (argumentFilter && field.args) {
-        for (const argName of Object.keys(field.args)) {
+        for (const argName in field.args) {
           if (!argumentFilter(operation, fieldName, argName, field.args[argName])) {
             delete field.args[argName];
           }
         }
       }
-    });
+    }
     return new GraphQLObjectType(config);
   }
   return type;
@@ -105,17 +106,18 @@ function filterElementFields<ElementType>(
 ): ElementType | undefined {
   if (fieldFilter || argumentFilter) {
     const config = type.toConfig();
-    Object.entries(config.fields).forEach(([fieldName, field]) => {
+    for (const fieldName in config.fields) {
+      const field = config.fields[fieldName];
       if (fieldFilter && !fieldFilter(type.name, fieldName, config.fields[fieldName])) {
         delete config.fields[fieldName];
       } else if (argumentFilter && 'args' in field) {
-        for (const argName of Object.keys(field.args)) {
+        for (const argName in field.args) {
           if (!argumentFilter(type.name, fieldName, argName, field.args[argName])) {
             delete field.args[argName];
           }
         }
       }
-    });
+    }
     return new ElementConstructor(config);
   }
 }

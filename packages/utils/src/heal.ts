@@ -66,14 +66,15 @@ export function healTypes(
   // schema.getTypeMap() have changed, the keys of the type map need to
   // be updated accordingly.
 
-  Object.entries(originalTypeMap).forEach(([typeName, namedType]) => {
+  for (const typeName in originalTypeMap) {
+    const namedType = originalTypeMap[typeName];
     if (namedType == null || typeName.startsWith('__')) {
-      return;
+      continue;
     }
 
     const actualName = namedType.name;
     if (actualName.startsWith('__')) {
-      return;
+      continue;
     }
 
     if (actualName in actualNamedTypeMap) {
@@ -85,31 +86,33 @@ export function healTypes(
     // Note: we are deliberately leaving namedType in the schema by its
     // original name (which might be different from actualName), so that
     // references by that name can be healed.
-  });
+  }
 
   // Now add back every named type by its actual name.
-  Object.entries(actualNamedTypeMap).forEach(([typeName, namedType]) => {
+  for (const typeName in actualNamedTypeMap) {
+    const namedType = actualNamedTypeMap[typeName];
     originalTypeMap[typeName] = namedType;
-  });
+  }
 
   // Directive declaration argument types can refer to named types.
-  directives.forEach((decl: GraphQLDirective) => {
+  for (const decl of directives) {
     decl.args = decl.args.filter(arg => {
       arg.type = healType(arg.type) as GraphQLInputType;
       return arg.type !== null;
     });
-  });
+  }
 
-  Object.entries(originalTypeMap).forEach(([typeName, namedType]) => {
+  for (const typeName in originalTypeMap) {
+    const namedType = originalTypeMap[typeName];
     // Heal all named types, except for dangling references, kept only to redirect.
     if (!typeName.startsWith('__') && typeName in actualNamedTypeMap) {
       if (namedType != null) {
         healNamedType(namedType);
       }
     }
-  });
+  }
 
-  for (const typeName of Object.keys(originalTypeMap)) {
+  for (const typeName in originalTypeMap) {
     if (!typeName.startsWith('__') && !(typeName in actualNamedTypeMap)) {
       delete originalTypeMap[typeName];
     }

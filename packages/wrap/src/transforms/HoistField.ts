@@ -80,12 +80,12 @@ export default class HoistField implements Transform {
     const argsMap: Record<string, GraphQLArgument> = Object.create(null);
     const innerType: GraphQLObjectType = this.pathToField.reduce((acc, pathSegment, index) => {
       const field = acc.getFields()[pathSegment];
-      field.args.forEach(arg => {
+      for (const arg of field.args) {
         if (this.argFilters[index](arg)) {
           argsMap[arg.name] = arg;
           this.argLevels[arg.name] = index;
         }
-      });
+      }
       return getNullableType(field.type) as GraphQLObjectType;
     }, originalWrappingSchema.getType(this.typeName) as GraphQLObjectType);
 

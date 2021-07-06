@@ -109,9 +109,9 @@ describe('basic stitching example', () => {
 
     expect(result.errors).toBeUndefined();
     assertSome(result.data)
-    expect(result.data.userById.chirps[1].id).not.toBe(null);
-    expect(result.data.userById.chirps[1].text).not.toBe(null);
-    expect(result.data.userById.chirps[1].author.email).not.toBe(null);
+    expect(result.data['userById'].chirps[1].id).not.toBe(null);
+    expect(result.data['userById'].chirps[1].text).not.toBe(null);
+    expect(result.data['userById'].chirps[1].author.email).not.toBe(null);
   });
 });
 
@@ -232,9 +232,9 @@ describe('stitching to interfaces', () => {
 
     expect(resultWithFragments.errors).toBeUndefined();
     assertSome(resultWithFragments.data)
-    expect(resultWithFragments.data.node.chirps[1].id).not.toBe(null);
-    expect(resultWithFragments.data.node.chirps[1].text).not.toBe(null);
-    expect(resultWithFragments.data.node.chirps[1].author.email).not.toBe(null);
+    expect(resultWithFragments.data['node'].chirps[1].id).not.toBe(null);
+    expect(resultWithFragments.data['node'].chirps[1].text).not.toBe(null);
+    expect(resultWithFragments.data['node'].chirps[1].author.email).not.toBe(null);
   });
 
   test('it works without fragments', async () => {
@@ -257,9 +257,9 @@ describe('stitching to interfaces', () => {
 
     expect(resultWithoutFragments.errors).toBeUndefined();
     assertSome(resultWithoutFragments.data)
-    expect(resultWithoutFragments.data.node.chirps[1].id).not.toBe(null);
-    expect(resultWithoutFragments.data.node.chirps[1].text).not.toBe(null);
-    expect(resultWithoutFragments.data.node.chirps[1].author.email).not.toBe(null);
+    expect(resultWithoutFragments.data['node'].chirps[1].id).not.toBe(null);
+    expect(resultWithoutFragments.data['node'].chirps[1].text).not.toBe(null);
+    expect(resultWithoutFragments.data['node'].chirps[1].author.email).not.toBe(null);
 
   });
 });

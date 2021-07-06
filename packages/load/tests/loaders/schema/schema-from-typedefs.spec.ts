@@ -26,8 +26,8 @@ describe('schema from typedefs', () => {
         loaders: [new GraphQLFileLoader()]
       });
 
-      expect(schema.getTypeMap().User).toBeDefined();
-      expect(schema.getTypeMap().Query).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
+      expect(schema.getTypeMap()['Query']).toBeDefined();
     });
 
     it('should ignore empty files when using glob expressions', async () => {
@@ -78,8 +78,8 @@ describe('schema from typedefs', () => {
         loaders: [new CodeFileLoader()]
       });
 
-      expect(schema.getTypeMap().User).toBeDefined();
-      expect(schema.getTypeMap().Query).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
+      expect(schema.getTypeMap()['Query']).toBeDefined();
     });
 
     it('should work without globs correctly', async () => {
@@ -88,8 +88,8 @@ describe('schema from typedefs', () => {
         loaders: [new CodeFileLoader()]
       });
 
-      expect(schema.getTypeMap().User).toBeDefined();
-      expect(schema.getTypeMap().Query).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
+      expect(schema.getTypeMap()['Query']).toBeDefined();
     });
 
     it('should work with import notations', async () => {
@@ -98,8 +98,8 @@ describe('schema from typedefs', () => {
         loaders: [new GraphQLFileLoader()]
       });
 
-      expect(schema.getTypeMap().User).toBeDefined();
-      expect(schema.getTypeMap().Query).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
+      expect(schema.getTypeMap()['Query']).toBeDefined();
     });
 
     it('should work with extensions (static graphql file)', async () => {
@@ -149,17 +149,17 @@ describe('schema from typedefs', () => {
         includeSources: true,
       });
       assertNonMaybe(schemaWithSources.extensions)
-      expect(schemaWithSources.extensions.sources).toBeDefined();
-      expect(schemaWithSources.extensions.sources).toHaveLength(1);
-      expect(schemaWithSources.extensions.sources[0]).toMatchObject(expect.objectContaining({
-        name: glob
+      expect(schemaWithSources.extensions['sources']).toBeDefined();
+      expect(schemaWithSources.extensions['sources']).toHaveLength(1);
+      expect(schemaWithSources.extensions['sources'][0]).toMatchObject(expect.objectContaining({
+        name: glob.replace('.', process.cwd())
       }))
 
       const schemaWithoutSources = await load(glob, {
         loaders: [new GraphQLFileLoader()]
       });
       assertNonMaybe(schemaWithoutSources.extensions)
-      expect(schemaWithoutSources.extensions.sources).not.toBeDefined();
+      expect(schemaWithoutSources.extensions['sources']).not.toBeDefined();
     });
   })
 });

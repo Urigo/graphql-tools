@@ -2,6 +2,9 @@
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "outDir": "dist-es5",
-    "target": "es5"
+    "target": "es5",
+    "tsBuildInfoFile": "./node_modules/tsconfig.build.es5.tsbuildinfo",
+    "sourceMap": false,
+    "inlineSourceMap": false
   }
 }

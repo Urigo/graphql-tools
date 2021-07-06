@@ -88,7 +88,6 @@ export interface SubschemaConfig {
   schema: GraphQLSchema;
   rootValue?: Record<string, any>;
   executor?: Executor;
-  subscriber?: Subscriber;
   createProxyingResolver?: CreateProxyingResolverFn;
   transforms?: Array<Transform>;
   merge?: Record<string, MergedTypeConfig>;
@@ -109,7 +108,7 @@ Also note that these subschema config objects may need to be referenced again in
 
 ## Stitching remote schemas
 
-To include a remote schema in the combined gateway, you must provide at least the `schema` and `executor` subschema config options, and an optional `subscriber` for subscriptions:
+To include a remote schema in the combined gateway, you must provide at least the `schema` and `executor` subschema config options.
 
 ```js
 import { introspectSchema } from '@graphql-tools/wrap';
@@ -129,13 +128,11 @@ async function remoteExecutor({ document, variables }) {
 export const postsSubschema = {
   schema: await introspectSchema(remoteExecutor),
   executor: remoteExecutor,
-  // subscriber: remoteSubscriber
 };
 ```
 
 - `schema`: this is a non-executable schema representing the remote API. The remote schema may be obtained using [introspection](/docs/remote-schemas/#introspectschemaexecutor-context), or fetched as a flat SDL string (from a server or repo) and built into a schema using [`buildSchema`](https://graphql.org/graphql-js/utilities/#buildschema). Note that not all GraphQL servers enable introspection, and those that do will not include custom directives.
 - `executor`: is a generic method that performs requests to a remote schema. It's quite simple to [write your own](/docs/remote-schemas#creating-an-executor). Subschema config uses the executor for query and mutation operations. See [handbook example](https://github.com/gmac/schema-stitching-handbook/tree/master/combining-local-and-remote-schemas).
-- `subscriber`: to enable subscription operations, include a [subscriber function](/docs/remote-schemas#creating-a-subscriber) that returns an AsyncIterator. See [handbook example](https://github.com/gmac/schema-stitching-handbook/tree/master/mutations-and-subscriptions).
 
 ## Duplicate types
 

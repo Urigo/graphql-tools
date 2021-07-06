@@ -224,7 +224,7 @@ describe('printSchemaWithDirectives', () => {
         name: 'dummy',
         locations: ['QUERY'],
       })]
-    });
+    } as any);
 
     const output = printSchemaWithDirectives(schema);
 

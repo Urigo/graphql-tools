@@ -10,17 +10,15 @@ There two ways to create remote schemas;
 
 ## Use Loaders to load schemas easily
 
-Check out [Schema Loading](/docs/schema-loading) to load schemas from an URL and/or different sources easily without implementing an executor or subscriber.
+Check out [Schema Loading](/docs/schema-loading) to load schemas from an URL and/or different sources easily without implementing an executor.
 
-## Create a remote executable schema with custom executor and subscriber methods
+## Create a remote executable schema with custom executor methods
 
 Generally, to create a remote schema, you generally need just three steps:
 
 1. Create a [executor](#creating-an-executor) that can retrieve results from that schema
 2. Use [`introspectSchema`](#introspectschemaexecutor-context) to get the non-executable schema of the remote server
 3. Use [`wrapSchema`](#wrapschemaschemaconfig) to create a schema that uses the executor to delegate requests to the underlying service
-
-You can optionally also include a [subscriber](#creating-a-subscriber) that can retrieve real time subscription results from the remote schema (only if you are using GraphQL Subscriptions)
 
 ### Creating an executor
 
@@ -99,13 +97,9 @@ export default async () => {
 };
 ```
 
-### Creating a subscriber
+### Extending the executor for subscriptions
 
-For subscriptions, we need to define a subscriber that returns `AsyncIterator`. Other than that, it has the similar API with `executor`.
-
-```ts
-type Subscriber = (executionParams: ExecutionParams) => Promise<AsyncIterator<ExecutionResult>>;
-```
+For subscriptions, we need to extend our executor by returning `AsyncIterator`.
 
 #### Using `graphql-ws`
 
@@ -113,7 +107,7 @@ For the following example to work, the server must implement the [library's tran
 
 ```ts
 import { wrapSchema, introspectSchema } from '@graphql-tools/wrap';
-import { Executor, Subscriber } from '@graphql-tools/delegate';
+import { Executor } from '@graphql-tools/delegate';
 import { fetch } from 'cross-fetch';
 import { print } from 'graphql';
 import { observableToAsyncIterable } from '@graphql-tools/utils';
@@ -122,23 +116,11 @@ import { createClient } from 'graphql-ws';
 const HTTP_GRAPHQL_ENDPOINT = 'http://localhost:3000/graphql';
 const WS_GRAPHQL_ENDPOINT = 'ws://localhost:3000/graphql';
 
-const executor: Executor = async ({ document, variables }) => {
-  const query = print(document);
-  const fetchResult = await fetch(HTTP_GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-  return fetchResult.json();
-};
-
 const subscriptionClient = createClient({
   url: WS_GRAPHQL_ENDPOINT,
 });
 
-const subscriber: Subscriber = ({ document, variables }) =>
+const executor: Executor = ({ document, variables }) =>
   observableToAsyncIterable({
     subscribe: observer => ({
       unsubscribe: subscriptionClient.subscribe(
@@ -169,7 +151,6 @@ export default async () => {
   const schema = wrapSchema({
     schema: await introspectSchema(executor),
     executor,
-    subscriber,
   });
 
   return schema;
@@ -260,24 +241,4 @@ const schema = wrapSchema({
 });
 ```
 
-Note that within the `defaultCreateProxyingResolver` function, `delegateToSchema` receives `executor` and `subscriber` functions stored on the subschema config object originally passed to `wrapSchema`. As above, use of the the `createProxyingResolver` option is helpful when you want to customize additional functionality at resolver creation time. If you just want to customize how things are proxied at the time that they are proxied, you can make do just with custom executors and subscribers.
-
-### makeRemoteExecutableSchema(options)
-
-What about `makeRemoteExecutableSchema`, the function used in older versions to access remote schemas? It still works -- just now under the hood calling `wrapSchema`. There is essentially no longer any need to use `makeRemoteExecutableSchema` directly, but we've kept it around for backwards compatibility.
-
-You can still pass a `createResolver` function to `makeRemoteExecutableSchema` to override how the fetch resolvers are created and executed. The `createResolver` param accepts an `Executor` as its first argument (and a `Subscriber` as its second) and returns a resolver function. This opens up the possibility for users to create batching mechanisms for fetches. As above, it is likely easier to just customize the `executor` function itself.
-
-Given a GraphQL.js schema (can be a non-executable client schema made by `buildClientSchema`) and a [executor](#creating-an-executor), `makeRemoteExecutableSchema` produce a GraphQL Schema that routes all requests to the executor:
-
-```js
-import { makeRemoteExecutableSchema } from '@graphql-tools/wrap';
-
-const createResolver: (executor: Executor) => GraphQLFieldResolver<any, any> = // . . .
-
-const schema = makeRemoteExecutableSchema({
-  schema,
-  executor,
-  createResolver
-});
-```
+Note that within the `defaultCreateProxyingResolver` function, `delegateToSchema` receives `executor` function stored on the subschema config object originally passed to `wrapSchema`. As above, use of the the `createProxyingResolver` option is helpful when you want to customize additional functionality at resolver creation time. If you just want to customize how things are proxied at the time that they are proxied, you can make do just with custom executors.

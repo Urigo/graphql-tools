@@ -58,7 +58,7 @@ describe('merging using type merging', () => {
       Query: {
         me: () => users[0],
         _entities: (_root, { keys }) => {
-          return keys.map((key: Record<string, any>) => ({ ...key,  ...users.find(u => u.id === key.id) }));
+          return keys.map((key: Record<string, any>) => ({ ...key,  ...users.find(u => u.id === key['id']) }));
         },
       },
     },
@@ -122,7 +122,7 @@ describe('merging using type merging', () => {
       Query: {
         mostStockedProduct: () => inventory.find(i => i.upc === '3'),
         _entities: (_root, { keys }) => {
-          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key.upc) }));
+          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key['upc']) }));
         },
       },
     },
@@ -187,7 +187,7 @@ describe('merging using type merging', () => {
       Query: {
         topProducts: (_root, args) => products.slice(0, args.first),
         _entities: (_root, { keys }) => {
-          return keys.map((key: Record<string, any>) => ({ ...key, ...products.find(product => product.upc === key.upc) }));
+          return keys.map((key: Record<string, any>) => ({ ...key, ...products.find(product => product.upc === key['upc']) }));
         }
       }
     },
@@ -281,8 +281,8 @@ describe('merging using type merging', () => {
       Query: {
         _entities: (_root, { keys }) => {
           return keys.map((key: Record<string, any>) => {
-            if (key.__typename === 'Review') {
-              return ({ ...key, ...reviews.find(review => review.id === key.id) });
+            if (key['__typename'] === 'Review') {
+              return ({ ...key, ...reviews.find(review => review.id === key['id']) });
             }
 
             return { ...key };

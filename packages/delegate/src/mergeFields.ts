@@ -30,7 +30,7 @@ const sortSubschemasByProxiability = memoize4(function (
   const proxiableSubschemas: Array<Subschema> = [];
   const nonProxiableSubschemas: Array<Subschema> = [];
 
-  targetSubschemas.forEach(t => {
+  for (const t of targetSubschemas) {
     const selectionSet = mergedTypeInfo.selectionSets.get(t);
     const fieldSelectionSets = mergedTypeInfo.fieldSelectionSets.get(t);
     if (
@@ -55,7 +55,7 @@ const sortSubschemasByProxiability = memoize4(function (
         nonProxiableSubschemas.push(t);
       }
     }
-  });
+  }
 
   return {
     proxiableSubschemas,
@@ -77,9 +77,9 @@ const buildDelegationPlan = memoize3(function (
   // 2. for each selection:
 
   const delegationMap: Map<Subschema, Array<SelectionNode>> = new Map();
-  fieldNodes.forEach(fieldNode => {
+  for (const fieldNode of fieldNodes) {
     if (fieldNode.name.value === '__typename') {
-      return;
+      continue;
     }
 
     // 2a. use uniqueFields map to assign fields to subschema if one of possible subschemas
@@ -88,7 +88,7 @@ const buildDelegationPlan = memoize3(function (
     if (uniqueSubschema != null) {
       if (!proxiableSubschemas.includes(uniqueSubschema)) {
         unproxiableFieldNodes.push(fieldNode);
-        return;
+        continue;
       }
 
       const existingSubschema = delegationMap.get(uniqueSubschema);
@@ -98,7 +98,7 @@ const buildDelegationPlan = memoize3(function (
         delegationMap.set(uniqueSubschema, [fieldNode]);
       }
 
-      return;
+      continue;
     }
 
     // 2b. use nonUniqueFields to assign to a possible subschema,
@@ -107,13 +107,13 @@ const buildDelegationPlan = memoize3(function (
     let nonUniqueSubschemas: Array<Subschema> = nonUniqueFields[fieldNode.name.value];
     if (nonUniqueSubschemas == null) {
       unproxiableFieldNodes.push(fieldNode);
-      return;
+      continue;
     }
 
     nonUniqueSubschemas = nonUniqueSubschemas.filter(s => proxiableSubschemas.includes(s));
     if (!nonUniqueSubschemas.length) {
       unproxiableFieldNodes.push(fieldNode);
-      return;
+      continue;
     }
 
     const existingSubschema = nonUniqueSubschemas.find(s => delegationMap.has(s));
@@ -123,16 +123,16 @@ const buildDelegationPlan = memoize3(function (
     } else {
       delegationMap.set(nonUniqueSubschemas[0], [fieldNode]);
     }
-  });
+  }
 
   const finalDelegationMap: Map<Subschema, SelectionSetNode> = new Map();
 
-  delegationMap.forEach((selections, subschema) => {
+  for (const [subschema, selections] of delegationMap) {
     finalDelegationMap.set(subschema, {
       kind: Kind.SELECTION_SET,
       selections,
     });
-  });
+  }
 
   return {
     delegationMap: finalDelegationMap,
@@ -177,14 +177,15 @@ export function mergeFields(
   }
 
   const resultMap: Map<ValueOrPromise<any>, SelectionSetNode> = new Map();
-  delegationMap.forEach((selectionSet: SelectionSetNode, s: Subschema) => {
-    // TODO: Verify whether it is safe that resolver always exists.
-    const resolver = mergedTypeInfo.resolvers.get(s)!;
-    const valueOrPromise = new ValueOrPromise(() => resolver(object, context, info, s, selectionSet)).catch(
-      error => error
-    );
-    resultMap.set(valueOrPromise, selectionSet);
-  });
+  for (const [s, selectionSet] of delegationMap) {
+    const resolver = mergedTypeInfo.resolvers.get(s);
+    if (resolver) {
+      const valueOrPromise = new ValueOrPromise(() => resolver(object, context, info, s, selectionSet)).catch(
+        error => error
+      );
+      resultMap.set(valueOrPromise, selectionSet);
+    }
+  }
 
   return ValueOrPromise.all(Array.from(resultMap.keys()))
     .then(results =>

@@ -7,7 +7,6 @@ import { stripWhitespaces } from './utils';
 import gql from 'graphql-tag';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { jest } from '@jest/globals';
 import { assertSome } from '@graphql-tools/utils';
 
 const introspectionSchema = JSON.parse(readFileSync(join(__dirname, './schema.json'), 'utf8'));
@@ -657,7 +656,6 @@ describe('Merge TypeDefs', () => {
       const merged = mergeTypeDefs([
         makeExecutableSchema({
           typeDefs: ['type Query { f1: String }'],
-          allowUndefinedInResolve: true,
         }),
         'type Query { f2: String }',
       ]);
@@ -679,11 +677,9 @@ describe('Merge TypeDefs', () => {
       const merged = mergeTypeDefs([
         makeExecutableSchema({
           typeDefs: ['type RootQuery { f1: String }'],
-          allowUndefinedInResolve: true,
         }),
         makeExecutableSchema({
           typeDefs: ['type RootQuery { f2: String }', 'schema { query: RootQuery }'],
-          allowUndefinedInResolve: true,
         }),
       ]);
 
@@ -704,7 +700,6 @@ describe('Merge TypeDefs', () => {
       const merged = mergeTypeDefs([
         makeExecutableSchema({
           typeDefs: ['type Query { f1: String }'],
-          allowUndefinedInResolve: true,
         }),
         'type Query { f2: String }',
         gql`
@@ -732,7 +727,6 @@ describe('Merge TypeDefs', () => {
       const merged = mergeTypeDefs([
         makeExecutableSchema({
           typeDefs: ['type MyType { f1: String }'],
-          allowUndefinedInResolve: true,
         }),
       ]);
 
@@ -747,11 +741,9 @@ describe('Merge TypeDefs', () => {
       const merged = mergeTypeDefs([
         makeExecutableSchema({
           typeDefs: ['type MyType { f1: String }'],
-          allowUndefinedInResolve: true,
         }),
         makeExecutableSchema({
           typeDefs: ['type MyType { f2: String }'],
-          allowUndefinedInResolve: true,
         }),
       ]);
 

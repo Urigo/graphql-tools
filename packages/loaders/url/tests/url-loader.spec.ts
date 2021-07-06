@@ -1,6 +1,6 @@
 import '../../../testing/to-be-similar-gql-doc';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { UrlLoader } from '../src';
+import { SubscriptionProtocol, UrlLoader } from '../src';
 import { printSchemaWithDirectives } from '@graphql-tools/utils';
 import nock from 'nock';
 import { mockGraphQLServer } from '../../../testing/utils';
@@ -156,7 +156,7 @@ input TestInput {
       assertNonMaybe(source.schema)
       expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
 
-      expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
+      expect(Array.isArray(headers['accept']) ? headers['accept'].join(',') : headers['accept']).toContain(`application/json`);
       expect(headers['content-type']).toContain(`application/json`);
     });
 
@@ -177,32 +177,9 @@ input TestInput {
       assertNonMaybe(source.schema)
       expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
 
-      expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
+      expect(Array.isArray(headers['accept']) ? headers['accept'].join(',') : headers['accept']).toContain(`application/json`);
       expect(headers['content-type']).toContain(`application/json`);
-      expect(headers.auth).toContain(`1`);
-    });
-
-    it('Should pass extra headers when they are specified as array', async () => {
-      let headers: Record<string, string | string[]> = {};
-      scope = mockGraphQLServer({
-        schema: testSchema,
-        host: testHost,
-        path: testPathChecker,
-        intercept(ctx) {
-          headers = ctx.req.headers;
-        },
-      });
-      const source = await loader.load(testUrl, { headers: [{ A: '1' }, { B: '2', C: '3' }] });
-
-      expect(source).toBeDefined();
-      assertNonMaybe(source.schema)
-      expect(printSchemaWithDirectives(source.schema)).toBeSimilarGqlDoc(testTypeDefs);
-
-      expect(Array.isArray(headers.accept) ? headers.accept.join(',') : headers.accept).toContain(`application/json`);
-      expect(headers['content-type']).toContain(`application/json`);
-      expect(headers.a).toContain(`1`);
-      expect(headers.b).toContain(`2`);
-      expect(headers.c).toContain(`3`);
+      expect(headers['auth']).toContain(`1`);
     });
 
     it('Should utilize extra introspection options', async () => {
@@ -247,7 +224,7 @@ input TestInput {
 
       expect(result?.errors).toBeFalsy();
 
-      expect(result?.data?.a).toBe(testVariableValue);
+      expect(result?.data?.['a']).toBe(testVariableValue);
     });
 
     it('Should preserve "ws" and "http" in the middle of a pointer', async () => {
@@ -328,6 +305,7 @@ input TestInput {
               data: introspectionFromSchema(testSchema),
             })
           }) as any,
+          subscriptionsProtocol: SubscriptionProtocol.WS
         });
 
         const httpServer = http.createServer(function weServeSocketsOnly(_, res) {
@@ -397,7 +375,7 @@ input TestInput {
               data: introspectionFromSchema(testSchema),
             })
           }) as any,
-          useWebSocketLegacyProtocol: true,
+          subscriptionsProtocol: SubscriptionProtocol.LEGACY_WS
         });
 
         const httpServer = http.createServer(function weServeSocketsOnly(_, res) {
@@ -488,8 +466,8 @@ input TestInput {
 
       expect(result.errors).toBeFalsy();
       assertNonMaybe(result.data)
-      expect(result.data.uploadFile?.filename).toBe(fileName);
-      expect(result.data.uploadFile?.content).toBe(content);
+      expect(result.data['uploadFile']?.filename).toBe(fileName);
+      expect(result.data['uploadFile']?.content).toBe(content);
     });
   });
 });

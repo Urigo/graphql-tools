@@ -29,10 +29,10 @@ describe('RemoveObjectFieldsWithDirective', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeUndefined();
-    expect(fields.second).toBeUndefined();
-    expect(fields.third).toBeUndefined();
-    expect(fields.fourth).toBeDefined();
+    expect(fields['first']).toBeUndefined();
+    expect(fields['second']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
+    expect(fields['fourth']).toBeDefined();
   });
 
   test('removes directive fields by name regex', async () => {
@@ -46,10 +46,10 @@ describe('RemoveObjectFieldsWithDirective', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeUndefined();
-    expect(fields.second).toBeUndefined();
-    expect(fields.third).toBeUndefined();
-    expect(fields.fourth).toBeDefined();
+    expect(fields['first']).toBeUndefined();
+    expect(fields['second']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
+    expect(fields['fourth']).toBeDefined();
   });
 
   test('removes directive fields by argument', async () => {
@@ -63,10 +63,10 @@ describe('RemoveObjectFieldsWithDirective', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeDefined();
-    expect(fields.second).toBeUndefined();
-    expect(fields.third).toBeUndefined();
-    expect(fields.third).toBeUndefined();
+    expect(fields['first']).toBeDefined();
+    expect(fields['second']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
   });
 
   test('removes directive fields by argument regex', async () => {
@@ -80,9 +80,9 @@ describe('RemoveObjectFieldsWithDirective', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    expect(fields.first).toBeUndefined();
-    expect(fields.second).toBeUndefined();
-    expect(fields.third).toBeUndefined();
-    expect(fields.third).toBeUndefined();
+    expect(fields['first']).toBeUndefined();
+    expect(fields['second']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
+    expect(fields['third']).toBeUndefined();
   });
 });

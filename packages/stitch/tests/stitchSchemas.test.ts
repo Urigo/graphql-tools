@@ -325,7 +325,7 @@ const schemaDirectiveTypeDefs = `
   }
 `;
 
-testCombinations.forEach((combination) => {
+for (const combination of testCombinations) {
   describe('merging ' + combination.name, () => {
     let stitchedSchema: GraphQLSchema;
     let propertySchema: GraphQLSchema | SubschemaConfig;
@@ -2223,8 +2223,8 @@ fragment BookingFragment on Booking {
         expect(originalResult.errors).toBeUndefined();
         expect(originalResult.data).toBeDefined();
         assertSome(originalResult.data)
-        expect(originalResult.data.persona.transactions.items.length).toBe(2);
-        expect(originalResult.data.persona.transactions.items[1].debt).toBeDefined();
+        expect(originalResult.data['persona'].transactions.items.length).toBe(2);
+        expect(originalResult.data['persona'].transactions.items[1].debt).toBeDefined();
 
         const mergedSchema = stitchSchemas({
           subschemas: [remoteSchema],
@@ -2323,8 +2323,8 @@ fragment BookingFragment on Booking {
                           },
                           transformResult: (originalResult: ExecutionResult) => {
                             assertSome(originalResult.data)
-                            originalResult.data.persona = {
-                              page: originalResult.data.persona.transactions.items,
+                            originalResult.data['persona'] = {
+                              page: originalResult.data['persona'].transactions.items,
                             };
                             return originalResult;
                           },
@@ -2366,8 +2366,8 @@ fragment BookingFragment on Booking {
 
         expect(result.errors).toBeUndefined();
         assertSome(result.data)
-        expect(result.data.flattenedTransactions.page.length).toBe(2);
-        expect(result.data.flattenedTransactions.page[1].debt).toBeDefined();
+        expect(result.data['flattenedTransactions'].page.length).toBe(2);
+        expect(result.data['flattenedTransactions'].page[1].debt).toBeDefined();
       });
 
       test('aliases', async () => {
@@ -2679,13 +2679,13 @@ fragment BookingFragment on Booking {
 
           const stitchedResult = await graphql(stitchedSchema, propertyQuery, undefined, {});
 
-          [propertyResult, stitchedResult].forEach((result) => {
+          for (const result of [propertyResult, stitchedResult]) {
             assertSome(result.errors)
             expect(result.errors.length > 0).toBe(true);
             const error = result.errors[0];
             assertSome(error.extensions)
-            expect(error.extensions.code).toBe('SOME_CUSTOM_CODE');
-          });
+            expect(error.extensions['code']).toBe('SOME_CUSTOM_CODE');
+          }
         },
       );
     });
@@ -2720,19 +2720,19 @@ fragment BookingFragment on Booking {
       test('should parse descriptions on new fields', () => {
         const Query = stitchedSchema.getQueryType();
         assertSome(Query)
-        expect(Query.getFields().linkTest.description).toBe(
+        expect(Query.getFields()['linkTest'].description).toBe(
           'A new field on the root query.',
         );
 
         const Booking = stitchedSchema.getType('Booking') as GraphQLObjectType;
-        expect(Booking.getFields().property.description).toBe(
+        expect(Booking.getFields()['property'].description).toBe(
           'The property of the booking.',
         );
 
         const Property = stitchedSchema.getType(
           'Property',
         ) as GraphQLObjectType;
-        const bookingsField = Property.getFields().bookings;
+        const bookingsField = Property.getFields()['bookings'];
         expect(bookingsField.description).toBe('A list of bookings.');
         expect(bookingsField.args[0].description).toBe(
           'The maximum number of bookings to retrieve.',
@@ -3119,7 +3119,7 @@ fragment BookingFragment on Booking {
 
         const result = await graphql(schema, '{ book { cat: category } }');
 assertSome(result.data)
-        expect(result.data.book.cat).toBe('Test');
+        expect(result.data['book'].cat).toBe('Test');
       });
     });
 
@@ -3252,7 +3252,7 @@ assertSome(result.data)
 
       const result = await graphql(schema, '{ book { cat: category } }');
 assertSome(result.data)
-      expect(result.data.book.cat).toBe('Test');
+      expect(result.data['book'].cat).toBe('Test');
     });
   });
 
@@ -3510,4 +3510,4 @@ assertSome(result.data)
       });
     });
   });
-});
+}

@@ -127,13 +127,13 @@ export class GraphQLFileLoader implements UniversalLoader<GraphQLFileLoaderOptio
     const normalizedFilePath = isAbsolute(pointer) ? pointer : resolve(options.cwd || processCwd(), pointer);
     const rawSDL: string = await readFile(normalizedFilePath, { encoding: 'utf8' });
 
-    return this.handleFileContent(rawSDL, pointer, options);
+    return this.handleFileContent(rawSDL, normalizedFilePath, options);
   }
 
   loadSync(pointer: SchemaPointerSingle | DocumentPointerSingle, options: GraphQLFileLoaderOptions): Source {
     const normalizedFilePath = isAbsolute(pointer) ? pointer : resolve(options.cwd || processCwd(), pointer);
     const rawSDL = readFileSync(normalizedFilePath, { encoding: 'utf8' });
-    return this.handleFileContent(rawSDL, pointer, options);
+    return this.handleFileContent(rawSDL, normalizedFilePath, options);
   }
 
   handleFileContent(rawSDL: string, pointer: string, options: GraphQLFileLoaderOptions) {

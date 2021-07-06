@@ -2,4 +2,6 @@
 '@graphql-tools/utils': major
 ---
 
-BREAKING - do not apply camelCase naming convention in buildOperationNodeForField
+BREAKING CHANGE
+
+- No longer applies `camelCase` naming convention in `buildOperationNodeForField`

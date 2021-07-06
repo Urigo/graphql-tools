@@ -11,8 +11,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -30,11 +30,13 @@
     "graphql": "^14.0.0 || ^15.0.0"
   },
   "devDependencies": {
-    "@types/lodash": "4.14.170"
+    "@types/lodash": "4.14.170",
+    "@types/micromatch": "4.0.1"
   },
   "dependencies": {
     "@graphql-tools/utils": "^7.9.1",
     "lodash": "4.17.21",
+    "micromatch": "^4.0.4",
     "tslib": "~2.3.0"
   },
   "publishConfig": {

@@ -25,7 +25,7 @@ function streamToString(stream: Readable) {
 
 function startServer(e: Express): Promise<Server> {
   return new Promise((resolve, reject) => {
-    e.listen(undefined, 'localhost', function (error: Error) {
+    e.listen(undefined as any, 'localhost', function (this: any, error: Error) {
       if (error) {
         reject(error);
       } else {

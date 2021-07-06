@@ -35,7 +35,7 @@ describe('Schema From Export', () => {
       expect(isSchema(result)).toBeTruthy();
       const QueryType = result.getQueryType()
       assertNonMaybe(QueryType)
-      expect(QueryType.getFields().hello).toBeDefined();
+      expect(QueryType.getFields()['hello']).toBeDefined();
     });
 
     test('should load the schema correctly from variable export', async () => {

@@ -29,14 +29,14 @@ describe('RemoveObjectFieldDirectives', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    assertSome(fields.id)
-    expect(fields.id.astNode?.directives?.length).toEqual(1);
-    assertSome(fields.first)
-    expect(fields.first.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.second)
-    expect(fields.second.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.third)
-    expect(fields.third.astNode?.directives?.length).toEqual(0);
+    assertSome(fields['id'])
+    expect(fields['id'].astNode?.directives?.length).toEqual(1);
+    assertSome(fields['first'])
+    expect(fields['first'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['second'])
+    expect(fields['second'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['third'])
+    expect(fields['third'].astNode?.directives?.length).toEqual(0);
   });
 
   test('removes directives by name regex', async () => {
@@ -50,14 +50,14 @@ describe('RemoveObjectFieldDirectives', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    assertSome(fields.id)
-    expect(fields.id.astNode?.directives?.length).toEqual(1);
-    assertSome(fields.first)
-    expect(fields.first.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.second)
-    expect(fields.second.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.third)
-    expect(fields.third.astNode?.directives?.length).toEqual(0);
+    assertSome(fields['id'])
+    expect(fields['id'].astNode?.directives?.length).toEqual(1);
+    assertSome(fields['first'])
+    expect(fields['first'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['second'])
+    expect(fields['second'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['third'])
+    expect(fields['third'].astNode?.directives?.length).toEqual(0);
   });
 
   test('removes directives by argument', async () => {
@@ -71,14 +71,14 @@ describe('RemoveObjectFieldDirectives', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    assertSome(fields.id)
-    expect(fields.id.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.first)
-    expect(fields.first.astNode?.directives?.length).toEqual(1);
-    assertSome(fields.second)
-    expect(fields.second.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.third)
-    expect(fields.third.astNode?.directives?.length).toEqual(0);
+    assertSome(fields['id'])
+    expect(fields['id'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['first'])
+    expect(fields['first'].astNode?.directives?.length).toEqual(1);
+    assertSome(fields['second'])
+    expect(fields['second'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['third'])
+    expect(fields['third'].astNode?.directives?.length).toEqual(0);
   });
 
   test('removes directives by argument regex', async () => {
@@ -92,13 +92,13 @@ describe('RemoveObjectFieldDirectives', () => {
     const Test = transformedSchema.getType('Test')
     assertGraphQLObjectType(Test)
     const fields = Test.getFields();
-    assertSome(fields.id)
-    expect(fields.id.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.first)
-    expect(fields.first.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.second)
-    expect(fields.second.astNode?.directives?.length).toEqual(0);
-    assertSome(fields.third)
-    expect(fields.third.astNode?.directives?.length).toEqual(0);
+    assertSome(fields['id'])
+    expect(fields['id'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['first'])
+    expect(fields['first'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['second'])
+    expect(fields['second'].astNode?.directives?.length).toEqual(0);
+    assertSome(fields['third'])
+    expect(fields['third'].astNode?.directives?.length).toEqual(0);
   });
 });

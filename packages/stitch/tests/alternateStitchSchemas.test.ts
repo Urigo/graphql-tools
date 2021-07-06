@@ -441,11 +441,11 @@ describe('optional arguments', () => {
 
     const originalResult = await graphql(schema, query);
     assertSome(originalResult.data)
-    expect(originalResult.data.test).toEqual(true);
+    expect(originalResult.data['test']).toEqual(true);
 
     const stitchedResult = await graphql(stitchedSchema, query);
     assertSome(stitchedResult.data)
-    expect(stitchedResult.data.test).toEqual(true);
+    expect(stitchedResult.data['test']).toEqual(true);
   });
 
   it('work with schema stitching when using variables', async () => {
@@ -457,11 +457,11 @@ describe('optional arguments', () => {
 
     const originalResult = await graphql(schema, query);
     assertSome(originalResult.data)
-    expect(originalResult.data.test).toEqual(true);
+    expect(originalResult.data['test']).toEqual(true);
 
     const stitchedResult = await graphql(stitchedSchema, query);
     assertSome(stitchedResult.data)
-    expect(stitchedResult.data.test).toEqual(true);
+    expect(stitchedResult.data['test']).toEqual(true);
   });
 
   // See https://github.com/graphql/graphql-js/issues/2533
@@ -480,7 +480,7 @@ describe('optional arguments', () => {
       { arg: undefined },
     );
     assertSome(originalResult.data)
-    expect(originalResult.data.test).toEqual(false);
+    expect(originalResult.data['test']).toEqual(false);
 
     const stitchedResult = await graphql(
       stitchedSchema,
@@ -490,7 +490,7 @@ describe('optional arguments', () => {
       { arg: undefined },
     );
     assertSome(stitchedResult.data)
-    expect(stitchedResult.data.test).toEqual(false);
+    expect(stitchedResult.data['test']).toEqual(false);
   });
 });
 
@@ -515,7 +515,7 @@ describe('default values', () => {
                   args: {
                     ...fieldConfig.args,
                     input: {
-                      ...fieldConfig.args.input,
+                      ...fieldConfig.args['input'],
                       defaultValue: { test: 'test' }
                     }
                   }
@@ -1516,7 +1516,7 @@ describe('schema transformation with wrapping of object fields', () => {
       const query = '{ wrapped { user { dummy } } }';
       const result = await graphql(stitchedSchema, query);
       assertSome(result.data)
-      expect(result.data.wrapped.user.dummy).not.toEqual(null);
+      expect(result.data['wrapped'].user.dummy).not.toEqual(null);
     });
   });
 });
@@ -1640,7 +1640,7 @@ describe('stitchSchemas', () => {
     const query = '{ test { field } }';
     const response = await graphql(stitchedSchema, query);
     assertSome(response.data)
-    expect(response.data.test).toBe(null);
+    expect(response.data['test']).toBe(null);
     expect(response.errors).toBeUndefined();
   });
 
@@ -1682,7 +1682,7 @@ type Query {
 }
     `.trim(),
     );
-    expect(response.data?.getInput).toBe('test');
+    expect(response.data?.['getInput']).toBe('test');
   });
 
   test('can override scalars with new internal values', async () => {
@@ -1722,7 +1722,7 @@ type Query {
     const query = '{ getTestScalar }';
     const response = await graphql(stitchedSchema, query);
 
-    expect(response.data?.getTestScalar).toBe('test');
+    expect(response.data?.['getTestScalar']).toBe('test');
   });
 
   test('can override scalars with new internal values when using default input types', async () => {
@@ -1762,7 +1762,7 @@ type Query {
     const query = '{ getTestScalar }';
     const response = await graphql(stitchedSchema, query);
 
-    expect(response.data?.getTestScalar).toBe('test');
+    expect(response.data?.['getTestScalar']).toBe('test');
   });
 
   test('can use @include directives', async () => {
@@ -1810,7 +1810,7 @@ type Query {
       }
     `;
     const response = await graphql(stitchedSchema, query);
-    expect(response.data?.get2.subfield).toBe('test');
+    expect(response.data?.['get2'].subfield).toBe('test');
   });
 
   test('can use functions in subfields', async () => {
@@ -1838,7 +1838,7 @@ type Query {
 
     const query = '{ wrappingObject { functionField } }';
     const response = await graphql(stitchedSchema, query);
-    expect(response.data?.wrappingObject.functionField).toBe(8);
+    expect(response.data?.['wrappingObject'].functionField).toBe(8);
   });
 });
 
@@ -1902,7 +1902,7 @@ describe('onTypeConflict', () => {
       mergeTypes: false,
     });
     const result1 = await graphql(stitchedSchema, '{ test2 { fieldC } }');
-    expect(result1.data?.test2.fieldC).toBe('C');
+    expect(result1.data?.['test2'].fieldC).toBe('C');
     const result2 = await graphql(stitchedSchema, '{ test2 { fieldB } }');
     expect(result2.data).toBeUndefined();
   });
@@ -1914,7 +1914,7 @@ describe('onTypeConflict', () => {
       onTypeConflict: (_left, right) => right,
     });
     const result1 = await graphql(stitchedSchema, '{ test2 { fieldC } }');
-    expect(result1.data?.test2.fieldC).toBe('C');
+    expect(result1.data?.['test2'].fieldC).toBe('C');
     const result2 = await graphql(stitchedSchema, '{ test2 { fieldB } }');
     expect(result2.data).toBeUndefined();
   });
@@ -1926,7 +1926,7 @@ describe('onTypeConflict', () => {
       onTypeConflict: (left) => left,
     });
     const result1 = await graphql(stitchedSchema, '{ test1 { fieldB } }');
-    expect(result1.data?.test1.fieldB).toBe('B');
+    expect(result1.data?.['test1'].fieldB).toBe('B');
     const result2 = await graphql(stitchedSchema, '{ test1 { fieldC } }');
     expect(result2.data).toBeUndefined();
   });

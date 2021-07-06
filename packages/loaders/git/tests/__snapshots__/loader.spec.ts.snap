@@ -1,0 +1,123 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GitLoader load async should load type definitions from a pluckable file 1`] = `
+Object {
+  "definitions": Array [
+    Object {
+      "description": undefined,
+      "directives": Array [],
+      "fields": Array [
+        Object {
+          "arguments": Array [],
+          "description": undefined,
+          "directives": Array [],
+          "kind": "FieldDefinition",
+          "loc": Object {
+            "end": 28,
+            "start": 15,
+          },
+          "name": Object {
+            "kind": "Name",
+            "loc": Object {
+              "end": 20,
+              "start": 15,
+            },
+            "value": "hello",
+          },
+          "type": Object {
+            "kind": "NamedType",
+            "loc": Object {
+              "end": 28,
+              "start": 22,
+            },
+            "name": Object {
+              "kind": "Name",
+              "loc": Object {
+                "end": 28,
+                "start": 22,
+              },
+              "value": "String",
+            },
+          },
+        },
+      ],
+      "interfaces": Array [],
+      "kind": "ObjectTypeDefinition",
+      "loc": Object {
+        "end": 30,
+        "start": 0,
+      },
+      "name": Object {
+        "kind": "Name",
+        "loc": Object {
+          "end": 10,
+          "start": 5,
+        },
+        "value": "Query",
+      },
+    },
+  ],
+  "kind": "Document",
+}
+`;
+
+exports[`GitLoader load sync should load type definitions from a pluckable file 1`] = `
+Object {
+  "definitions": Array [
+    Object {
+      "description": undefined,
+      "directives": Array [],
+      "fields": Array [
+        Object {
+          "arguments": Array [],
+          "description": undefined,
+          "directives": Array [],
+          "kind": "FieldDefinition",
+          "loc": Object {
+            "end": 28,
+            "start": 15,
+          },
+          "name": Object {
+            "kind": "Name",
+            "loc": Object {
+              "end": 20,
+              "start": 15,
+            },
+            "value": "hello",
+          },
+          "type": Object {
+            "kind": "NamedType",
+            "loc": Object {
+              "end": 28,
+              "start": 22,
+            },
+            "name": Object {
+              "kind": "Name",
+              "loc": Object {
+                "end": 28,
+                "start": 22,
+              },
+              "value": "String",
+            },
+          },
+        },
+      ],
+      "interfaces": Array [],
+      "kind": "ObjectTypeDefinition",
+      "loc": Object {
+        "end": 30,
+        "start": 0,
+      },
+      "name": Object {
+        "kind": "Name",
+        "loc": Object {
+          "end": 10,
+          "start": 5,
+        },
+        "value": "Query",
+      },
+    },
+  ],
+  "kind": "Document",
+}
+`;

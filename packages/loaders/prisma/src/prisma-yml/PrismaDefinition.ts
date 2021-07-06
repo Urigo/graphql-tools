@@ -255,7 +255,7 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
       : [];
 
     let allTypes = '';
-    typesPaths.forEach(unresolvedTypesPath => {
+    for (const unresolvedTypesPath of typesPaths) {
       const typesPath = path.join(this.definitionDir!, unresolvedTypesPath!);
       try {
         fs.accessSync(typesPath);
@@ -264,7 +264,7 @@ and execute ${chalk.bold.green('prisma deploy')} again, to get that value auto-f
       } catch {
         throw new Error(`The types definition file "${typesPath}" could not be found.`);
       }
-    });
+    }
 
     return allTypes;
   }

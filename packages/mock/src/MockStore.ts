@@ -237,7 +237,7 @@ export class MockStore implements IMockStore {
       if (!isRecord(value)) {
         throw new Error('When no `fieldName` is provided, `value` should be a record.');
       }
-      for (const fieldName of Object.keys(value)) {
+      for (const fieldName in value) {
         this.setImpl({
           typeName,
           key,
@@ -368,7 +368,7 @@ export class MockStore implements IMockStore {
     }
 
     const toInsert = { ...otherValues, ...values };
-    for (const fieldName of Object.keys(toInsert)) {
+    for (const fieldName in toInsert) {
       if (fieldName === '$ref') continue;
       if (fieldName === '__typename') continue;
       this.set({
@@ -410,7 +410,7 @@ export class MockStore implements IMockStore {
           throw new Error(`Value returned by the mock for ${typeName} is not an object`);
         }
 
-        for (const otherFieldName of Object.keys(values)) {
+        for (const otherFieldName in values) {
           if (otherFieldName === fieldName) continue;
           if (typeof (values as any)[otherFieldName] === 'function') continue;
           onOtherFieldsGenerated && onOtherFieldsGenerated(otherFieldName, (values as any)[otherFieldName]);
@@ -498,7 +498,7 @@ export class MockStore implements IMockStore {
       }
 
       const toInsert = {};
-      for (const fieldName of Object.keys(values)) {
+      for (const fieldName in values) {
         if (fieldName === '__typename') continue;
         const fieldValue = (values as any)[fieldName];
         toInsert[fieldName] = typeof fieldValue === 'function' ? fieldValue() : fieldValue;

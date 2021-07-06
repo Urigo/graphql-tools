@@ -86,7 +86,7 @@ export function loadTypedefsSync<AdditionalConfig = Record<string, unknown>>(
 
   const validSources: Source[] = [];
 
-  sources.forEach(partialSource => {
+  for (const partialSource of sources) {
     parseSource({
       partialSource,
       options,
@@ -96,7 +96,7 @@ export function loadTypedefsSync<AdditionalConfig = Record<string, unknown>>(
         validSources.push(source);
       },
     });
-  });
+  }
 
   return prepareResult({ options, pointerOptionMap, validSources });
 }

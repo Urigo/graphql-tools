@@ -79,7 +79,7 @@ describe('merged interfaces via concrete type', () => {
     `);
 
     assertSome(result.data)
-    expect(result.data.placement).toEqual({ id: '23', index: 23, name: 'Item 23' });
+    expect(result.data['placement']).toEqual({ id: '23', index: 23, name: 'Item 23' });
   });
 
   test('works without selection set key', async () => {
@@ -93,7 +93,7 @@ describe('merged interfaces via concrete type', () => {
     `);
 
     assertSome(result.data)
-    expect(result.data.placement).toEqual({ index: 23, name: 'Item 23' });
+    expect(result.data['placement']).toEqual({ index: 23, name: 'Item 23' });
   });
 });
 
@@ -174,7 +174,7 @@ describe('merged interfaces via abstract type', () => {
 
 
     assertSome(result.data)
-    expect(result.data.placement).toEqual({ id: '23', index: 23, name: 'Item 23' });
+    expect(result.data['placement']).toEqual({ id: '23', index: 23, name: 'Item 23' });
   });
 
   test('works without selection set key', async () => {
@@ -187,6 +187,6 @@ describe('merged interfaces via abstract type', () => {
       }
     `);
     assertSome(result.data)
-    expect(result.data.placement).toEqual({ index: 23, name: 'Item 23' });
+    expect(result.data['placement']).toEqual({ index: 23, name: 'Item 23' });
   });
 });

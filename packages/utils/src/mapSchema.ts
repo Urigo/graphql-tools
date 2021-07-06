@@ -29,6 +29,7 @@ import {
   Kind,
   EnumValueDefinitionNode,
 } from 'graphql';
+import { getObjectTypeFromTypeMap } from './addTypes';
 
 import {
   SchemaMapper,
@@ -47,16 +48,30 @@ import { rewireTypes } from './rewire';
 import { serializeInputValue, parseInputValue } from './transformInputValue';
 
 export function mapSchema(schema: GraphQLSchema, schemaMapper: SchemaMapper = {}): GraphQLSchema {
-  const originalTypeMap = schema.getTypeMap();
-
-  let newTypeMap = mapDefaultValues(originalTypeMap, schema, serializeInputValue);
-  newTypeMap = mapTypes(newTypeMap, schema, schemaMapper, type => isLeafType(type));
-  newTypeMap = mapEnumValues(newTypeMap, schema, schemaMapper);
-  newTypeMap = mapDefaultValues(newTypeMap, schema, parseInputValue);
-
-  newTypeMap = mapTypes(newTypeMap, schema, schemaMapper, type => !isLeafType(type));
-  newTypeMap = mapFields(newTypeMap, schema, schemaMapper);
-  newTypeMap = mapArguments(newTypeMap, schema, schemaMapper);
+  const newTypeMap = mapArguments(
+    mapFields(
+      mapTypes(
+        mapDefaultValues(
+          mapEnumValues(
+            mapTypes(mapDefaultValues(schema.getTypeMap(), schema, serializeInputValue), schema, schemaMapper, type =>
+              isLeafType(type)
+            ),
+            schema,
+            schemaMapper
+          ),
+          schema,
+          parseInputValue
+        ),
+        schema,
+        schemaMapper,
+        type => !isLeafType(type)
+      ),
+      schema,
+      schemaMapper
+    ),
+    schema,
+    schemaMapper
+  );
 
   const originalDirectives = schema.getDirectives();
   const newDirectives = mapDirectives(originalDirectives, schema, schemaMapper);
@@ -65,29 +80,18 @@ export function mapSchema(schema: GraphQLSchema, schemaMapper: SchemaMapper = {}
   const mutationType = schema.getMutationType();
   const subscriptionType = schema.getSubscriptionType();
 
-  const newQueryTypeName =
-    queryType != null ? (newTypeMap[queryType.name] != null ? newTypeMap[queryType.name].name : undefined) : undefined;
-  const newMutationTypeName =
-    mutationType != null
-      ? newTypeMap[mutationType.name] != null
-        ? newTypeMap[mutationType.name].name
-        : undefined
-      : undefined;
-  const newSubscriptionTypeName =
-    subscriptionType != null
-      ? newTypeMap[subscriptionType.name] != null
-        ? newTypeMap[subscriptionType.name].name
-        : undefined
-      : undefined;
+  const newQueryTypeName = queryType?.name && newTypeMap?.[queryType?.name]?.name;
+  const newMutationTypeName = mutationType?.name && newTypeMap?.[mutationType?.name]?.name;
+  const newSubscriptionTypeName = subscriptionType?.name && newTypeMap?.[subscriptionType?.name]?.name;
 
   const { typeMap, directives } = rewireTypes(newTypeMap, newDirectives);
 
   return new GraphQLSchema({
     ...schema.toConfig(),
-    query: newQueryTypeName ? (typeMap[newQueryTypeName] as GraphQLObjectType) : undefined,
-    mutation: newMutationTypeName ? (typeMap[newMutationTypeName] as GraphQLObjectType) : undefined,
-    subscription: newSubscriptionTypeName != null ? (typeMap[newSubscriptionTypeName] as GraphQLObjectType) : undefined,
-    types: Object.keys(typeMap).map(typeName => typeMap[typeName]),
+    query: getObjectTypeFromTypeMap(typeMap, newQueryTypeName),
+    mutation: getObjectTypeFromTypeMap(typeMap, newMutationTypeName),
+    subscription: getObjectTypeFromTypeMap(typeMap, newSubscriptionTypeName),
+    types: Object.values(typeMap),
     directives,
   });
 }
@@ -100,32 +104,32 @@ function mapTypes(
 ): TypeMap {
   const newTypeMap = {};
 
-  Object.keys(originalTypeMap).forEach(typeName => {
+  for (const typeName in originalTypeMap) {
     if (!typeName.startsWith('__')) {
       const originalType = originalTypeMap[typeName];
 
       if (originalType == null || !testFn(originalType)) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const typeMapper = getTypeMapper(schema, schemaMapper, typeName);
 
       if (typeMapper == null) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const maybeNewType = typeMapper(originalType, schema);
 
       if (maybeNewType === undefined) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       newTypeMap[typeName] = maybeNewType;
     }
-  });
+  }
 
   return newTypeMap;
 }
@@ -144,7 +148,7 @@ function mapEnumValues(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMa
         const config = type.toConfig();
         const originalEnumValueConfigMap = config.values;
         const newEnumValueConfigMap = {};
-        Object.keys(originalEnumValueConfigMap).forEach(externalValue => {
+        for (const externalValue in originalEnumValueConfigMap) {
           const originalEnumValueConfig = originalEnumValueConfigMap[externalValue];
           const mappedEnumValue = enumValueMapper(originalEnumValueConfig, type.name, schema, externalValue);
           if (mappedEnumValue === undefined) {
@@ -156,7 +160,7 @@ function mapEnumValues(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMa
           } else if (mappedEnumValue !== null) {
             newEnumValueConfigMap[externalValue] = mappedEnumValue;
           }
-        });
+        }
         return correctASTNodes(
           new GraphQLEnumType({
             ...config,
@@ -221,26 +225,26 @@ function getNewType<T extends GraphQLType>(newTypeMap: TypeMap, type: T): T | nu
 function mapFields(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMapper: SchemaMapper): TypeMap {
   const newTypeMap = {};
 
-  Object.keys(originalTypeMap).forEach(typeName => {
+  for (const typeName in originalTypeMap) {
     if (!typeName.startsWith('__')) {
       const originalType = originalTypeMap[typeName];
 
       if (!isObjectType(originalType) && !isInterfaceType(originalType) && !isInputObjectType(originalType)) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const fieldMapper = getFieldMapper(schema, schemaMapper, typeName);
       if (fieldMapper == null) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const config = originalType.toConfig();
 
       const originalFieldConfigMap = config.fields;
       const newFieldConfigMap = {};
-      Object.keys(originalFieldConfigMap).forEach(fieldName => {
+      for (const fieldName in originalFieldConfigMap) {
         const originalFieldConfig = originalFieldConfigMap[fieldName];
         const mappedField = fieldMapper(originalFieldConfig, fieldName, typeName, schema);
         if (mappedField === undefined) {
@@ -260,7 +264,7 @@ function mapFields(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMapper
         } else if (mappedField !== null) {
           newFieldConfigMap[fieldName] = mappedField;
         }
-      });
+      }
 
       if (isObjectType(originalType)) {
         newTypeMap[typeName] = correctASTNodes(
@@ -285,7 +289,7 @@ function mapFields(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMapper
         );
       }
     }
-  });
+  }
 
   return newTypeMap;
 }
@@ -293,44 +297,44 @@ function mapFields(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMapper
 function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMapper: SchemaMapper): TypeMap {
   const newTypeMap = {};
 
-  Object.keys(originalTypeMap).forEach(typeName => {
+  for (const typeName in originalTypeMap) {
     if (!typeName.startsWith('__')) {
       const originalType = originalTypeMap[typeName];
 
       if (!isObjectType(originalType) && !isInterfaceType(originalType)) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const argumentMapper = getArgumentMapper(schemaMapper);
       if (argumentMapper == null) {
         newTypeMap[typeName] = originalType;
-        return;
+        continue;
       }
 
       const config = originalType.toConfig();
 
       const originalFieldConfigMap = config.fields;
       const newFieldConfigMap = {};
-      Object.keys(originalFieldConfigMap).forEach(fieldName => {
+      for (const fieldName in originalFieldConfigMap) {
         const originalFieldConfig = originalFieldConfigMap[fieldName];
         const originalArgumentConfigMap = originalFieldConfig.args;
 
         if (originalArgumentConfigMap == null) {
           newFieldConfigMap[fieldName] = originalFieldConfig;
-          return;
+          continue;
         }
 
         const argumentNames = Object.keys(originalArgumentConfigMap);
 
         if (!argumentNames.length) {
           newFieldConfigMap[fieldName] = originalFieldConfig;
-          return;
+          continue;
         }
 
         const newArgumentConfigMap = {};
 
-        argumentNames.forEach(argumentName => {
+        for (const argumentName of argumentNames) {
           const originalArgumentConfig = originalArgumentConfigMap[argumentName];
 
           const mappedArgument = argumentMapper(originalArgumentConfig, fieldName, typeName, schema);
@@ -343,12 +347,13 @@ function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMap
           } else if (mappedArgument !== null) {
             newArgumentConfigMap[argumentName] = mappedArgument;
           }
-        });
+        }
+
         newFieldConfigMap[fieldName] = {
           ...originalFieldConfig,
           args: newArgumentConfigMap,
         };
-      });
+      }
 
       if (isObjectType(originalType)) {
         newTypeMap[typeName] = new GraphQLObjectType({
@@ -367,7 +372,7 @@ function mapArguments(originalTypeMap: TypeMap, schema: GraphQLSchema, schemaMap
         });
       }
     }
-  });
+  }
 
   return newTypeMap;
 }
@@ -384,14 +389,14 @@ function mapDirectives(
 
   const newDirectives: Array<GraphQLDirective> = [];
 
-  originalDirectives.forEach(directive => {
+  for (const directive of originalDirectives) {
     const mappedDirective = directiveMapper(directive, schema);
     if (mappedDirective === undefined) {
       newDirectives.push(directive);
     } else if (mappedDirective !== null) {
       newDirectives.push(mappedDirective);
     }
-  });
+  }
 
   return newDirectives;
 }
@@ -507,11 +512,14 @@ export function correctASTNodes(type: GraphQLNamedType): GraphQLNamedType {
     const config = (type as GraphQLObjectType).toConfig();
     if (config.astNode != null) {
       const fields: Array<FieldDefinitionNode> = [];
-      Object.values(config.fields).forEach(fieldConfig => {
+      for (const fieldName in config.fields) {
+        const fieldConfig = config.fields[fieldName];
+
         if (fieldConfig.astNode != null) {
           fields.push(fieldConfig.astNode);
         }
-      });
+      }
+
       config.astNode = {
         ...config.astNode,
         kind: Kind.OBJECT_TYPE_DEFINITION,
@@ -532,11 +540,13 @@ export function correctASTNodes(type: GraphQLNamedType): GraphQLNamedType {
     const config = (type as GraphQLInterfaceType).toConfig();
     if (config.astNode != null) {
       const fields: Array<FieldDefinitionNode> = [];
-      Object.values(config.fields).forEach(fieldConfig => {
+      for (const fieldName in config.fields) {
+        const fieldConfig = config.fields[fieldName];
+
         if (fieldConfig.astNode != null) {
           fields.push(fieldConfig.astNode);
         }
-      });
+      }
       config.astNode = {
         ...config.astNode,
         kind: Kind.INTERFACE_TYPE_DEFINITION,
@@ -557,11 +567,13 @@ export function correctASTNodes(type: GraphQLNamedType): GraphQLNamedType {
     const config = (type as GraphQLInputObjectType).toConfig();
     if (config.astNode != null) {
       const fields: Array<InputValueDefinitionNode> = [];
-      Object.values(config.fields).forEach(fieldConfig => {
+      for (const fieldName in config.fields) {
+        const fieldConfig = config.fields[fieldName];
+
         if (fieldConfig.astNode != null) {
           fields.push(fieldConfig.astNode);
         }
-      });
+      }
       config.astNode = {
         ...config.astNode,
         kind: Kind.INPUT_OBJECT_TYPE_DEFINITION,
@@ -582,11 +594,12 @@ export function correctASTNodes(type: GraphQLNamedType): GraphQLNamedType {
     const config = (type as GraphQLEnumType).toConfig();
     if (config.astNode != null) {
       const values: Array<EnumValueDefinitionNode> = [];
-      Object.values(config.values).forEach(enumValueConfig => {
+      for (const enumKey in config.values) {
+        const enumValueConfig = config.values[enumKey];
         if (enumValueConfig.astNode != null) {
           values.push(enumValueConfig.astNode);
         }
-      });
+      }
       config.astNode = {
         ...config.astNode,
         values,

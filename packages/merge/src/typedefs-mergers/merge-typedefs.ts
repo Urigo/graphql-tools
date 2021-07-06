@@ -124,7 +124,9 @@ function visitTypeSources(
     if (typeof typeSource === 'function') {
       visitTypeSources(typeSource(), options, allNodes, visitedTypeSources);
     } else if (Array.isArray(typeSource)) {
-      typeSource.forEach(type => visitTypeSources(type, options, allNodes, visitedTypeSources));
+      for (const type of typeSource) {
+        visitTypeSources(type, options, allNodes, visitedTypeSources);
+      }
     } else if (isSchema(typeSource)) {
       const documentNode = getDocumentNodeFromSchema(typeSource, options);
       visitTypeSources(documentNode.definitions as DefinitionNode[], options, allNodes, visitedTypeSources);

@@ -29,22 +29,23 @@ export function createStitchingInfo<TContext = Record<string, any>>(
   const mergedTypes = createMergedTypes(typeCandidates, mergeTypes);
   const selectionSetsByField: Record<string, Record<string, SelectionSetNode>> = Object.create(null);
 
-  Object.entries(mergedTypes).forEach(([typeName, mergedTypeInfo]) => {
+  for (const typeName in mergedTypes) {
+    const mergedTypeInfo = mergedTypes[typeName];
     if (mergedTypeInfo.selectionSets == null && mergedTypeInfo.fieldSelectionSets == null) {
-      return;
+      continue;
     }
 
     selectionSetsByField[typeName] = Object.create(null);
 
-    mergedTypeInfo.selectionSets.forEach((selectionSet, subschemaConfig) => {
+    for (const [subschemaConfig, selectionSet] of mergedTypeInfo.selectionSets) {
       const schema = subschemaConfig.transformedSchema;
       const type = schema.getType(typeName) as GraphQLObjectType;
       const fields = type.getFields();
-      Object.keys(fields).forEach(fieldName => {
+      for (const fieldName in fields) {
         const field = fields[fieldName];
         const fieldType = getNamedType(field.type);
         if (selectionSet && isLeafType(fieldType) && selectionSetContainsTopLevelField(selectionSet, fieldName)) {
-          return;
+          continue;
         }
         if (selectionSetsByField[typeName][fieldName] == null) {
           selectionSetsByField[typeName][fieldName] = {
@@ -55,11 +56,11 @@ export function createStitchingInfo<TContext = Record<string, any>>(
         selectionSetsByField[typeName][fieldName].selections = selectionSetsByField[typeName][
           fieldName
         ].selections.concat(selectionSet.selections);
-      });
-    });
+      }
+    }
 
-    mergedTypeInfo.fieldSelectionSets.forEach(selectionSetFieldMap => {
-      Object.keys(selectionSetFieldMap).forEach(fieldName => {
+    for (const [, selectionSetFieldMap] of mergedTypeInfo.fieldSelectionSets) {
+      for (const fieldName in selectionSetFieldMap) {
         if (selectionSetsByField[typeName][fieldName] == null) {
           selectionSetsByField[typeName][fieldName] = {
             kind: Kind.SELECTION_SET,
@@ -69,15 +70,15 @@ export function createStitchingInfo<TContext = Record<string, any>>(
         selectionSetsByField[typeName][fieldName].selections = selectionSetsByField[typeName][
           fieldName
         ].selections.concat(selectionSetFieldMap[fieldName].selections);
-      });
-    });
-  });
+      }
+    }
+  }
 
   return {
     subschemaMap,
-    selectionSetsByType: undefined,
+    selectionSetsByType: Object.create(null),
     selectionSetsByField,
-    dynamicSelectionSetsByField: undefined,
+    dynamicSelectionSetsByField: Object.create(null),
     mergedTypes,
   };
 }
@@ -88,7 +89,7 @@ function createMergedTypes<TContext = Record<string, any>>(
 ): Record<string, MergedTypeInfo<TContext>> {
   const mergedTypes: Record<string, MergedTypeInfo<TContext>> = Object.create(null);
 
-  Object.keys(typeCandidates).forEach(typeName => {
+  for (const typeName in typeCandidates) {
     if (
       typeCandidates[typeName].length > 1 &&
       (isObjectType(typeCandidates[typeName][0].type) || isInterfaceType(typeCandidates[typeName][0].type))
@@ -114,11 +115,11 @@ function createMergedTypes<TContext = Record<string, any>>(
         const fieldSelectionSets: Map<Subschema<any, any, any, TContext>, Record<string, SelectionSetNode>> = new Map();
         const resolvers: Map<Subschema<any, any, any, TContext>, MergedTypeResolver<TContext>> = new Map();
 
-        typeCandidates[typeName].forEach(typeCandidate => {
+        for (const typeCandidate of typeCandidates[typeName]) {
           const subschema = typeCandidate.transformedSubschema;
 
           if (subschema == null) {
-            return;
+            continue;
           }
 
           typeMaps.set(subschema, subschema.transformedSchema.getTypeMap());
@@ -126,7 +127,7 @@ function createMergedTypes<TContext = Record<string, any>>(
           const mergedTypeConfig = subschema?.merge?.[typeName];
 
           if (mergedTypeConfig == null) {
-            return;
+            continue;
           }
 
           if (mergedTypeConfig.selectionSet) {
@@ -150,7 +151,7 @@ function createMergedTypes<TContext = Record<string, any>>(
           const resolver = mergedTypeConfig.resolve ?? createMergedTypeResolver(mergedTypeConfig);
 
           if (resolver == null) {
-            return;
+            continue;
           }
 
           const keyFn = mergedTypeConfig.key;
@@ -169,18 +170,18 @@ function createMergedTypes<TContext = Record<string, any>>(
           const type = subschema.transformedSchema.getType(typeName) as GraphQLObjectType | GraphQLInterfaceType;
           const fieldMap = type.getFields();
           const selectionSet = selectionSets.get(subschema);
-          Object.keys(fieldMap).forEach(fieldName => {
+          for (const fieldName in fieldMap) {
             const field = fieldMap[fieldName];
             const fieldType = getNamedType(field.type);
             if (selectionSet && isLeafType(fieldType) && selectionSetContainsTopLevelField(selectionSet, fieldName)) {
-              return;
+              continue;
             }
             if (!(fieldName in supportedBySubschemas)) {
               supportedBySubschemas[fieldName] = [];
             }
             supportedBySubschemas[fieldName].push(subschema);
-          });
-        });
+          }
+        }
 
         const sourceSubschemas = typeCandidates[typeName]
           .map(typeCandidate => typeCandidate?.transformedSubschema)
@@ -189,12 +190,12 @@ function createMergedTypes<TContext = Record<string, any>>(
           Subschema<any, any, any, TContext>,
           Array<Subschema<any, any, any, TContext>>
         > = new Map();
-        sourceSubschemas.forEach(subschema => {
+        for (const subschema of sourceSubschemas) {
           const filteredSubschemas = targetSubschemas.filter(s => s !== subschema);
           if (filteredSubschemas.length) {
             targetSubschemasBySubschema.set(subschema, filteredSubschemas);
           }
-        });
+        }
 
         mergedTypes[typeName] = {
           typeName,
@@ -207,16 +208,16 @@ function createMergedTypes<TContext = Record<string, any>>(
           resolvers,
         };
 
-        Object.keys(supportedBySubschemas).forEach(fieldName => {
+        for (const fieldName in supportedBySubschemas) {
           if (supportedBySubschemas[fieldName].length === 1) {
             mergedTypes[typeName].uniqueFields[fieldName] = supportedBySubschemas[fieldName][0];
           } else {
             mergedTypes[typeName].nonUniqueFields[fieldName] = supportedBySubschemas[fieldName];
           }
-        });
+        }
       }
     }
-  });
+  }
 
   return mergedTypes;
 }
@@ -226,22 +227,21 @@ export function completeStitchingInfo<TContext = Record<string, any>>(
   resolvers: IResolvers,
   schema: GraphQLSchema
 ): StitchingInfo<TContext> {
-  const selectionSetsByType = Object.create(null);
-  [schema.getQueryType(), schema.getMutationType()].forEach(rootType => {
+  const { selectionSetsByType, selectionSetsByField, dynamicSelectionSetsByField } = stitchingInfo;
+
+  const rootTypes = [schema.getQueryType(), schema.getMutationType()];
+  for (const rootType of rootTypes) {
     if (rootType) {
       selectionSetsByType[rootType.name] = parseSelectionSet('{ __typename }', { noLocation: true });
     }
-  });
+  }
 
-  const selectionSetsByField = stitchingInfo.selectionSetsByField;
-  const dynamicSelectionSetsByField = Object.create(null);
-
-  Object.keys(resolvers).forEach(typeName => {
+  for (const typeName in resolvers) {
     const type = resolvers[typeName];
     if (isScalarType(type)) {
-      return;
+      continue;
     }
-    Object.keys(type).forEach(fieldName => {
+    for (const fieldName in type) {
       const field = type[fieldName] as IFieldResolverOptions;
       if (field.selectionSet) {
         if (typeof field.selectionSet === 'function') {
@@ -271,24 +271,20 @@ export function completeStitchingInfo<TContext = Record<string, any>>(
           ].selections.concat(selectionSet.selections);
         }
       }
-    });
-  });
+    }
+  }
 
-  Object.keys(selectionSetsByField).forEach(typeName => {
+  for (const typeName in selectionSetsByField) {
     const typeSelectionSets = selectionSetsByField[typeName];
-    Object.keys(typeSelectionSets).forEach(fieldName => {
+    for (const fieldName in typeSelectionSets) {
       const consolidatedSelections: Map<string, SelectionNode> = new Map();
       const selectionSet = typeSelectionSets[fieldName];
-      selectionSet.selections.forEach(selection => {
+      for (const selection of selectionSet.selections) {
         consolidatedSelections.set(print(selection), selection);
-      });
+      }
       selectionSet.selections = Array.from(consolidatedSelections.values());
-    });
-  });
-
-  stitchingInfo.selectionSetsByType = selectionSetsByType;
-  stitchingInfo.selectionSetsByField = selectionSetsByField;
-  stitchingInfo.dynamicSelectionSetsByField = dynamicSelectionSetsByField;
+    }
+  }
 
   return stitchingInfo;
 }

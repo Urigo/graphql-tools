@@ -120,13 +120,13 @@ describe('Mock retro-compatibility', () => {
       returnID
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnInt).toBeGreaterThanOrEqual(-1000);
-      expect(res.data.returnInt).toBeLessThanOrEqual(1000);
-      expect(res.data.returnFloat).toBeGreaterThanOrEqual(-1000);
-      expect(res.data.returnFloat).toBeLessThanOrEqual(1000);
-      expect(typeof res.data.returnBoolean).toBe('boolean');
-      expect(typeof res.data.returnString).toBe('string');
-      expect(typeof res.data.returnID).toBe('string');
+      expect(res.data?.['returnInt']).toBeGreaterThanOrEqual(-1000);
+      expect(res.data?.['returnInt']).toBeLessThanOrEqual(1000);
+      expect(res.data?.['returnFloat']).toBeGreaterThanOrEqual(-1000);
+      expect(res.data?.['returnFloat']).toBeLessThanOrEqual(1000);
+      expect(typeof res.data?.['returnBoolean']).toBe('boolean');
+      expect(typeof res.data?.['returnString']).toBe('string');
+      expect(typeof res.data?.['returnID']).toBe('string');
     });
   });
 
@@ -290,7 +290,7 @@ describe('Mock retro-compatibility', () => {
       returnEnum
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(['A', 'B', 'C']).toContain(res.data.returnEnum);
+      expect(['A', 'B', 'C']).toContain(res.data?.['returnEnum']);
     });
   });
 
@@ -304,7 +304,7 @@ describe('Mock retro-compatibility', () => {
       returnEnum
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect('C').toBe(res.data.returnEnum);
+      expect('C').toBe(res.data?.['returnEnum']);
     });
   });
 
@@ -333,13 +333,13 @@ describe('Mock retro-compatibility', () => {
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
       // XXX this test is expected to fail once every 2^40 times ;-)
-      expect(res.data.returnBirdsAndBees).toContainEqual(
+      expect(res.data?.['returnBirdsAndBees']).toContainEqual(
         expect.objectContaining({
           returnInt: 10,
           returnString: 'aha',
         }),
       );
-      return expect(res.data.returnBirdsAndBees).toContainEqual(
+      return expect(res.data?.['returnBirdsAndBees']).toContainEqual(
         expect.objectContaining({
           returnInt: 10,
           returnEnum: 'A',
@@ -375,13 +375,13 @@ describe('Mock retro-compatibility', () => {
       }
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnFlying).toContainEqual(
+      expect(res.data?.['returnFlying']).toContainEqual(
         expect.objectContaining({
           returnInt: 10,
           returnString: 'aha',
         }),
       );
-      return expect(res.data.returnFlying).toContainEqual(
+      return expect(res.data?.['returnFlying']).toContainEqual(
         expect.objectContaining({
           returnInt: 10,
           returnEnum: 'A',
@@ -420,7 +420,7 @@ describe('Mock retro-compatibility', () => {
     }`;
 
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.node).toEqual(null);
+      expect(res.data?.['node']).toEqual(null);
     });
   });
 
@@ -448,7 +448,7 @@ describe('Mock retro-compatibility', () => {
 
     const res = await server.query(testQuery);
 
-    expect(res.data.node).toEqual({
+    expect(res.data?.['node']).toEqual({
       id: 'bee:hardcoded',
       returnAbility: {
         name: 'Hello World',
@@ -479,7 +479,7 @@ describe('Mock retro-compatibility', () => {
           const __typename = ['Bird', 'Bee'].find(
             (r) => r.toLowerCase() === type,
           );
-          return store.get(__typename, id);
+          return __typename && store.get(__typename, id);
         }
       }
     });
@@ -498,7 +498,7 @@ describe('Mock retro-compatibility', () => {
 
     return graphql(jsSchema, testQuery).then((res) => {
       expect(spy).toBe(1); // to make sure that Flying possible types are not randomly selected
-      expect(res.data.node).toMatchObject({
+      expect(res.data?.['node']).toMatchObject({
         id: 'bee:123456',
         returnSong: 'I believe i can fly',
         returnInt: 200,
@@ -540,7 +540,7 @@ describe('Mock retro-compatibility', () => {
 
     return graphql(jsSchema, testQuery).then((res) => {
       expect(spy).toBe(1);
-      expect(res.data.node2).toMatchObject({
+      expect(res.data?.['node2']).toMatchObject({
         id: 'bee:hardcoded',
         returnEnum: 'A',
       });
@@ -569,7 +569,7 @@ describe('Mock retro-compatibility', () => {
         }`;
     const expected = 'Please return a __typename in "Flying"';
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.errors[0].originalError.message).toBe(expected);
+      expect(res.errors?.[0].originalError?.message).toBe(expected);
     });
   });
 
@@ -582,7 +582,7 @@ describe('Mock retro-compatibility', () => {
     }`;
     const expected = 'No mock defined for type "MissingMockType"';
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.errors[0].originalError.message).toBe(expected);
+      expect(res.errors?.[0].originalError?.message).toBe(expected);
     });
   });
 
@@ -595,7 +595,7 @@ describe('Mock retro-compatibility', () => {
         __parseLiteral: (val: string) => val,
       },
       RootQuery: {
-        returnMockError: (): string => undefined,
+        returnMockError: () => undefined,
       },
     };
     jsSchema = addResolversToSchema(jsSchema, resolvers);
@@ -611,7 +611,7 @@ describe('Mock retro-compatibility', () => {
       }`;
     const expected = 'No mock defined for type "MissingMockType"';
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.errors[0].originalError.message).toBe(expected);
+      expect(res.errors?.[0].originalError?.message).toBe(expected);
     });
   });
 
@@ -655,7 +655,7 @@ describe('Mock retro-compatibility', () => {
       returnInt
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnInt).toBe(55);
+      expect(res.data?.['returnInt']).toBe(55);
     });
   });
 
@@ -667,7 +667,7 @@ describe('Mock retro-compatibility', () => {
       returnFloat
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnFloat).toBe(55.5);
+      expect(res.data?.['returnFloat']).toBe(55.5);
     });
   });
   test('can mock a String', () => {
@@ -678,7 +678,7 @@ describe('Mock retro-compatibility', () => {
       returnString
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnString).toBe('a string');
+      expect(res.data?.['returnString']).toBe('a string');
     });
   });
   test('can mock a Boolean', () => {
@@ -689,7 +689,7 @@ describe('Mock retro-compatibility', () => {
       returnBoolean
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnBoolean).toBe(true);
+      expect(res.data?.['returnBoolean']).toBe(true);
     });
   });
   test('can mock an ID', () => {
@@ -700,7 +700,7 @@ describe('Mock retro-compatibility', () => {
       returnID
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnID).toBe('ea5bdc19');
+      expect(res.data?.['returnID']).toBe('ea5bdc19');
     });
   });
   test('nullable type is nullable', () => {
@@ -711,7 +711,7 @@ describe('Mock retro-compatibility', () => {
       returnNullableString
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnNullableString).toBe(null);
+      expect(res.data?.['returnNullableString']).toBe(null);
     });
   });
   test('can mock a nonNull type', () => {
@@ -722,7 +722,7 @@ describe('Mock retro-compatibility', () => {
       returnNonNullString
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnNonNullString).toBe('nonnull');
+      expect(res.data?.['returnNonNullString']).toBe('nonnull');
     });
   });
   test('nonNull type is not nullable', () => {
@@ -734,7 +734,7 @@ describe('Mock retro-compatibility', () => {
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
       expect(res.data).toBe(null);
-      expect(res.errors.length).toBe(1);
+      expect(res.errors?.length).toBe(1);
     });
   });
   test('can mock object types', () => {
@@ -1029,7 +1029,7 @@ describe('Mock retro-compatibility', () => {
     let jsSchema = buildSchema(shorthand);
     const resolvers = {
       RootQuery: {
-        returnString: (): string => null, // a) resolve of a string
+        returnString: () => null, // a) resolve of a string
       },
     };
     jsSchema = addResolversToSchema(jsSchema, resolvers);
@@ -1053,7 +1053,7 @@ describe('Mock retro-compatibility', () => {
         returnInt: 666, // from the mock, see b)
         returnString: 'Hello World', // from mock default values.
       },
-      returnString: null as string, // from the mock, see a)
+      returnString: null as unknown as string, // from the mock, see a)
     };
     return graphql(jsSchema, testQuery, undefined, {}).then((res) => {
       expect(res.data).toEqual(expected);
@@ -1064,7 +1064,7 @@ describe('Mock retro-compatibility', () => {
     let jsSchema = buildSchema(shorthand);
     const resolvers = {
       RootQuery: {
-        returnStringArgument: (_: void, a: Record<string, any>) => a.s,
+        returnStringArgument: (_: void, a: Record<string, any>) => a['s'],
       },
     };
     jsSchema = addMocksToSchema({ schema: jsSchema, resolvers });
@@ -1083,7 +1083,7 @@ describe('Mock retro-compatibility', () => {
     let jsSchema = buildSchema(shorthand);
     const resolvers = {
       RootMutation: {
-        returnStringArgument: (_: void, a: Record<string, any>) => a.s,
+        returnStringArgument: (_: void, a: Record<string, any>) => a['s'],
       },
     };
     jsSchema = addMocksToSchema({ schema: jsSchema, resolvers });
@@ -1127,9 +1127,9 @@ describe('Mock retro-compatibility', () => {
       returnListOfInt
     }`;
     return graphql(jsSchema, testQuery).then((res) => {
-      expect(res.data.returnListOfInt.length).toBeGreaterThanOrEqual(10);
-      expect(res.data.returnListOfInt.length).toBeLessThanOrEqual(20);
-      expect(res.data.returnListOfInt[0]).toBe(12);
+      expect(res.data?.['returnListOfInt'].length).toBeGreaterThanOrEqual(10);
+      expect(res.data?.['returnListOfInt'].length).toBeLessThanOrEqual(20);
+      expect(res.data?.['returnListOfInt'][0]).toBe(12);
     });
   });
 
@@ -1366,9 +1366,9 @@ describe('Mock retro-compatibility', () => {
       `,
     });
 
-    expect(result.data?.reviews?.length <= 4).toBeTruthy();
-    expect(typeof result.data?.reviews[0]?.sentence).toBe('string');
-    expect(typeof result.data?.reviews[0]?.user?.first_name).toBe('string');
+    expect(result.data?.['reviews']?.length <= 4).toBeTruthy();
+    expect(typeof result.data?.['reviews'][0]?.sentence).toBe('string');
+    expect(typeof result.data?.['reviews'][0]?.user?.first_name).toBe('string');
   });
 
   it('resolves subscriptions only once', async () => {

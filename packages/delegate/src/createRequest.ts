@@ -10,7 +10,6 @@ import {
   typeFromAST,
   NamedTypeNode,
   GraphQLInputType,
-  GraphQLArgument,
   VariableDefinitionNode,
   SelectionSetNode,
   DefinitionNode,
@@ -107,7 +106,7 @@ export function createRequest({
   const variableDefinitionMap = Object.create(null);
 
   if (sourceSchema != null && variableDefinitions != null) {
-    variableDefinitions.forEach(def => {
+    for (const def of variableDefinitions) {
       const varName = def.variable.name.value;
       variableDefinitionMap[varName] = def;
       const varType = typeFromAST(sourceSchema, def.type as NamedTypeNode) as GraphQLInputType;
@@ -115,7 +114,7 @@ export function createRequest({
       if (serializedValue !== undefined) {
         newVariables[varName] = serializedValue;
       }
-    });
+    }
   }
 
   if (sourceParentType != null && sourceFieldName != null) {
@@ -130,7 +129,7 @@ export function createRequest({
 
   const rootfieldNode: FieldNode = {
     kind: Kind.FIELD,
-    arguments: Object.keys(argumentNodeMap).map(argName => argumentNodeMap[argName]),
+    arguments: Object.values(argumentNodeMap),
     name: {
       kind: Kind.NAME,
       value:
@@ -152,17 +151,17 @@ export function createRequest({
     kind: Kind.OPERATION_DEFINITION,
     name: operationName,
     operation: targetOperation,
-    variableDefinitions: Object.keys(variableDefinitionMap).map(varName => variableDefinitionMap[varName]),
+    variableDefinitions: Object.values(variableDefinitionMap),
     selectionSet: {
       kind: Kind.SELECTION_SET,
       selections: [rootfieldNode],
     },
   };
 
-  let definitions: Array<DefinitionNode> = [operationDefinition];
+  const definitions: Array<DefinitionNode> = [operationDefinition];
 
   if (fragments != null) {
-    definitions = definitions.concat(Object.keys(fragments).map(fragmentName => fragments[fragmentName]));
+    definitions.push(...Object.values(fragments));
   }
 
   const document: DocumentNode = {
@@ -173,6 +172,7 @@ export function createRequest({
   return {
     document,
     variables: newVariables,
+    operationName: targetOperationName,
   };
 }
 
@@ -184,7 +184,7 @@ function updateArgumentsWithDefaults(
   variableValues: Record<string, any>
 ): void {
   const sourceField = sourceParentType.getFields()[sourceFieldName];
-  sourceField.args.forEach((argument: GraphQLArgument) => {
+  for (const argument of sourceField.args) {
     const argName = argument.name;
     const sourceArgType = argument.type;
 
@@ -202,5 +202,5 @@ function updateArgumentsWithDefaults(
         );
       }
     }
-  });
+  }
 }

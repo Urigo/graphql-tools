@@ -33,8 +33,8 @@ describe('loadSchema', () => {
       const schema = await load(schemaPath, {
         loaders: [new CodeFileLoader()]
       });
-      expect(schema.getTypeMap().User).toBeDefined();
-      expect(schema.getTypeMap().Query).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
+      expect(schema.getTypeMap()['Query']).toBeDefined();
     });
 
     test('should work with graphql single file', async () => {
@@ -43,7 +43,7 @@ describe('loadSchema', () => {
         loaders: [new GraphQLFileLoader()]
       });
 
-      expect(schema.getTypeMap().User).toBeDefined();
+      expect(schema.getTypeMap()['User']).toBeDefined();
     });
 
     test('import and merge Query types from few different files', async () => {

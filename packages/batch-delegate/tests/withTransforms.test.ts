@@ -73,7 +73,7 @@ describe('works with complex transforms', () => {
         ]
       }),
       resultTransformer: (results, delegationContext) => {
-        const userIds = delegationContext.args.userIds;
+        const userIds = delegationContext.args['userIds'];
         const booksByUserIds = results.reduce(
           (acc: any, { userId, books }: { userId: string, books: any[] }) => {
             acc[userId] = books

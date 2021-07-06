@@ -68,22 +68,25 @@ export function mergeExecutionParams(
 
   let operation: Maybe<OperationTypeNode>;
 
-  execs.forEach((executionParams, index) => {
+  for (const index in execs) {
+    const executionParams = execs[index];
     const prefixedExecutionParams = prefixExecutionParams(createPrefix(index), executionParams);
 
-    prefixedExecutionParams.document.definitions.forEach(def => {
+    for (const def of prefixedExecutionParams.document.definitions) {
       if (isOperationDefinition(def)) {
         operation = def.operation;
         mergedSelections.push(...def.selectionSet.selections);
-        mergedVariableDefinitions.push(...(def.variableDefinitions ?? []));
+        if (def.variableDefinitions) {
+          mergedVariableDefinitions.push(...def.variableDefinitions);
+        }
       }
       if (isFragmentDefinition(def)) {
         mergedFragmentDefinitions.push(def);
       }
-    });
+    }
     Object.assign(mergedVariables, prefixedExecutionParams.variables);
     mergedExtensions = extensionsReducer(mergedExtensions, executionParams);
-  });
+  }
 
   if (operation == null) {
     throw new Error('Could not identify operation type. Did the document only include fragment definitions?');

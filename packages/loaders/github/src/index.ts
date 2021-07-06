@@ -1,11 +1,10 @@
 import { UniversalLoader, parseGraphQLSDL, parseGraphQLJSON, SingleFileOptions } from '@graphql-tools/utils';
 import { fetch } from 'cross-fetch';
 import { GraphQLTagPluckOptions, gqlPluckFromCodeString } from '@graphql-tools/graphql-tag-pluck';
+import { concatAST, parse } from 'graphql';
 
 // github:owner/name#ref:path/to/file
-function extractData(
-  pointer: string
-): {
+function extractData(pointer: string): {
   owner: string;
   name: string;
   ref: string;
@@ -113,8 +112,11 @@ export class GithubLoader implements UniversalLoader<GithubLoaderOptions> {
     }
 
     if (path.endsWith('.tsx') || path.endsWith('.ts') || path.endsWith('.js') || path.endsWith('.jsx')) {
-      const rawSDL = await gqlPluckFromCodeString(pointer, content, options.pluckConfig);
-      return parseGraphQLSDL(path, rawSDL, options);
+      const sources = await gqlPluckFromCodeString(pointer, content, options.pluckConfig);
+      return {
+        location: path,
+        document: concatAST(sources.map(source => parse(source, options))),
+      };
     }
 
     throw new Error(`Invalid file extension: ${path}`);

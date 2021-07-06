@@ -9,22 +9,24 @@ export function getSourcePaths(
   selectionSet?: SelectionSetNode
 ): Array<Array<string>> {
   const sourcePaths: Array<Array<string>> = [];
-  mappingInstructions.forEach(mappingInstruction => {
+  for (const mappingInstruction of mappingInstructions) {
     const { sourcePath } = mappingInstruction;
     if (sourcePath.length) {
       sourcePaths.push(sourcePath);
-      return;
+      continue;
     }
 
     if (selectionSet == null) {
-      return;
+      continue;
     }
 
     const paths = pathsFromSelectionSet(selectionSet);
-    paths.forEach(path => sourcePaths.push(path));
+    for (const path of paths) {
+      sourcePaths.push(path);
+    }
 
     sourcePaths.push([TypeNameMetaFieldDef.name]);
-  });
+  }
 
   return sourcePaths;
 }

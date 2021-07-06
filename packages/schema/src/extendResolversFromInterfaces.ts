@@ -3,28 +3,21 @@ import { GraphQLSchema } from 'graphql';
 import { IResolvers, IObjectTypeResolver } from '@graphql-tools/utils';
 
 export function extendResolversFromInterfaces(schema: GraphQLSchema, resolvers: IResolvers): IResolvers {
-  const typeNames = Object.keys({
-    ...schema.getTypeMap(),
-    ...resolvers,
-  });
-
   const extendedResolvers = {};
-  typeNames.forEach(typeName => {
-    const type = schema.getType(typeName);
-    if (type && 'getInterfaces' in type) {
-      const allInterfaceResolvers = type
-        .getInterfaces()
-        .map(iFace => resolvers[iFace.name])
-        .filter(interfaceResolvers => interfaceResolvers != null);
-
+  const typeMap = schema.getTypeMap();
+  for (const typeName in typeMap) {
+    const type = typeMap[typeName];
+    if ('getInterfaces' in type) {
       extendedResolvers[typeName] = {};
-      allInterfaceResolvers.forEach(interfaceResolvers => {
-        Object.keys(interfaceResolvers).forEach(fieldName => {
-          if (fieldName === '__isTypeOf' || !fieldName.startsWith('__')) {
-            extendedResolvers[typeName][fieldName] = interfaceResolvers[fieldName];
+      for (const iFace of type.getInterfaces()) {
+        if (resolvers[iFace.name]) {
+          for (const fieldName in resolvers[iFace.name]) {
+            if (fieldName === '__isTypeOf' || !fieldName.startsWith('__')) {
+              extendedResolvers[typeName][fieldName] = resolvers[iFace.name][fieldName];
+            }
           }
-        });
-      });
+        }
+      }
 
       const typeResolvers = resolvers[typeName] as Record<string, IObjectTypeResolver>;
       extendedResolvers[typeName] = {
@@ -37,7 +30,7 @@ export function extendResolversFromInterfaces(schema: GraphQLSchema, resolvers: 
         extendedResolvers[typeName] = typeResolvers;
       }
     }
-  });
+  }
 
   return extendedResolvers;
 }

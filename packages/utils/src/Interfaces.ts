@@ -312,6 +312,7 @@ export type NextResolverFn = () => Promise<any>;
 export interface Request {
   document: DocumentNode;
   variables: Record<string, any>;
+  operationName?: string;
   extensions?: Record<string, any>;
 }
 

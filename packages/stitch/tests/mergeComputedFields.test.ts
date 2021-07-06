@@ -110,7 +110,7 @@ describe('merge computed fields via config', () => {
     `);
 
     assertSome(data)
-    expect(data.product).toEqual({
+    expect(data['product']).toEqual({
       id: '77',
       price: 77.99,
       weight: 77,
@@ -135,7 +135,7 @@ describe('merge computed fields via config', () => {
     `);
 
     assertSome(data)
-    expect(data.storefront.availableProducts).toEqual([
+    expect(data['storefront'].availableProducts).toEqual([
       {
         id: '23',
         price: 23.99,
@@ -188,7 +188,7 @@ describe('merge computed fields via config', () => {
     `);
 
     assertSome(data)
-    expect(data.product).toEqual({
+    expect(data['product']).toEqual({
       id: '77',
       price: 77.99,
       weight: 77,
@@ -276,7 +276,7 @@ describe('merge computed fields via SDL (Apollo Federation-style directive annot
     `);
 
     assertSome(data)
-    expect(data.storefront.availableProducts).toEqual([
+    expect(data['storefront'].availableProducts).toEqual([
       {
         id: '23',
         price: 23.99,

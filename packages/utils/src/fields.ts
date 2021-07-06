@@ -24,12 +24,13 @@ export function appendObjectFields(
         const originalFieldConfigMap = config.fields;
 
         const newFieldConfigMap = {};
-        Object.keys(originalFieldConfigMap).forEach(fieldName => {
+
+        for (const fieldName in originalFieldConfigMap) {
           newFieldConfigMap[fieldName] = originalFieldConfigMap[fieldName];
-        });
-        Object.keys(additionalFields).forEach(fieldName => {
+        }
+        for (const fieldName in additionalFields) {
           newFieldConfigMap[fieldName] = additionalFields[fieldName];
-        });
+        }
 
         return correctASTNodes(
           new GraphQLObjectType({
@@ -55,14 +56,14 @@ export function removeObjectFields(
         const originalFieldConfigMap = config.fields;
 
         const newFieldConfigMap = {};
-        Object.keys(originalFieldConfigMap).forEach(fieldName => {
+        for (const fieldName in originalFieldConfigMap) {
           const originalFieldConfig = originalFieldConfigMap[fieldName];
           if (testFn(fieldName, originalFieldConfig)) {
             removedFields[fieldName] = originalFieldConfig;
           } else {
             newFieldConfigMap[fieldName] = originalFieldConfig;
           }
-        });
+        }
 
         return correctASTNodes(
           new GraphQLObjectType({
@@ -89,12 +90,12 @@ export function selectObjectFields(
         const config = type.toConfig();
         const originalFieldConfigMap = config.fields;
 
-        Object.keys(originalFieldConfigMap).forEach(fieldName => {
+        for (const fieldName in originalFieldConfigMap) {
           const originalFieldConfig = originalFieldConfigMap[fieldName];
           if (testFn(fieldName, originalFieldConfig)) {
             selectedFields[fieldName] = originalFieldConfig;
           }
-        });
+        }
       }
 
       return undefined;
@@ -118,19 +119,19 @@ export function modifyObjectFields(
         const originalFieldConfigMap = config.fields;
 
         const newFieldConfigMap = {};
-        Object.keys(originalFieldConfigMap).forEach(fieldName => {
+        for (const fieldName in originalFieldConfigMap) {
           const originalFieldConfig = originalFieldConfigMap[fieldName];
           if (testFn(fieldName, originalFieldConfig)) {
             removedFields[fieldName] = originalFieldConfig;
           } else {
             newFieldConfigMap[fieldName] = originalFieldConfig;
           }
-        });
+        }
 
-        Object.keys(newFields).forEach(fieldName => {
+        for (const fieldName in newFields) {
           const fieldConfig = newFields[fieldName];
           newFieldConfigMap[fieldName] = fieldConfig;
-        });
+        }
 
         return correctASTNodes(
           new GraphQLObjectType({

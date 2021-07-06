@@ -1,20 +1,30 @@
 import {
   GraphQLSchema,
-  DocumentNode,
   getIntrospectionQuery,
   buildClientSchema,
   parse,
   IntrospectionOptions,
   IntrospectionQuery,
+  ParseOptions,
 } from 'graphql';
 
 import { ValueOrPromise } from 'value-or-promise';
 
-import { AsyncExecutor, Executor, SyncExecutor, ExecutionResult, AggregateError } from '@graphql-tools/utils';
+import {
+  AsyncExecutor,
+  Executor,
+  ExecutionResult,
+  AggregateError,
+  isAsyncIterable,
+  SyncExecutor,
+} from '@graphql-tools/utils';
 
-function getSchemaFromIntrospection(introspectionResult: ExecutionResult<IntrospectionQuery>): GraphQLSchema {
+function getSchemaFromIntrospection(
+  introspectionResult: ExecutionResult<IntrospectionQuery>,
+  options?: Parameters<typeof buildClientSchema>[1]
+): GraphQLSchema {
   if (introspectionResult?.data?.__schema) {
-    return buildClientSchema(introspectionResult.data);
+    return buildClientSchema(introspectionResult.data, options);
   } else if (introspectionResult?.errors?.length) {
     if (introspectionResult.errors.length > 1) {
       const combinedError = new AggregateError(introspectionResult.errors, 'Could not obtain introspection result');
@@ -27,27 +37,34 @@ function getSchemaFromIntrospection(introspectionResult: ExecutionResult<Introsp
   }
 }
 
-export function introspectSchema<TExecutor extends AsyncExecutor | SyncExecutor>(
-  executor: TExecutor,
+export function introspectSchema(
+  executor: SyncExecutor,
   context?: Record<string, any>,
-  options?: IntrospectionOptions
-): TExecutor extends AsyncExecutor ? Promise<GraphQLSchema> : GraphQLSchema {
-  const parsedIntrospectionQuery: DocumentNode = parse(getIntrospectionQuery(options));
+  options?: Partial<IntrospectionOptions> & Parameters<typeof buildClientSchema>[1] & ParseOptions
+): GraphQLSchema;
+export function introspectSchema(
+  executor: AsyncExecutor,
+  context?: Record<string, any>,
+  options?: Partial<IntrospectionOptions> & Parameters<typeof buildClientSchema>[1] & ParseOptions
+): Promise<GraphQLSchema>;
+export function introspectSchema(
+  executor: Executor,
+  context?: Record<string, any>,
+  options?: Partial<IntrospectionOptions> & Parameters<typeof buildClientSchema>[1] & ParseOptions
+): Promise<GraphQLSchema> | GraphQLSchema {
+  const parsedIntrospectionQuery = parse(getIntrospectionQuery(options as any), options);
   return new ValueOrPromise(() =>
-    (executor as Executor)<IntrospectionQuery>({
+    executor({
       document: parsedIntrospectionQuery,
       context,
     })
   )
-    .then(introspection => getSchemaFromIntrospection(introspection))
-    .resolve() as any;
-}
-
-// Keep for backwards compatibility. Will be removed on next release.
-export function introspectSchemaSync(
-  executor: SyncExecutor,
-  context?: Record<string, any>,
-  options?: IntrospectionOptions
-) {
-  return introspectSchema(executor, context, options);
+    .then(introspection => {
+      if (isAsyncIterable(introspection)) {
+        return introspection.next().then(({ value }) => value);
+      }
+      return introspection;
+    })
+    .then(introspection => getSchemaFromIntrospection(introspection, options))
+    .resolve();
 }

@@ -86,7 +86,7 @@ describe('Abstract type merge', () => {
       }
     `);
     assertSome(data)
-    expect(data.post.leadArt).toEqual({
+    expect(data['post'].leadArt).toEqual({
       __typename: 'Image',
       url: '/path/to/23',
       id: '23',
@@ -185,7 +185,7 @@ describe('Merged associations', () => {
     `);
 
     assertSome(data)
-    expect(data.slots).toEqual([{
+    expect(data['slots']).toEqual([{
       id: '55',
       network: { domain: 'network56.com' }
     }]);

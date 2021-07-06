@@ -2,4 +2,7 @@
 '@graphql-tools/utils': major
 ---
 
-BREAKING - Remove fieldToFieldConfig, fieldToFieldConfig, argsToFieldConfigArgument and argumentToArgumentConfig
+BREAKING CHANGE
+
+- Remove `fieldToFieldConfig`, `argsToFieldConfigArgument` and `argumentToArgumentConfig`
+- - You can use `.toConfig` method instead for each.

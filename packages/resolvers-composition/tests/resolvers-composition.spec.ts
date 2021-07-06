@@ -2,7 +2,6 @@ import gql from 'graphql-tag';
 import { composeResolvers, ResolversComposerMapping } from '../src';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { execute, GraphQLScalarType, Kind } from 'graphql';
-import { IResolvers } from 'packages/graphql-tools/src';
 
 function createAsyncIterator<T>(array: T[]): AsyncIterator<T, T, T> {
   let i = 0;
@@ -53,7 +52,7 @@ describe('Resolvers composition', () => {
       `,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data!.foo).toBe('FOOFOO');
+    expect(result.data!['foo']).toBe('FOOFOO');
   });
   it('should compose resolvers with resolve field', async () => {
     const getFoo = () => 'FOO';
@@ -91,7 +90,7 @@ describe('Resolvers composition', () => {
       `,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data!.foo).toBe('FOOFOO');
+    expect(result.data!['foo']).toBe('FOOFOO');
   });
   it('should compose subscription resolvers', async () => {
     const array1 = [1, 2];
@@ -170,7 +169,7 @@ describe('Resolvers composition', () => {
       `,
     });
     expect(result.errors).toBeFalsy();
-    expect(result.data!.foo).toBe('FOOFOO');
+    expect(result.data!['foo']).toBe('FOOFOO');
   });
   it('should be able to take nested composition objects for subscription resolvers', async () => {
     const array1 = [1, 2];
@@ -291,16 +290,73 @@ describe('Resolvers composition', () => {
 
   });
 
+  it('should support glob pattern for fields - Query.{foo, bar}', async () => {
+    const resolvers = {
+      Query: {
+        foo: async () => 0,
+        bar: async () => 1,
+        fooBar: async () => 2,
+      },
+      Mutation: {
+        qux: async () => 3,
+        baz: async () => 4,
+      },
+    };
+    const resolversComposition = {
+      'Query.{foo, bar}': [
+        (next: any) => async (...args: any) => {
+          const result = await next(...args);
+          return result + 1;
+        }
+      ]
+    }
+    const composedResolvers = composeResolvers(resolvers, resolversComposition);
+
+    expect(await composedResolvers.Query.foo()).toBe(1);
+    expect(await composedResolvers.Query.bar()).toBe(2);
+    expect(await composedResolvers.Query.fooBar()).toBe(2);
+    expect(await composedResolvers.Mutation.qux()).toBe(3);
+    expect(await composedResolvers.Mutation.baz()).toBe(4);
+  });
+
+  it('should support glob pattern for fields - Query.!{foo, bar}', async () => {
+    const resolvers = {
+      Query: {
+        foo: async () => 0,
+        bar: async () => 1,
+        fooBar: async () => 2,
+      },
+      Mutation: {
+        qux: async () => 3,
+        baz: async () => 4,
+      },
+    };
+    const resolversComposition = {
+      'Query.!{foo, bar}': [
+        (next: any) => async (...args: any) => {
+          const result = await next(...args);
+          return result + 1;
+        }
+      ]
+    }
+    const composedResolvers = composeResolvers(resolvers, resolversComposition);
+
+    expect(await composedResolvers.Query.foo()).toBe(0);
+    expect(await composedResolvers.Query.bar()).toBe(1);
+    expect(await composedResolvers.Query.fooBar()).toBe(3);
+    expect(await composedResolvers.Mutation.qux()).toBe(3);
+    expect(await composedResolvers.Mutation.baz()).toBe(4);
+  });
   it('should handle nullish properties correctly', async () => {
     const getFoo = () => 'FOO';
-    const resolvers: IResolvers = {
+    const resolvers = {
       Query: {
         foo: async () => getFoo(),
         bar: undefined,
       },
       Mutation: undefined
     };
-    const resolversComposition: ResolversComposerMapping = {
+    const resolversComposition: any = {
       'Query.foo': (next: (arg0: any, arg1: any, arg2: any, arg3: any) => void) => async (root: any, args: any, context: any, info: any) => {
         const prevResult = await next(root, args, context, info);
         return getFoo() + prevResult;

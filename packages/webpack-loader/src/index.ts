@@ -64,10 +64,10 @@ export default function graphqlLoader(this: LoaderContext<Options>, source: stri
   let stringifiedDoc = JSON.stringify(doc);
 
   if (options.replaceKinds) {
-    Object.keys(Kind).forEach(identifier => {
+    for (const identifier in Kind) {
       const value = Kind[identifier as keyof typeof Kind];
       stringifiedDoc = stringifiedDoc.replace(new RegExp(`"kind":"${value}"`, 'g'), `"kind": Kind.${identifier}`);
-    });
+    }
   }
 
   const headerCode = `

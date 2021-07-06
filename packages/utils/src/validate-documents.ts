@@ -7,6 +7,9 @@ import {
   FragmentDefinitionNode,
   ValidationContext,
   ASTVisitor,
+  DefinitionNode,
+  concatAST,
+  DocumentNode,
 } from 'graphql';
 import { Source } from './loaders';
 import { AggregateError } from './AggregateError';
@@ -24,41 +27,42 @@ export async function validateGraphQlDocuments(
   effectiveRules?: ValidationRule[]
 ): Promise<ReadonlyArray<LoadDocumentError>> {
   effectiveRules = effectiveRules || createDefaultRules();
-  const allFragments: FragmentDefinitionNode[] = [];
+  const allFragmentMap = new Map<string, FragmentDefinitionNode>();
+  const documentFileObjectsToValidate: {
+    location?: string;
+    document: DocumentNode;
+  }[] = [];
 
-  documentFiles.forEach(documentFile => {
+  for (const documentFile of documentFiles) {
     if (documentFile.document) {
+      const definitionsToValidate: DefinitionNode[] = [];
       for (const definitionNode of documentFile.document.definitions) {
         if (definitionNode.kind === Kind.FRAGMENT_DEFINITION) {
-          allFragments.push(definitionNode);
+          allFragmentMap.set(definitionNode.name.value, definitionNode);
+        } else {
+          definitionsToValidate.push(definitionNode);
         }
       }
+      documentFileObjectsToValidate.push({
+        location: documentFile.location,
+        document: {
+          kind: Kind.DOCUMENT,
+          definitions: definitionsToValidate,
+        },
+      });
     }
-  });
+  }
 
   const allErrors: LoadDocumentError[] = [];
 
+  const allFragmentsDocument: DocumentNode = {
+    kind: Kind.DOCUMENT,
+    definitions: [...allFragmentMap.values()],
+  };
+
   await Promise.all(
-    documentFiles.map(async documentFile => {
-      const documentToValidate = {
-        kind: Kind.DOCUMENT,
-        definitions: [...allFragments, ...(documentFile.document?.definitions ?? [])].filter(
-          (definition, index, list) => {
-            if (definition.kind === Kind.FRAGMENT_DEFINITION) {
-              const firstIndex = list.findIndex(
-                def => def.kind === Kind.FRAGMENT_DEFINITION && def.name.value === definition.name.value
-              );
-              const isDuplicated = firstIndex !== index;
-
-              if (isDuplicated) {
-                return false;
-              }
-            }
-
-            return true;
-          }
-        ),
-      };
+    documentFileObjectsToValidate.map(async documentFile => {
+      const documentToValidate = concatAST([allFragmentsDocument, documentFile.document]);
 
       const errors = validate(schema, documentToValidate, effectiveRules);
 
@@ -84,26 +88,25 @@ export function checkValidationErrors(loadDocumentErrors: ReadonlyArray<LoadDocu
         error.name = 'GraphQLDocumentError';
         error.message = `${error.name}: ${graphQLError.message}`;
         error.stack = error.message;
-        graphQLError.locations?.forEach(
-          location => (error.stack += `\n    at ${loadDocumentError.filePath}:${location.line}:${location.column}`)
-        );
+        if (graphQLError.locations) {
+          for (const location of graphQLError.locations) {
+            error.stack += `\n    at ${loadDocumentError.filePath}:${location.line}:${location.column}`;
+          }
+        }
 
         errors.push(error);
       }
     }
 
-    throw new AggregateError(errors, 'Validation failed');
+    throw new AggregateError(errors, `GraphQL Document Validation failed with ${loadDocumentErrors.length} errors`);
   }
 }
 
 function createDefaultRules() {
   const ignored = ['NoUnusedFragmentsRule', 'NoUnusedVariablesRule', 'KnownDirectivesRule'];
+  const v4ignored = ignored.map(rule => rule.replace(/Rule$/, ''));
 
-  // GraphQL v14 has no Rule suffix in function names
-  // Adding `*Rule` makes validation backwards compatible
-  ignored.forEach(rule => {
-    ignored.push(rule.replace(/Rule$/, ''));
-  });
-
-  return specifiedRules.filter((f: (...args: any[]) => any) => !ignored.includes(f.name));
+  return specifiedRules.filter(
+    (f: (...args: any[]) => any) => !ignored.includes(f.name) && !v4ignored.includes(f.name)
+  );
 }

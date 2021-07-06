@@ -54,13 +54,13 @@ function visitSelectionSets(
 
   const operations: Array<OperationDefinitionNode> = [];
   const fragments: Record<string, FragmentDefinitionNode> = Object.create(null);
-  document.definitions.forEach(def => {
+  for (const def of document.definitions) {
     if (def.kind === Kind.OPERATION_DEFINITION) {
       operations.push(def);
     } else if (def.kind === Kind.FRAGMENT_DEFINITION) {
       fragments[def.name.value] = def;
     }
-  });
+  }
 
   const partialExecutionContext = {
     schema,
@@ -87,14 +87,14 @@ function visitSelectionSets(
     );
 
     const newSelections: Array<SelectionNode> = [];
-    Object.keys(fields).forEach(responseKey => {
+    for (const responseKey in fields) {
       const fieldNodes = fields[responseKey];
-      fieldNodes.forEach(fieldNode => {
+      for (const fieldNode of fieldNodes) {
         const selectionSet = fieldNode.selectionSet;
 
         if (selectionSet == null) {
           newSelections.push(fieldNode);
-          return;
+          continue;
         }
 
         const newSelectionSet = visit(
@@ -106,15 +106,15 @@ function visitSelectionSets(
 
         if (newSelectionSet === selectionSet) {
           newSelections.push(fieldNode);
-          return;
+          continue;
         }
 
         newSelections.push({
           ...fieldNode,
           selectionSet: newSelectionSet,
         });
-      });
-    });
+      }
+    }
 
     return {
       ...operation,
@@ -125,7 +125,8 @@ function visitSelectionSets(
     };
   });
 
-  Object.values(fragments).forEach(fragment => {
+  for (const fragmentIndex in fragments) {
+    const fragment = fragments[fragmentIndex];
     newDefinitions.push(
       visit(
         fragment,
@@ -134,7 +135,7 @@ function visitSelectionSets(
         })
       )
     );
-  });
+  }
 
   return {
     ...document,

@@ -122,12 +122,12 @@ describe('@directives', () => {
       return schema => mapSchema(schema, {
         [MapperKind.OBJECT_TYPE]: type => {
           const directives = getDirectives(schema, type);
-          Object.keys(directives).forEach(directiveName => {
+          for (const directiveName in directives) {
             if (directiveNames.includes(directiveName)) {
               expect(type.name).toBe(schema.getQueryType()?.name);
               visited.add(type);
             }
-          });
+          }
           return undefined;
         }
       })
@@ -149,11 +149,11 @@ describe('@directives', () => {
     function recordSchemaDirectiveUses(directiveNames: Array<string>): (schema: GraphQLSchema) => GraphQLSchema {
       return schema => {
         const directives = getDirectives(schema, schema);
-        Object.keys(directives).forEach(directiveName => {
+          for (const directiveName in directives) {
           if (directiveNames.includes(directiveName)) {
             visited.push(schema);
           }
-        });
+        }
         return schema;
       }
     }
@@ -269,7 +269,7 @@ describe('@directives', () => {
       schemaTransforms: [deprecatedDirectiveTransformer],
     });
 
-    expect((schema.getType('ExampleType') as GraphQLObjectType).getFields().oldField.deprecationReason).toBe('Use \`newField\`.')
+    expect((schema.getType('ExampleType') as GraphQLObjectType).getFields()['oldField'].deprecationReason).toBe('Use \`newField\`.')
   });
 
   test('can be used to implement the @date example', () => {
@@ -552,10 +552,10 @@ describe('@directives', () => {
       execWithRole('ADMIN')
         .then(checkErrors(0))
         .then((data) => {
-          expect(data?.users.length).toBe(1);
-          expect(data?.users[0].banned).toBe(true);
-          expect(data?.users[0].canPost).toBe(false);
-          expect(data?.users[0].name).toBe('Ben');
+          expect(data?.['users'].length).toBe(1);
+          expect(data?.['users'][0].banned).toBe(true);
+          expect(data?.['users'][0].canPost).toBe(false);
+          expect(data?.['users'][0].name).toBe('Ben');
         }),
     ]);
   });
@@ -614,9 +614,9 @@ describe('@directives', () => {
 
       function wrapType<F extends GraphQLFieldConfig<any, any> | GraphQLInputFieldConfig>(fieldConfig: F, directiveArgumentMap: Record<string, any>): void {
         if (isNonNullType(fieldConfig.type) && isScalarType(fieldConfig.type.ofType)) {
-          fieldConfig.type = getLimitedLengthType(fieldConfig.type.ofType, directiveArgumentMap.max);
+          fieldConfig.type = getLimitedLengthType(fieldConfig.type.ofType, directiveArgumentMap['max']);
         } else if (isScalarType(fieldConfig.type)) {
-          fieldConfig.type = getLimitedLengthType(fieldConfig.type, directiveArgumentMap.max);
+          fieldConfig.type = getLimitedLengthType(fieldConfig.type, directiveArgumentMap['max']);
         } else {
           throw new Error(`Not a scalar type: ${fieldConfig.type.toString()}`);
         }
@@ -729,9 +729,9 @@ describe('@directives', () => {
                 resolve(object: any) {
                   const hash = createHash('sha1');
                   hash.update(type.name);
-                  from.forEach((fieldName: string) => {
+                  for (const fieldName of from ){
                     hash.update(String(object[fieldName]));
-                  });
+                  }
                   return hash.digest('hex');
                 },
               };
@@ -805,7 +805,7 @@ describe('@directives', () => {
     ).then((result) => {
       const { data } = result;
 
-      expect(data?.people).toEqual([
+      expect(data?.['people']).toEqual([
         {
           uid: '580a207c8e94f03b93a2b01217c3cc218490571a',
           personID: 1,
@@ -813,7 +813,7 @@ describe('@directives', () => {
         },
       ]);
 
-      expect(data?.locations).toEqual([
+      expect(data?.['locations']).toEqual([
         {
           uid: 'c31b71e6e23a7ae527f94341da333590dd7cba96',
           locationID: 1,
@@ -844,7 +844,7 @@ describe('@directives', () => {
     });
 
     const Query = schema.getType('Query') as GraphQLObjectType;
-    const peopleType = Query.getFields().people.type;
+    const peopleType = Query.getFields()['people'].type;
     if (isListType(peopleType)) {
       expect(peopleType.ofType).toBe(schema.getType('Human'));
     } else {
@@ -852,7 +852,7 @@ describe('@directives', () => {
     }
 
     const Mutation = schema.getType('Mutation') as GraphQLObjectType;
-    const addPersonResultType = Mutation.getFields().addPerson.type;
+    const addPersonResultType = Mutation.getFields()['addPerson'].type;
     expect(addPersonResultType).toBe(
       schema.getType('Human') as GraphQLOutputType,
     );
@@ -1023,16 +1023,16 @@ describe('@directives', () => {
 
     const Human = schema.getType('Human') as GraphQLObjectType;
     expect(Human.name).toBe('Human');
-    expect(Human.getFields().heightInInches.type).toBe(GraphQLInt);
+    expect(Human.getFields()['heightInInches'].type).toBe(GraphQLInt);
 
     const Person = schema.getType('Person') as GraphQLObjectType;
     expect(Person.name).toBe('Person');
-    expect(Person.getFields().born.type).toBe(
+    expect(Person.getFields()['born'].type).toBe(
       schema.getType('Date') as GraphQLScalarType,
     );
 
     const Query = schema.getType('Query') as GraphQLObjectType;
-    const peopleType = Query.getFields().people.type as GraphQLList<
+    const peopleType = Query.getFields()['people'].type as GraphQLList<
       GraphQLObjectType
     >;
     expect(peopleType.ofType).toBe(Human);

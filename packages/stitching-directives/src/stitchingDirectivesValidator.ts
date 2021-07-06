@@ -108,7 +108,7 @@ export function stitchingDirectivesValidator(
               throw new Error('Cannot use @merge directive with both `keyField` and `key` arguments.');
             }
 
-            key.forEach(keyDef => {
+            for (const keyDef of key) {
               let [aliasOrKeyPath, keyPath] = keyDef.split(':');
               let aliasPath: string;
               if (keyPath == null) {
@@ -129,7 +129,7 @@ export function stitchingDirectivesValidator(
                 );
                 // TODO: ideally we should check that the arg exists within the resolver
               }
-            });
+            }
           }
 
           const additionalArgs = directiveArgumentMap.additionalArgs;
@@ -156,13 +156,13 @@ export function stitchingDirectivesValidator(
               ? getImplementingTypes(returnType.name, schema).map(typeName => schema.getType(typeName))
               : returnType.getTypes();
             const implementingTypeNames = implementingTypes.filter(isSome).map(type => type.name);
-            typeNames.forEach(typeName => {
+            for (const typeName of typeNames) {
               if (!implementingTypeNames.includes(typeName)) {
                 throw new Error(
                   `Types argument can only include only type names that implement the field return type's abstract type.`
                 );
               }
-            });
+            }
           }
         }
 

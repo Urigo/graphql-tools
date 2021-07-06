@@ -12,8 +12,6 @@ import {
   GraphQLInterfaceType,
 } from 'graphql';
 
-import isPromise from 'is-promise';
-
 import { ValueOrPromise } from 'value-or-promise';
 
 import { introspectSchema } from '../../src/introspect';
@@ -21,6 +19,7 @@ import {
   IResolvers,
   ExecutionResult,
   mapAsyncIterator,
+  isAsyncIterable,
 } from '@graphql-tools/utils';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { SubschemaConfig, ExecutionParams } from '@graphql-tools/delegate';
@@ -188,10 +187,6 @@ export const sampleData: {
   },
 };
 
-function values<T>(o: { [s: string]: T }): Array<T> {
-  return Object.keys(o).map((k) => o[k]);
-}
-
 function coerceString(value: any): string {
   if (Array.isArray(value)) {
     throw new TypeError(
@@ -225,9 +220,9 @@ function parseLiteral(ast: ValueNode): any {
       return parseFloat(ast.value);
     case Kind.OBJECT: {
       const value = Object.create(null);
-      ast.fields.forEach((field) => {
+      for (const field of ast.fields) {
         value[field.name.value] = parseLiteral(field.value);
-      });
+      }
 
       return value;
     }
@@ -289,8 +284,7 @@ const propertyRootTypeDefs = `
     foo: String
   }
 
-  ${
-  'getInterfaces' in GraphQLInterfaceType.prototype
+  ${'getInterfaces' in GraphQLInterfaceType.prototype
     ? `interface TestNestedInterface implements TestInterface {
     kind: TestInterfaceKind
     testString: String
@@ -301,7 +295,7 @@ const propertyRootTypeDefs = `
     testString: String
     bar: String
   }`
-      : `type TestImpl2 implements TestInterface {
+    : `type TestImpl2 implements TestInterface {
     kind: TestInterfaceKind
     testString: String
     bar: String
@@ -349,7 +343,7 @@ const propertyResolvers: IResolvers = {
     },
 
     properties(_root, { limit }) {
-      const list = values(sampleData.Property);
+      const list = Object.values(sampleData.Property);
       return limit ? list.slice(0, limit) : list;
     },
 
@@ -368,27 +362,27 @@ const propertyResolvers: IResolvers = {
     interfaceTest(_root, { kind }) {
       return kind === 'ONE'
         ? {
-            kind: 'ONE',
-            testString: 'test',
-            foo: 'foo',
-          }
+          kind: 'ONE',
+          testString: 'test',
+          foo: 'foo',
+        }
         : {
-            kind: 'TWO',
-            testString: 'test',
-            bar: 'bar',
-          };
+          kind: 'TWO',
+          testString: 'test',
+          bar: 'bar',
+        };
     },
 
     unionTest(_root, { output }) {
       return output === 'Interface'
         ? {
-            kind: 'ONE',
-            testString: 'test',
-            foo: 'foo',
-          }
+          kind: 'ONE',
+          testString: 'test',
+          foo: 'foo',
+        }
         : {
-            someField: 'Bar',
-          };
+          someField: 'Bar',
+        };
     },
 
     errorTest() {
@@ -464,7 +458,7 @@ const productTypeDefs = `
 const productResolvers: IResolvers = {
   Query: {
     products(_root) {
-      const list = values(sampleData.Product);
+      const list = Object.values(sampleData.Product);
       return list;
     },
   },
@@ -550,7 +544,7 @@ const bookingResolvers: IResolvers = {
       return sampleData.Booking[id];
     },
     bookingsByPropertyId(_parent, { propertyId, limit }) {
-      const list = values(sampleData.Booking).filter(
+      const list = Object.values(sampleData.Booking).filter(
         (booking: Booking) => booking.propertyId === propertyId,
       );
       return limit ? list.slice(0, limit) : list;
@@ -559,11 +553,11 @@ const bookingResolvers: IResolvers = {
       return sampleData.Customer[id];
     },
     bookings(_parent, { limit }) {
-      const list = values(sampleData.Booking);
+      const list = Object.values(sampleData.Booking);
       return limit ? list.slice(0, limit) : list;
     },
     customers(_parent, { limit }) {
-      const list = values(sampleData.Customer);
+      const list = Object.values(sampleData.Customer);
       return limit ? list.slice(0, limit) : list;
     },
   },
@@ -600,13 +594,13 @@ const bookingResolvers: IResolvers = {
 
   Customer: {
     bookings(parent: Customer, { limit }) {
-      const list = values(sampleData.Booking).filter(
+      const list = Object.values(sampleData.Booking).filter(
         (booking: Booking) => booking.customerId === parent.id,
       );
       return limit ? list.slice(0, limit) : list;
     },
     vehicle(parent: Customer) {
-      return sampleData.Vehicle[parent.vehicleId];
+      return parent.vehicleId && sampleData.Vehicle[parent.vehicleId];
     },
     error() {
       throw new Error('Customer.error error');
@@ -684,7 +678,20 @@ export const subscriptionSchema: GraphQLSchema = makeExecutableSchema({
 });
 
 function makeExecutorFromSchema(schema: GraphQLSchema) {
-  return async <TReturn, TArgs, TContext>({ document, variables, context }: ExecutionParams<TArgs, TContext>) => {
+  return async <TReturn, TArgs, TContext>({ document, variables, context, info }: ExecutionParams<TArgs, TContext>) => {
+    if (info?.operation.operation === 'subscription') {
+      const result = await subscribe(
+        schema,
+        document,
+        null,
+        context,
+        variables,
+      );
+      if (isAsyncIterable<ExecutionResult<TReturn>>(result)) {
+        return mapAsyncIterator<ExecutionResult<TReturn>, TReturn>(result, (originalResult: ExecutionResult<TReturn>) => JSON.parse(JSON.stringify(originalResult)));
+      }
+      return JSON.parse(JSON.stringify(result));
+    }
     return (new ValueOrPromise(() => graphql(
       schema,
       print(document),
@@ -692,25 +699,8 @@ function makeExecutorFromSchema(schema: GraphQLSchema) {
       context,
       variables,
     ))
-    .then(originalResult => JSON.parse(JSON.stringify(originalResult)))
-    .resolve()) as Promise<ExecutionResult<TReturn>> | ExecutionResult<TReturn>;
-  };
-}
-
-function makeSubscriberFromSchema(schema: GraphQLSchema) {
-  return async <TReturn, TArgs, TContext>({ document, variables, context }: ExecutionParams<TArgs, TContext>) => {
-    const result = subscribe(
-      schema,
-      document,
-      null,
-      context,
-      variables,
-    ) as Promise<AsyncIterator<ExecutionResult<TReturn>> | ExecutionResult<TReturn>>;
-    if (isPromise(result)) {
-      return result.then(asyncIterator =>
-        mapAsyncIterator(asyncIterator as AsyncIterator<ExecutionResult>, (originalResult: ExecutionResult<TReturn>) => JSON.parse(JSON.stringify(originalResult))));
-    }
-    return JSON.parse(JSON.stringify(result));
+      .then(originalResult => JSON.parse(JSON.stringify(originalResult)))
+      .resolve()) as Promise<ExecutionResult<TReturn>> | ExecutionResult<TReturn>;
   };
 }
 
@@ -718,12 +708,10 @@ export async function makeSchemaRemote(
   schema: GraphQLSchema,
 ): Promise<SubschemaConfig> {
   const executor = makeExecutorFromSchema(schema);
-  const subscriber = makeSubscriberFromSchema(schema);
   const clientSchema = await introspectSchema(executor);
   return {
     schema: clientSchema,
     executor,
-    subscriber,
   };
 }
 

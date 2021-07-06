@@ -59,7 +59,7 @@ describe('GitLoader', () => {
 
       it('should load type definitions from a pluckable file', async () => {
         const result: Source = await load(getPointer('pluckable.ts'), {});
-        expect(result.rawSDL).toBeDefined();
+        expect(result.document).toMatchSnapshot();
       });
 
       it('should throw when pointer is malformed', async () => {

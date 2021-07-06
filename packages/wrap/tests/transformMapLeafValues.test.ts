@@ -50,7 +50,7 @@ describe('MapLeafValues', () => {
 
     const result = await graphql(transformedSchema, query);
     assertSome(result.data)
-    expect(result.data.testEnum).toBe('THREE');
-    expect(result.data.testScalar).toBe(15);
+    expect(result.data['testEnum']).toBe('THREE');
+    expect(result.data['testScalar']).toBe(15);
   });
 });

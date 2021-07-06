@@ -8,9 +8,6 @@ import {
   GraphQLFloat,
   GraphQLBoolean,
   GraphQLID,
-  isObjectType,
-  isInterfaceType,
-  isInputObjectType,
   TypeNode,
   Kind,
   GraphQLType,
@@ -64,10 +61,13 @@ export function createStub(node: TypeNode, type: any): any {
 }
 
 export function isNamedStub(type: GraphQLNamedType): boolean {
-  if (isObjectType(type) || isInterfaceType(type) || isInputObjectType(type)) {
+  if ('getFields' in type) {
     const fields = type.getFields();
-    const fieldNames = Object.keys(fields);
-    return fieldNames.length === 1 && fields[fieldNames[0]].name === '_fake';
+    // eslint-disable-next-line no-unreachable-loop
+    for (const fieldName in fields) {
+      const field = fields[fieldName];
+      return field.name === '_fake';
+    }
   }
 
   return false;

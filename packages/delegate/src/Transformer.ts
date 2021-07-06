@@ -16,7 +16,9 @@ export class Transformer<TContext = Record<string, any>> {
   constructor(context: DelegationContext<TContext>, binding: DelegationBinding<TContext> = defaultDelegationBinding) {
     this.delegationContext = context;
     const delegationTransforms: Array<Transform> = binding(this.delegationContext);
-    delegationTransforms.forEach(transform => this.addTransform(transform, {}));
+    for (const transform of delegationTransforms) {
+      this.addTransform(transform, {});
+    }
   }
 
   private addTransform(transform: Transform, context = {}) {

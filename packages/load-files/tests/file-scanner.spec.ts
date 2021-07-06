@@ -19,7 +19,7 @@ function testSchemaDir({ path, expected, note, extensions, ignoreIndex }: TestDi
     };
   });
 
-  syncAndAsync.forEach(([type, loadFiles]) => {
+  for (const [type, loadFiles] of syncAndAsync) {
     describe(type, () => {
       it(`should return the correct schema results for path: ${path} (${note})`, async () => {
         const result = await loadFiles(path, options);
@@ -33,7 +33,7 @@ function testSchemaDir({ path, expected, note, extensions, ignoreIndex }: TestDi
         })).toEqual(expected.map(stripWhitespaces));
       });
     });
-  })
+  }
 
 }
 
@@ -55,7 +55,7 @@ function testResolversDir({ path, expected, note, extensions, compareValue, igno
     };
   });
 
-  syncAndAsync.forEach(([type, loadFiles]) => {
+  for (const [type, loadFiles] of syncAndAsync) {
     describe(type, () => {
       it(`should return the correct resolvers results for path: ${path} (${note})`, async () => {
         const result = await loadFiles(path, options);
@@ -67,7 +67,7 @@ function testResolversDir({ path, expected, note, extensions, compareValue, igno
         }
       });
     })
-  });
+  }
 }
 
 function stripWhitespaces(str: any): string {
@@ -219,7 +219,7 @@ describe('file scanner', function() {
       note: 'extensions and ignored extensions works with a trailing dot',
     });
   });
-  syncAndAsync.forEach(([type, loadFiles]) => {
+  for (const [type, loadFiles] of syncAndAsync) {
     it(`${type}: should process custom extractExports properly`, async () => {
       const customQueryTypeName = 'root_query';
       const customExtractExports = (fileExport: any) => {
@@ -254,7 +254,7 @@ describe('file scanner', function() {
       expect(typeof resolvers.Query.foo).toBe('function');
       expect(resolvers.Query.foo()).toBe('FOO');
     });
-  })
+  }
 });
 
 interface TestDirOptions {

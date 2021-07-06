@@ -28,11 +28,11 @@ function createBatchFn<K = any>(options: BatchDelegateOptions) {
         const [pathFieldName, pathNumber] = originalError.path;
 
         if (pathFieldName !== fieldName) {
-          throw new Error(`Error path value at index 0 should be '${fieldName}', received '${pathFieldName}'.`);
+          return originalError;
         }
         const pathNumberType = typeof pathNumber;
         if (pathNumberType !== 'number') {
-          throw new Error(`Error path value at index 1 should be of type number, received '${pathNumberType}'.`);
+          return originalError;
         }
 
         return relocatedError(originalError, originalError.path.slice(0, 0).concat(originalError.path.slice(2)));

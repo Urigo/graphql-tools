@@ -8,7 +8,8 @@ import micromatch from 'micromatch';
 import unixify from 'unixify';
 
 import { loadFromGit, loadFromGitSync, readTreeAtRef, readTreeAtRefSync } from './load-git';
-import { parse } from './parse';
+import { parse as handleStuff } from './parse';
+import { concatAST, parse } from 'graphql';
 
 // git:branch:path/to/file
 function extractData(pointer: string): {
@@ -114,34 +115,38 @@ export class GitLoader implements UniversalLoader {
   async load(pointer: string, options: GitLoaderOptions) {
     const { ref, path } = extractData(pointer);
     const content = await loadFromGit({ ref, path });
-    const parsed = parse({ path, options, pointer, content });
+    const parsed = handleStuff({ path, options, pointer, content });
 
     if (parsed) {
       return parsed;
     }
 
-    const rawSDL = await gqlPluckFromCodeString(pointer, content, options.pluckConfig);
+    const sources = await gqlPluckFromCodeString(pointer, content, options.pluckConfig);
+
+    const documents = sources.map(source => parse(source, options));
 
     return {
       location: pointer,
-      rawSDL,
+      document: concatAST(documents),
     };
   }
 
   loadSync(pointer: string, options: GitLoaderOptions) {
     const { ref, path } = extractData(pointer);
     const content = loadFromGitSync({ ref, path });
-    const parsed = parse({ path, options, pointer, content });
+    const parsed = handleStuff({ path, options, pointer, content });
 
     if (parsed) {
       return parsed;
     }
 
-    const rawSDL = gqlPluckFromCodeStringSync(pointer, content, options.pluckConfig);
+    const sources = gqlPluckFromCodeStringSync(pointer, content, options.pluckConfig);
+
+    const documents = sources.map(source => parse(source, options));
 
     return {
       location: pointer,
-      rawSDL,
+      document: concatAST(documents),
     };
   }
 }

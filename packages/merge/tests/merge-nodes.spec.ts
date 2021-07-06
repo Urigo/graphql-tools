@@ -1,6 +1,6 @@
 import { mergeGraphQLNodes } from '../src';
-import { parse, InputObjectTypeDefinitionNode } from 'graphql';
-import { assertEnumTypeDefinitionNode, assertInputObjectTypeDefinitionNode, assertInterfaceTypeDefinitionNode, assertNamedTypeNode, assertObjectTypeDefinitionNode, assertScalarTypeDefinitionNode, assertUnionTypeDefinitionNode } from '../../testing/assertion';
+import { parse } from 'graphql';
+import { assertEnumTypeDefinitionNode, assertInputObjectTypeDefinitionNode, assertNamedTypeNode, assertObjectTypeDefinitionNode, assertScalarTypeDefinitionNode, assertUnionTypeDefinitionNode } from '../../testing/assertion';
 import { assertSome } from '@graphql-tools/utils';
 
 describe('Merge Nodes', () => {
@@ -9,7 +9,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.fields)
       expect(type.fields.length).toBe(1);
@@ -22,7 +22,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A { f2: Int }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.fields)
 
@@ -39,7 +39,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A { f1: String }`);
       const type2 = parse(`type A { f1: String, f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.fields)
 
@@ -56,7 +56,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base { f1: String } type A implements Base { f1: String }`);
       const type2 = parse(`interface Base { f1: String } type A implements Base { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.interfaces)
 
@@ -68,7 +68,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base { f1: String } type A implements Base { f1: String }`);
       const type2 = parse(`type A { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type  = merged.A;
+      const type  = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.interfaces)
 
@@ -80,7 +80,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.directives)
 
@@ -92,7 +92,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @other { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.directives)
 
@@ -105,7 +105,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @test { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.directives)
 
@@ -117,7 +117,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A @test { f1: String }`);
       const type2 = parse(`type A @test2 { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.directives)
 
@@ -132,7 +132,7 @@ describe('Merge Nodes', () => {
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions], {
         reverseDirectives: true,
       });
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.directives)
 
@@ -145,7 +145,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`interface Base1 { f1: String } type A implements Base1 { f1: String }`);
       const type2 = parse(`interface Base2 { f2: Int } type A implements Base2 { f2: Int}`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.A;
+      const type = merged['A'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.interfaces)
 
@@ -168,7 +168,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A { T }`);
       const type2 = parse(`enum A { S }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A
+      const result = merged['A']
       assertEnumTypeDefinitionNode(result)
       assertSome(result.values)
       expect(result.values.length).toBe(2);
@@ -180,7 +180,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A { T }`);
       const type2 = parse(`enum A { T }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertEnumTypeDefinitionNode(result)
       assertSome(result.values)
 
@@ -192,7 +192,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A @test { T }`);
       const type2 = parse(`enum A @test2 { T }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertEnumTypeDefinitionNode(result)
       assertSome(result.directives)
 
@@ -205,7 +205,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`enum A @test { T }`);
       const type2 = parse(`enum A { S }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertEnumTypeDefinitionNode(result)
       assertSome(result.directives)
 
@@ -219,7 +219,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type A union C = A`);
       const type2 = parse(`type B union C = B`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.C;
+      const result = merged['C'];
       assertUnionTypeDefinitionNode(result)
       assertSome(result.types)
 
@@ -234,7 +234,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`scalar A`);
       const type2 = parse(`scalar A`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertScalarTypeDefinitionNode(result)
 
       expect(result.name.value).toBe('A');
@@ -246,7 +246,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`input A { f1: String }`);
       const type2 = parse(`input A { f2: String }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertInputObjectTypeDefinitionNode(result)
       assertSome(result.fields)
 
@@ -259,7 +259,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`input A { f1: String }`);
       const type2 = parse(`input A { f1: String! }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const result = merged.A;
+      const result = merged['A'];
       assertInputObjectTypeDefinitionNode(result)
       assertSome(result.fields)
 
@@ -274,7 +274,7 @@ describe('Merge Nodes', () => {
       const type1 = parse(`type Query { f1: String }`);
       const type2 = parse(`type Query { f2: String }`);
       const merged = mergeGraphQLNodes([...type1.definitions, ...type2.definitions]);
-      const type = merged.Query;
+      const type = merged['Query'];
       assertObjectTypeDefinitionNode(type)
       assertSome(type.fields)
 

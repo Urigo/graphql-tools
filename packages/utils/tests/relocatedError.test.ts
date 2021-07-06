@@ -4,11 +4,11 @@ import { relocatedError } from '../src/errors';
 describe('Errors', () => {
   describe('relocatedError', () => {
     test('should adjust the path of a GraphqlError', () => {
-      const originalError = new GraphQLError('test', null, null, null, [
+      const originalError = new GraphQLError('test', null as any, null, null, [
         'test',
       ]);
       const newError = relocatedError(originalError, ['test', 1]);
-      const expectedError = new GraphQLError('test', null, null, null, [
+      const expectedError = new GraphQLError('test', null as any, null, null, [
         'test',
         1,
       ]);

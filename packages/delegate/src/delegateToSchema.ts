@@ -18,13 +18,12 @@ import { getBatchingExecutor } from '@graphql-tools/batch-execute';
 
 import {
   mapAsyncIterator,
-  ExecutionResult,
   Executor,
   ExecutionParams,
-  Subscriber,
   Maybe,
   assertSome,
   AggregateError,
+  isAsyncIterable,
 } from '@graphql-tools/utils';
 
 import {
@@ -39,7 +38,6 @@ import { isSubschemaConfig } from './subschemaConfig';
 import { Subschema } from './Subschema';
 import { createRequestFromInfo, getDelegatingOperation } from './createRequest';
 import { Transformer } from './Transformer';
-import { memoize2 } from './memoize';
 
 export function delegateToSchema<TContext = Record<string, any>, TArgs = any>(
   options: IDelegateToSchemaOptions<TContext, TArgs>
@@ -99,45 +97,31 @@ export function delegateRequest<TContext = Record<string, any>, TArgs = any>(
 
   const processedRequest = transformer.transformRequest(options.request);
 
-  if (!options.skipValidation) {
+  if (options.validateRequest) {
     validateRequest(delegationContext, processedRequest.document);
   }
 
-  const { operation, context, info } = delegationContext;
+  const { context, info } = delegationContext;
 
-  if (operation === 'query' || operation === 'mutation') {
-    const executor = getExecutor(delegationContext);
+  const executor = getExecutor(delegationContext);
 
-    return new ValueOrPromise(() =>
-      executor({
-        ...processedRequest,
-        context,
-        info,
-      })
-    )
-      .then(originalResult => transformer.transformResult(originalResult))
-      .resolve();
-  }
-
-  const subscriber = getSubscriber(delegationContext);
-
-  return subscriber({
-    ...processedRequest,
-    context,
-    info,
-  }).then(subscriptionResult => {
-    if (Symbol.asyncIterator in subscriptionResult) {
-      // "subscribe" to the subscription result and map the result through the transforms
-      return mapAsyncIterator<ExecutionResult, any>(
-        subscriptionResult as AsyncIterableIterator<ExecutionResult>,
-        originalResult => ({
+  return new ValueOrPromise(() =>
+    executor({
+      ...processedRequest,
+      context,
+      info,
+    })
+  )
+    .then(originalResult => {
+      if (isAsyncIterable(originalResult)) {
+        // "subscribe" to the subscription result and map the result through the transforms
+        return mapAsyncIterator(originalResult, originalResult => ({
           [delegationContext.fieldName]: transformer.transformResult(originalResult),
-        })
-      );
-    }
-
-    return transformer.transformResult(subscriptionResult as ExecutionResult);
-  });
+        }));
+      }
+      return transformer.transformResult(originalResult);
+    })
+    .resolve();
 }
 
 const emptyObject = {};
@@ -151,18 +135,19 @@ function getDelegationContext<TContext>({
   args = {},
   context,
   info,
-  rootValue,
+  rootValue = emptyObject,
   transforms = [],
   transformedSchema,
-  skipTypeMerging,
+  skipTypeMerging = false,
+  operationName,
 }: IDelegateRequestOptions<TContext>): DelegationContext<TContext> {
   let operationDefinition: Maybe<OperationDefinitionNode>;
   let targetOperation: Maybe<OperationTypeNode>;
   let targetFieldName: string;
-  skipTypeMerging = skipTypeMerging ?? false;
+  let targetOperationName: string | undefined;
 
   if (operation == null) {
-    operationDefinition = getOperationAST(request.document, undefined);
+    operationDefinition = getOperationAST(request.document, request.operationName);
     assertSome(operationDefinition, 'Could not identify the main operation of the document.');
     targetOperation = operationDefinition.operation;
   } else {
@@ -170,10 +155,20 @@ function getDelegationContext<TContext>({
   }
 
   if (fieldName == null) {
-    operationDefinition = operationDefinition ?? getOperationAST(request.document, undefined);
+    operationDefinition = operationDefinition ?? getOperationAST(request.document, request.operationName);
     targetFieldName = (operationDefinition?.selectionSet.selections[0] as unknown as FieldDefinitionNode).name.value;
   } else {
     targetFieldName = fieldName;
+  }
+
+  if (operationName == null) {
+    if (request.operationName) {
+      targetOperationName = request.operationName;
+    } else if (operationDefinition?.name?.value) {
+      targetOperationName = operationDefinition.name.value;
+    }
+  } else {
+    targetOperationName = operationName;
   }
 
   const stitchingInfo: Maybe<StitchingInfo<TContext>> = info?.schema.extensions?.['stitchingInfo'];
@@ -188,11 +183,12 @@ function getDelegationContext<TContext>({
       subschemaConfig: subschemaOrSubschemaConfig,
       targetSchema,
       operation: targetOperation,
+      operationName: targetOperationName,
       fieldName: targetFieldName,
       args,
       context,
       info,
-      rootValue: rootValue ?? subschemaOrSubschemaConfig?.rootValue ?? info?.rootValue ?? emptyObject,
+      rootValue: rootValue ?? emptyObject,
       returnType:
         returnType ?? info?.returnType ?? getDelegationReturnType(targetSchema, targetOperation, targetFieldName),
       transforms:
@@ -215,7 +211,7 @@ function getDelegationContext<TContext>({
     args,
     context,
     info,
-    rootValue: rootValue ?? info?.rootValue ?? emptyObject,
+    rootValue: rootValue,
     returnType:
       returnType ??
       info?.returnType ??
@@ -238,21 +234,15 @@ function validateRequest(delegationContext: DelegationContext<any>, document: Do
   }
 }
 
-// Since the memo function relies on WeakMap which needs an object.
-// TODO: clarify whether this has been a potential runtime error
-const executorFallbackRootValue = {};
-
 function getExecutor<TContext>(delegationContext: DelegationContext<TContext>): Executor<TContext> {
-  const { subschemaConfig, targetSchema, context, rootValue } = delegationContext;
+  const { subschemaConfig, targetSchema, context, operation } = delegationContext;
 
-  let executor: Executor =
-    subschemaConfig?.executor ||
-    createDefaultExecutor(targetSchema, subschemaConfig?.rootValue ?? rootValue ?? executorFallbackRootValue);
+  let executor: Executor = subschemaConfig?.executor || createDefaultExecutor(targetSchema, operation);
 
   if (subschemaConfig?.batch) {
     const batchingOptions = subschemaConfig?.batchingOptions;
     executor = getBatchingExecutor(
-      context as any,
+      context ?? globalThis ?? window ?? global,
       executor,
       batchingOptions?.dataLoaderOptions,
       batchingOptions?.extensionsReducer
@@ -262,29 +252,17 @@ function getExecutor<TContext>(delegationContext: DelegationContext<TContext>): 
   return executor;
 }
 
-function getSubscriber<TContext>(delegationContext: DelegationContext<TContext>): Subscriber<TContext> {
-  const { subschemaConfig, targetSchema, rootValue } = delegationContext;
-  return subschemaConfig?.subscriber || createDefaultSubscriber(targetSchema, subschemaConfig?.rootValue || rootValue);
-}
-
-const createDefaultExecutor = memoize2(function (schema: GraphQLSchema, rootValue?: Record<string, any>): Executor {
-  return (({ document, context, variables, info }: ExecutionParams) =>
-    execute({
+const createDefaultExecutor = (schema: GraphQLSchema, operation: OperationTypeNode) =>
+  (({ document, context, variables, rootValue }: ExecutionParams) => {
+    const executionParams = {
       schema,
       document,
       contextValue: context,
       variableValues: variables,
-      rootValue: rootValue ?? info?.rootValue,
-    })) as Executor;
-});
-
-function createDefaultSubscriber(schema: GraphQLSchema, rootValue?: Record<string, any>) {
-  return ({ document, context, variables, info }: ExecutionParams) =>
-    subscribe({
-      schema,
-      document,
-      contextValue: context,
-      variableValues: variables,
-      rootValue: rootValue ?? info?.rootValue,
-    }) as any;
-}
+      rootValue,
+    };
+    if (operation === 'subscription') {
+      return subscribe(executionParams);
+    }
+    return execute(executionParams);
+  }) as Executor;

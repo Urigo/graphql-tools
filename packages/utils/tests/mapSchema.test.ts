@@ -29,7 +29,7 @@ describe('mapSchema', () => {
     const newSchema = mapSchema(schema, {
       [MapperKind.QUERY]: (type) => {
         const queryConfig = type.toConfig();
-        queryConfig.fields.version.resolve = () => 1;
+        queryConfig.fields['version'].resolve = () => 1;
         return new GraphQLObjectType(queryConfig);
       },
     });
@@ -37,7 +37,7 @@ describe('mapSchema', () => {
     expect(newSchema).toBeInstanceOf(GraphQLSchema);
 
     const result = graphqlSync(newSchema, '{ version }');
-    expect(result.data?.version).toBe(1);
+    expect(result.data?.['version']).toBe(1);
   });
 
   test('can change the root query name', () => {

@@ -615,9 +615,9 @@ function uniqueIDDirective(directiveName: string) {
               resolve(object: any) {
                 const hash = createHash('sha1');
                 hash.update(type.name);
-                from.forEach((fieldName: string) => {
+                for (const fieldName of from) {
                   hash.update(String(object[fieldName]));
-                });
+                }
                 return hash.digest('hex');
               },
             };
@@ -702,7 +702,7 @@ export function attachDirectiveResolvers(
       const newFieldConfig = { ...fieldConfig };
 
       const directives = getDirectives(schema, fieldConfig);
-      Object.keys(directives).forEach(directiveName => {
+      for (const directiveName in directives) {
         if (directiveResolvers[directiveName]) {
           const resolver = directiveResolvers[directiveName];
           const originalResolver = newFieldConfig.resolve != null ? newFieldConfig.resolve : defaultFieldResolver;
@@ -724,7 +724,7 @@ export function attachDirectiveResolvers(
             );
           };
         }
-      });
+      }
 
       return newFieldConfig;
     },

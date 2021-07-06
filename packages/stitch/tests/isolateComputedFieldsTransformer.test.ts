@@ -75,13 +75,13 @@ describe('isolateComputedFieldsTransformer', () => {
       expect(computedSubschema.transformedSchema.getType('ProductRepresentation')).toBeDefined();
 
       assertSome(baseSubschema.merge)
-      expect(baseSubschema.merge.Product.canonical).toEqual(true);
-      expect(baseSubschema.merge.Product.fields).toEqual({
+      expect(baseSubschema.merge['Product'].canonical).toEqual(true);
+      expect(baseSubschema.merge['Product'].fields).toEqual({
         deliveryService: { canonical: true },
       });
       assertSome(computedSubschema.merge)
-      expect(computedSubschema.merge.Product.canonical).toBeUndefined();
-      expect(computedSubschema.merge.Product.fields).toEqual({
+      expect(computedSubschema.merge['Product'].canonical).toBeUndefined();
+      expect(computedSubschema.merge['Product'].fields).toEqual({
         shippingEstimate: { selectionSet: '{ price }', computed: true, canonical: true },
       });
     });
@@ -198,16 +198,16 @@ describe('isolateComputedFieldsTransformer', () => {
       expect(Object.keys((baseSubschema.transformedSchema.getType('Product') as GraphQLObjectType).getFields())).toEqual(['base']);
       expect(Object.keys((baseSubschema.transformedSchema.getType('Storefront') as GraphQLObjectType).getFields())).toEqual(['base']);
       assertSome(baseSubschema.merge)
-      expect(baseSubschema.merge.Storefront.fields).toEqual({});
+      expect(baseSubschema.merge['Storefront'].fields).toEqual({});
 
       expect(Object.keys((computedSubschema.transformedSchema.getType('Query') as GraphQLObjectType).getFields())).toEqual(['storefront', '_products']);
       expect(Object.keys((computedSubschema.transformedSchema.getType('Product') as GraphQLObjectType).getFields())).toEqual(['computeMe']);
       expect(Object.keys((computedSubschema.transformedSchema.getType('Storefront') as GraphQLObjectType).getFields())).toEqual(['computeMe']);
       assertSome(computedSubschema.merge)
-      expect(computedSubschema.merge.Storefront.fields).toEqual({
+      expect(computedSubschema.merge['Storefront'].fields).toEqual({
         computeMe: { selectionSet: '{ availableProductIds }', computed: true },
       });
-      expect(computedSubschema.merge.Product.fields).toEqual({
+      expect(computedSubschema.merge['Product'].fields).toEqual({
         computeMe: { selectionSet: '{ price }', computed: true },
       });
     });

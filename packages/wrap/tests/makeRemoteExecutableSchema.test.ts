@@ -6,9 +6,10 @@ import {
   execute,
   print,
   ExecutionResult,
+  buildSchema,
 } from 'graphql';
 
-import { makeRemoteExecutableSchema } from '../src/index';
+import { wrapSchema } from '../src/index';
 
 import {
   propertySchema,
@@ -22,7 +23,7 @@ describe('remote queries', () => {
   let schema: GraphQLSchema;
   beforeAll(async () => {
     const remoteSubschemaConfig = await makeSchemaRemote(propertySchema);
-    schema = makeRemoteExecutableSchema(remoteSubschemaConfig);
+    schema = wrapSchema(remoteSubschemaConfig);
   });
 
   test('should work', async () => {
@@ -60,7 +61,7 @@ describe('remote subscriptions', () => {
   let schema: GraphQLSchema;
   beforeAll(async () => {
     const remoteSubschemaConfig = await makeSchemaRemote(subscriptionSchema);
-    schema = makeRemoteExecutableSchema(remoteSubschemaConfig);
+    schema = wrapSchema(remoteSubschemaConfig);
   });
 
   test('should work', async () => {
@@ -133,7 +134,7 @@ describe('remote subscriptions', () => {
 });
 
 describe('respects buildSchema options', () => {
-  const schema = `
+  const typeDefs = /* GraphQL */`
   type Query {
     # Field description
     custom: CustomScalar!
@@ -144,26 +145,25 @@ describe('respects buildSchema options', () => {
 `;
 
   test('without comment descriptions', () => {
-    const remoteSchema = makeRemoteExecutableSchema({ schema });
+    const remoteSchema = wrapSchema({ schema: buildSchema(typeDefs) });
 
     const customScalar = remoteSchema.getType('CustomScalar');
-    expect(customScalar.description).toBeUndefined();
+    expect(customScalar?.description).toBeUndefined();
   });
 
   test('with comment descriptions', () => {
-    const remoteSchema = makeRemoteExecutableSchema({
-      schema,
-      buildSchemaOptions: { commentDescriptions: true },
+    const remoteSchema = wrapSchema({
+      schema: buildSchema(typeDefs, { commentDescriptions: true }),
     });
 
-    const field = remoteSchema.getQueryType().getFields()['custom'];
+    const field = remoteSchema.getQueryType()!.getFields()['custom'];
     expect(field.description).toBe('Field description');
     const customScalar = remoteSchema.getType('CustomScalar');
-    expect(customScalar.description).toBe('Scalar description');
+    expect(customScalar?.description).toBe('Scalar description');
   });
 
   describe('when query for multiple fields', () => {
-    const schema = `
+    const typeDefs = `
       type Query {
         fieldA: Int!
         fieldB: Int!
@@ -188,8 +188,8 @@ describe('respects buildSchema options', () => {
         },
       });
     };
-    const remoteSchema = makeRemoteExecutableSchema({
-      schema,
+    const remoteSchema = wrapSchema({
+      schema: buildSchema(typeDefs),
       executor,
     });
 

@@ -126,7 +126,7 @@ describe('merge on multiple keys', () => {
       }
     `);
     assertSome(data)
-    expect(data.productsByKey).toEqual(result);
+    expect(data['productsByKey']).toEqual(result);
   });
 
   test('works from upc -> join -> id', async () => {
@@ -142,7 +142,7 @@ describe('merge on multiple keys', () => {
       }
     `);
     assertSome(data)
-    expect(data.productsByUpc).toEqual(result);
+    expect(data['productsByUpc']).toEqual(result);
   });
 
   test('works from id -> join -> upc', async () => {
@@ -158,6 +158,6 @@ describe('merge on multiple keys', () => {
       }
     `);
     assertSome(data)
-    expect(data.productsById).toEqual(result);
+    expect(data['productsById']).toEqual(result);
   });
 });

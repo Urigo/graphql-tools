@@ -14,7 +14,7 @@ export function extractDefinitions(ast: DocumentNode) {
   const schemaDefs: SchemaDefinitionNode[] = [];
   const schemaExtensions: SchemaExtensionNode[] = [];
   const extensionDefs: TypeExtensionNode[] = [];
-  ast.definitions.forEach(def => {
+  for (const def of ast.definitions) {
     switch (def.kind) {
       case Kind.OBJECT_TYPE_DEFINITION:
       case Kind.INTERFACE_TYPE_DEFINITION:
@@ -42,7 +42,7 @@ export function extractDefinitions(ast: DocumentNode) {
         extensionDefs.push(def);
         break;
     }
-  });
+  }
 
   return {
     typeDefinitions,

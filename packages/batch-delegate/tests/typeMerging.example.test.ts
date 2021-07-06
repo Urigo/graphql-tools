@@ -84,7 +84,7 @@ describe('merging using type merging', () => {
       Query: {
         mostStockedProduct: () => inventory.find(i => i.upc === '3'),
         _products: (_root, { representations }) => {
-          return representations.map((rep: Record<string, any>) => ({ ...rep, ...inventory.find(i => i.upc === rep.upc) }));
+          return representations.map((rep: Record<string, any>) => ({ ...rep, ...inventory.find(i => i.upc === rep['upc']) }));
         },
       },
     },

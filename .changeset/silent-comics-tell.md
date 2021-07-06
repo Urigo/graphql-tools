@@ -2,4 +2,7 @@
 '@graphql-tools/schema': major
 ---
 
-BREAKING(schema) - remove allowUndefinedResolve option, buildSchemaFromTypeDefinitions and use buildSchema instead
+BREAKING CHANGE
+
+- No longer exports `buildSchemaFromTypeDefinitions`, use `buildSchema` from `graphql-js` instead
+- Remove `allowUndefinedResolve` option in `makeExecutableSchema` because GraphQL Schema itself does this checking

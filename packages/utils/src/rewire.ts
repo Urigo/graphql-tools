@@ -37,21 +37,21 @@ export function rewireTypes(
   directives: Array<GraphQLDirective>;
 } {
   const referenceTypeMap = Object.create(null);
-  Object.keys(originalTypeMap).forEach(typeName => {
+  for (const typeName in originalTypeMap) {
     referenceTypeMap[typeName] = originalTypeMap[typeName];
-  });
+  }
   const newTypeMap: TypeMap = Object.create(null);
 
-  Object.keys(referenceTypeMap).forEach(typeName => {
+  for (const typeName in referenceTypeMap) {
     const namedType = referenceTypeMap[typeName];
 
     if (namedType == null || typeName.startsWith('__')) {
-      return;
+      continue;
     }
 
     const newName = namedType.name;
     if (newName.startsWith('__')) {
-      return;
+      continue;
     }
 
     if (newTypeMap[newName] != null) {
@@ -59,11 +59,11 @@ export function rewireTypes(
     }
 
     newTypeMap[newName] = namedType;
-  });
+  }
 
-  Object.keys(newTypeMap).forEach(typeName => {
+  for (const typeName in newTypeMap) {
     newTypeMap[typeName] = rewireNamedType(newTypeMap[typeName]);
-  });
+  }
 
   const newDirectives = directives.map(directive => rewireDirective(directive));
 
@@ -83,14 +83,14 @@ export function rewireTypes(
 
   function rewireArgs(args: GraphQLFieldConfigArgumentMap): GraphQLFieldConfigArgumentMap {
     const rewiredArgs = {};
-    Object.keys(args).forEach(argName => {
+    for (const argName in args) {
       const arg = args[argName];
       const rewiredArgType = rewireType(arg.type);
       if (rewiredArgType != null) {
         arg.type = rewiredArgType;
         rewiredArgs[argName] = arg;
       }
-    });
+    }
     return rewiredArgs;
   }
 
@@ -144,7 +144,7 @@ export function rewireTypes(
 
   function rewireFields(fields: GraphQLFieldConfigMap<any, any>): GraphQLFieldConfigMap<any, any> {
     const rewiredFields = {};
-    Object.keys(fields).forEach(fieldName => {
+    for (const fieldName in fields) {
       const field = fields[fieldName];
       const rewiredFieldType = rewireType(field.type);
       if (rewiredFieldType != null && field.args) {
@@ -152,31 +152,31 @@ export function rewireTypes(
         field.args = rewireArgs(field.args);
         rewiredFields[fieldName] = field;
       }
-    });
+    }
     return rewiredFields;
   }
 
   function rewireInputFields(fields: GraphQLInputFieldConfigMap): GraphQLInputFieldConfigMap {
     const rewiredFields = {};
-    Object.keys(fields).forEach(fieldName => {
+    for (const fieldName in fields) {
       const field = fields[fieldName];
       const rewiredFieldType = rewireType(field.type);
       if (rewiredFieldType != null) {
         field.type = rewiredFieldType;
         rewiredFields[fieldName] = field;
       }
-    });
+    }
     return rewiredFields;
   }
 
   function rewireNamedTypes<T extends GraphQLNamedType>(namedTypes: Array<T>): Array<T> {
     const rewiredTypes: Array<T> = [];
-    namedTypes.forEach(namedType => {
+    for (const namedType of namedTypes) {
       const rewiredType = rewireType(namedType);
       if (rewiredType != null) {
         rewiredTypes.push(rewiredType);
       }
-    });
+    }
     return rewiredTypes;
   }
 

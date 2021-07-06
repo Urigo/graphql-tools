@@ -113,8 +113,8 @@ export class Environment {
           // clean up all prisma-eu1 and prisma-us1 clusters if they already exist
           this.clusters = this._getClusters().filter(c => c.name !== 'prisma-eu1' && c.name !== 'prisma-us1');
 
-          res.me.memberships.forEach((m: any) => {
-            m.workspace.clusters.forEach((cluster: any) => {
+          for (const m of res.me.memberships) {
+            for (const cluster of m.workspace.clusters) {
               const endpoint = cluster.connectInfo
                 ? cluster.connectInfo.endpoint
                 : cluster.customConnectionInfo
@@ -132,8 +132,8 @@ export class Environment {
                   m.workspace.slug
                 )
               );
-            });
-          });
+            }
+          }
         }
       } catch (e) {
         debug(e);

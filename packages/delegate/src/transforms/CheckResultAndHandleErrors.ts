@@ -84,38 +84,39 @@ export function mergeDataAndErrors(
     return { data, unpathedErrors: [] };
   }
 
-  let unpathedErrors: Array<GraphQLError> = [];
+  const unpathedErrors: Array<GraphQLError> = [];
 
-  const errorMap: Record<string, Array<GraphQLError>> = Object.create(null);
-  errors.forEach(error => {
+  const errorMap = new Map<string | number, Array<GraphQLError>>();
+  for (const error of errors) {
     const pathSegment = error.path?.[index];
     if (pathSegment != null) {
-      const pathSegmentErrors = errorMap[pathSegment];
+      let pathSegmentErrors = errorMap.get(pathSegment);
       if (pathSegmentErrors === undefined) {
-        errorMap[pathSegment] = [error];
+        pathSegmentErrors = [error];
+        errorMap.set(pathSegment, pathSegmentErrors);
       } else {
         pathSegmentErrors.push(error);
       }
     } else {
       unpathedErrors.push(error);
     }
-  });
+  }
 
-  Object.keys(errorMap).forEach(pathSegment => {
+  for (const [pathSegment, pathSegmentErrors] of errorMap) {
     if (data[pathSegment] !== undefined) {
       const { data: newData, unpathedErrors: newErrors } = mergeDataAndErrors(
         data[pathSegment],
-        errorMap[pathSegment],
+        pathSegmentErrors,
         path,
         onLocatedError,
         index + 1
       );
       data[pathSegment] = newData;
-      unpathedErrors = unpathedErrors.concat(newErrors);
+      unpathedErrors.push(...newErrors);
     } else {
-      unpathedErrors = unpathedErrors.concat(errorMap[pathSegment]);
+      unpathedErrors.push(...pathSegmentErrors);
     }
-  });
+  }
 
   return { data, unpathedErrors };
 }

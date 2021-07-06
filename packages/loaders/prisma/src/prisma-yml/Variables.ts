@@ -69,35 +69,38 @@ export class Variables {
     let warned = false;
 
     if (typeof property === 'string' && property.match(this.variableSyntax)) {
-      property.match(this.variableSyntax)!.forEach(matchedString => {
-        const variableString = matchedString
-          .replace(this.variableSyntax, (_, varName) => varName.trim())
-          .replace(/\s/g, '');
+      const matchedStrings = property.match(this.variableSyntax);
+      if (matchedStrings) {
+        for (const matchedString of matchedStrings) {
+          const variableString = matchedString
+            .replace(this.variableSyntax, (_, varName) => varName.trim())
+            .replace(/\s/g, '');
 
-        let singleValueToPopulate: Promise<any> | null = null;
-        if (variableString.match(this.overwriteSyntax)) {
-          singleValueToPopulate = this.overwrite(variableString);
-        } else {
-          singleValueToPopulate = this.getValueFromSource(variableString).then((valueToPopulate: any) => {
-            if (typeof valueToPopulate === 'object') {
-              return this.populateObject(valueToPopulate);
-            }
-            return valueToPopulate;
-          });
-        }
-
-        singleValueToPopulate = singleValueToPopulate!.then(valueToPopulate => {
-          if (this.warnIfNotFound(variableString, valueToPopulate)) {
-            warned = true;
+          let singleValueToPopulate: Promise<any> | null = null;
+          if (variableString.match(this.overwriteSyntax)) {
+            singleValueToPopulate = this.overwrite(variableString);
+          } else {
+            singleValueToPopulate = this.getValueFromSource(variableString).then((valueToPopulate: any) => {
+              if (typeof valueToPopulate === 'object') {
+                return this.populateObject(valueToPopulate);
+              }
+              return valueToPopulate;
+            });
           }
-          return this.populateVariable(property, matchedString, valueToPopulate).then((newProperty: any) => {
-            property = newProperty;
-            return Promise.resolve(property);
-          });
-        });
 
-        allValuesToPopulate.push(singleValueToPopulate);
-      });
+          singleValueToPopulate = singleValueToPopulate!.then(valueToPopulate => {
+            if (this.warnIfNotFound(variableString, valueToPopulate)) {
+              warned = true;
+            }
+            return this.populateVariable(property, matchedString, valueToPopulate).then((newProperty: any) => {
+              property = newProperty;
+              return Promise.resolve(property);
+            });
+          });
+
+          allValuesToPopulate.push(singleValueToPopulate);
+        }
+      }
       return Promise.all(allValuesToPopulate).then(() => {
         if ((property as any) !== (this.json as any) && !warned) {
           return this.populateProperty(property);

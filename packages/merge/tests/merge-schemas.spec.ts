@@ -78,8 +78,8 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.foo).toBe('FOO');
-        expect(data.bar).toBe('BAR');
+        expect(data['foo']).toBe('FOO');
+        expect(data['bar']).toBe('BAR');
     });
     it('should merge two valid executable schemas async', async () => {
         const fooSchema = makeExecutableSchema({
@@ -119,8 +119,8 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.foo).toBe('FOO');
-        expect(data.bar).toBe('BAR');
+        expect(data['foo']).toBe('FOO');
+        expect(data['bar']).toBe('BAR');
     });
     it('should merge two valid executable schemas with extra resolvers', async () => {
         const fooSchema = makeExecutableSchema({
@@ -167,9 +167,9 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.foo).toBe('FOO');
-        expect(data.bar).toBe('BAR');
-        expect(data.qux).toBe('QUX');
+        expect(data['foo']).toBe('FOO');
+        expect(data['bar']).toBe('BAR');
+        expect(data['qux']).toBe('QUX');
     });
     it('should merge two valid executable schemas with extra typeDefs and resolvers', async () => {
         const fooSchema = makeExecutableSchema({
@@ -220,9 +220,9 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.foo).toBe('FOO');
-        expect(data.bar).toBe('BAR');
-        expect(data.qux).toBe('QUX');
+        expect(data['foo']).toBe('FOO');
+        expect(data['bar']).toBe('BAR');
+        expect(data['qux']).toBe('QUX');
     });
     it('should merge two valid schemas by keeping their directives to be used in extra typeDefs', async () => {
         const fooSchema = makeExecutableSchema({
@@ -274,9 +274,9 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.foo).toBe('FOO');
-        expect(data.bar).toBe('BAR');
-        expect(data.qux).toBe('QUX');
+        expect(data['foo']).toBe('FOO');
+        expect(data['bar']).toBe('BAR');
+        expect(data['qux']).toBe('QUX');
     });
     it('should merge valid schemas with interfaces correctly', async () => {
         const fooSchema = makeExecutableSchema({
@@ -345,10 +345,10 @@ describe('Merge Schemas', () => {
         });
         expect(errors).toBeFalsy();
         assertSome(data)
-        expect(data.bar.foo).toBe('foo');
-        expect(data.bar.bar).toBe('bar');
-        expect(data.qux.foo).toBe('foo');
-        expect(data.qux.qux).toBe('qux');
+        expect(data['bar'].foo).toBe('foo');
+        expect(data['bar'].bar).toBe('bar');
+        expect(data['qux'].foo).toBe('foo');
+        expect(data['qux'].qux).toBe('qux');
     });
 
     it('should merge scalars (part of resolvers)', async () => {
@@ -389,7 +389,7 @@ describe('Merge Schemas', () => {
         });
 
         assertSome(dataA)
-        expect(dataA.a).toEqual(now.toISOString());
+        expect(dataA['a']).toEqual(now.toISOString());
 
         // merged schema
         const { data } = await graphql({
@@ -397,7 +397,7 @@ describe('Merge Schemas', () => {
             source: /* GraphQL */` { a } `
         });
         assertSome(data)
-        expect(data.a).toEqual(now.toISOString());
+        expect(data['a']).toEqual(now.toISOString());
     });
 
     it.only('should not duplicate directives of scalars', () => {
@@ -447,13 +447,13 @@ describe('Merge Schemas', () => {
         const QueryType = prev.getQueryType()
         assertSome(QueryType)
         const fields = QueryType.getFields()
-        assertSome(fields.test.astNode)
-        assertSome(fields.test.astNode.directives)
-        assertSome(fields.test.astNode.directives[0])
-        assertSome(fields.test.astNode.directives[0].arguments)
-        assertListValueNode(fields.test.astNode.directives[0].arguments[0].value)
+        assertSome(fields['test'].astNode)
+        assertSome(fields['test'].astNode.directives)
+        assertSome(fields['test'].astNode.directives[0])
+        assertSome(fields['test'].astNode.directives[0].arguments)
+        assertListValueNode(fields['test'].astNode.directives[0].arguments[0].value)
 
-        expect(fields.test.astNode.directives[0].arguments[0].value.values).toHaveLength(1);
+        expect(fields['test'].astNode.directives[0].arguments[0].value.values).toHaveLength(1);
       });
       it('should merge schemas with custom scalars', () => {
         const GraphQLUUID = new GraphQLScalarType({

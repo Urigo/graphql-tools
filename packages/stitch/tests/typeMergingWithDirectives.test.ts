@@ -56,7 +56,7 @@ describe('merging using type merging with directives', () => {
     resolvers: {
       Query: {
         me: () => users[0],
-        _users: (_root, { keys }) => keys.map((key: Record<string, any>) => users.find(u => u.id === key.id)),
+        _users: (_root, { keys }) => keys.map((key: Record<string, any>) => users.find(u => u.id === key['id'])),
       },
     },
     schemaTransforms: [stitchingDirectivesValidator],
@@ -122,7 +122,7 @@ describe('merging using type merging with directives', () => {
       Query: {
         mostStockedProduct: () => inventory.find(i => i.upc === '3'),
         _products: (_root, { keys }) => {
-          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key.upc) }));
+          return keys.map((key: Record<string, any>) => ({ ...key, ...inventory.find(i => i.upc === key['upc']) }));
         },
       },
     },

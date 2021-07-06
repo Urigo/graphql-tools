@@ -22,7 +22,9 @@ export function useSyncQueue<T>() {
       queue.push(fn);
     },
     runAll() {
-      queue.forEach(fn => fn());
+      for (const fn of queue) {
+        fn();
+      }
     },
   };
 }

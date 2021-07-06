@@ -8,11 +8,10 @@ import {
   Kind,
   FragmentDefinitionNode,
   GraphQLInputObjectType,
-  GraphQLInputType,
   ObjectValueNode,
   ObjectFieldNode,
   OperationDefinitionNode,
-  NamedTypeNode,
+  isInputType,
 } from 'graphql';
 
 import { Maybe, Request, MapperKind, mapSchema, transformInputValue, assertSome } from '@graphql-tools/utils';
@@ -79,24 +78,27 @@ export default class TransformInputObjectFields implements Transform {
 
     const operations: Array<OperationDefinitionNode> = [];
 
-    originalRequest.document.definitions.forEach(def => {
-      if ((def as OperationDefinitionNode).kind === Kind.OPERATION_DEFINITION) {
-        operations.push(def as OperationDefinitionNode);
-      } else {
-        fragments[(def as FragmentDefinitionNode).name.value] = def;
+    for (const def of originalRequest.document.definitions) {
+      if (def.kind === Kind.OPERATION_DEFINITION) {
+        operations.push(def);
+      } else if (def.kind === Kind.FRAGMENT_DEFINITION) {
+        fragments[def.name.value] = def;
       }
-    });
+    }
 
-    operations.forEach(def => {
+    for (const def of operations) {
       const variableDefs = def.variableDefinitions;
       if (variableDefs != null) {
-        variableDefs.forEach(variableDef => {
+        for (const variableDef of variableDefs) {
           const varName = variableDef.variable.name.value;
+          if (variableDef.type.kind !== Kind.NAMED_TYPE) {
+            throw new Error(`Expected ${variableDef.type} to be a named type`);
+          }
           // requirement for 'as NamedTypeNode' appears to be a bug within types, as function should take any TypeNode
-          const varType = typeFromAST(
-            delegationContext.transformedSchema,
-            variableDef.type as NamedTypeNode
-          ) as GraphQLInputType;
+          const varType = typeFromAST(delegationContext.transformedSchema, variableDef.type);
+          if (!isInputType(varType)) {
+            throw new Error(`Expected ${varType} to be an input type`);
+          }
           variableValues[varName] = transformInputValue(
             varType,
             variableValues[varName],
@@ -104,7 +106,7 @@ export default class TransformInputObjectFields implements Transform {
             (type, originalValue) => {
               const newValue = Object.create(null);
               const fields = type.getFields();
-              Object.keys(originalValue).forEach(key => {
+              for (const key in originalValue) {
                 const field = fields[key];
                 if (field != null) {
                   const newFieldName = this.mapping[type.name]?.[field.name];
@@ -114,19 +116,17 @@ export default class TransformInputObjectFields implements Transform {
                     newValue[field.name] = originalValue[field.name];
                   }
                 }
-              });
+              }
               return newValue;
             }
           );
-        });
+        }
       }
-    });
+    }
 
-    originalRequest.document.definitions
-      .filter(def => def.kind === Kind.FRAGMENT_DEFINITION)
-      .forEach(def => {
-        fragments[(def as FragmentDefinitionNode).name.value] = def;
-      });
+    for (const def of originalRequest.document.definitions.filter(def => def.kind === Kind.FRAGMENT_DEFINITION)) {
+      fragments[(def as FragmentDefinitionNode).name.value] = def;
+    }
     const document = this.transformDocument(
       originalRequest.document,
       this.mapping,
@@ -162,7 +162,7 @@ export default class TransformInputObjectFields implements Transform {
               const parentTypeName = parentType.name;
               const newInputFields: Array<ObjectFieldNode> = [];
 
-              node.fields.forEach(inputField => {
+              for (const inputField of node.fields) {
                 const newName = inputField.name.value;
 
                 const transformedInputField =
@@ -171,17 +171,17 @@ export default class TransformInputObjectFields implements Transform {
                     : inputField;
 
                 if (Array.isArray(transformedInputField)) {
-                  transformedInputField.forEach(individualTransformedInputField => {
+                  for (const individualTransformedInputField of transformedInputField) {
                     const typeMapping = mapping[parentTypeName];
                     if (typeMapping == null) {
                       newInputFields.push(individualTransformedInputField);
-                      return;
+                      continue;
                     }
 
                     const oldName = typeMapping[newName];
                     if (oldName == null) {
                       newInputFields.push(individualTransformedInputField);
-                      return;
+                      continue;
                     }
 
                     newInputFields.push({
@@ -191,20 +191,20 @@ export default class TransformInputObjectFields implements Transform {
                         value: oldName,
                       },
                     });
-                  });
-                  return;
+                  }
+                  continue;
                 }
 
                 const typeMapping = mapping[parentTypeName];
                 if (typeMapping == null) {
                   newInputFields.push(transformedInputField);
-                  return;
+                  continue;
                 }
 
                 const oldName = typeMapping[newName];
                 if (oldName == null) {
                   newInputFields.push(transformedInputField);
-                  return;
+                  continue;
                 }
 
                 newInputFields.push({
@@ -214,7 +214,7 @@ export default class TransformInputObjectFields implements Transform {
                     value: oldName,
                   },
                 });
-              });
+              }
 
               const newNode = {
                 ...node,

@@ -267,8 +267,8 @@ describe('addMocksToSchema', () => {
       source: query
     });
 
-    expect(data.foo.field1).toBe('text');
-    expect(data.foo.field2).toBe(null);
+    expect(data?.['foo'].field1).toBe('text');
+    expect(data?.['foo'].field2).toBe(null);
   })
   it('should handle null fields correctly in nested fields', async () => {
     const schema = buildSchema(/* GraphQL */`
@@ -309,8 +309,8 @@ describe('addMocksToSchema', () => {
     });
 
     expect(errors).toBeFalsy();
-    expect(data.foo.foo_field).toBe('text');
-    expect(data.foo.boo).toBe(null);
+    expect(data?.['foo'].foo_field).toBe('text');
+    expect(data?.['foo'].boo).toBe(null);
   });
   it('handle objects without object prototype correctly', () => {
     const maybeRef = Object.create(null);

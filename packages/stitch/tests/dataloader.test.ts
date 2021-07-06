@@ -60,7 +60,7 @@ describe('dataloader', () => {
           user: {
             selectionSet: '{ userId }',
             resolve(task, _args, context, info) {
-              return context.usersLoader.load({ id: task.userId, info });
+              return context['usersLoader'].load({ id: task.userId, info });
             },
           },
         },
