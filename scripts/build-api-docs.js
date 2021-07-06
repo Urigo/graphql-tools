@@ -34,6 +34,7 @@ async function buildApiDocs() {
     const packageJsonContent = require(path.join(__dirname, '..', packageJsonPath));
     // Do not include private and large npm package that contains rest
     if (
+      !packageJsonPath.includes('./website/') &&
       !packageJsonContent.private &&
       packageJsonContent.name !== MONOREPO &&
       !packageJsonContent.name.endsWith('/container')
@@ -80,6 +81,13 @@ async function buildApiDocs() {
       // Escape angle brackets
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
+      // Fix title
+      .replace(/^# .+/g, function (match) {
+        return `---
+title: '${match.replace('# ', '')}'
+---
+${match}`;
+      })
       // Fix links
       .replace(/\[([^\]]+)\]\(([^)]+).md\)/g, '[$1]($2)')
       .replace(/\[([^\]]+)\]\((\.\.\/(classes|interfaces|enums)\/([^\)]+))\)/g, '[$1](/docs/api/$3/$4)');
@@ -109,8 +117,8 @@ async function buildApiDocs() {
     })
   );
 
-  // Remove the generated "index.md" file
-  // fs.unlinkSync(path.join(outputDir, 'index.md'));
+  // Remove the generated "README.md" file
+  fs.unlinkSync(path.join(outputDir, 'README.md'));
 
   // Update each module 's frontmatter and title
   await Promise.all(
@@ -142,20 +150,27 @@ sidebar_label: "${id}"
   fs.writeFileSync(
     sidebarsPath,
     JSON.stringify(
-      [
-        {
-          Modules: modules.map(([name]) => `api/modules/${convertNameToId(name)}`),
+      {
+        $name: 'API Reference',
+        _: {
+          modules: {
+            $name: 'Modules',
+            $routes: getSidebarItemsByDirectory(path.join(outputDir, 'modules')),
+          },
+          classes: {
+            $name: 'Classes',
+            $routes: getSidebarItemsByDirectory(path.join(outputDir, 'classes')),
+          },
+          interfaces: {
+            $name: 'Interfaces',
+            $routes: getSidebarItemsByDirectory(path.join(outputDir, 'interfaces')),
+          },
+          enums: {
+            $name: 'Enums',
+            $routes: getSidebarItemsByDirectory(path.join(outputDir, 'enums')),
+          },
         },
-        {
-          Classes: getSidebarItemsByDirectory(path.join(outputDir, 'classes')),
-        },
-        {
-          Interfaces: getSidebarItemsByDirectory(path.join(outputDir, 'interfaces')),
-        },
-        {
-          Enums: getSidebarItemsByDirectory(path.join(outputDir, 'enums')),
-        },
-      ],
+      },
       null,
       2
     )
@@ -183,8 +198,7 @@ sidebar_label: "${id}"
         const absoluteFilePath = path.join(dirName, fileName);
         const fileLstat = fs.lstatSync(absoluteFilePath);
         if (fileLstat.isFile()) {
-          const relativeDirName = path.relative(outputDir, dirName);
-          return `api/${relativeDirName}/${path.parse(fileName).name}`;
+          return path.parse(fileName).name;
         } else {
           return getSidebarItemsByDirectory(absoluteFilePath);
         }

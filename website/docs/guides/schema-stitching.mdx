@@ -1,0 +1,96 @@
+---
+id: schema-stitching
+title: Schema Stitching
+sidebar_label: Schema Stitching
+---
+
+Schema stitching (`@graphql-tools/stitch`) creates a single GraphQL gateway schema from multiple underlying GraphQL services. Unlike [schema merging](/docs/merge-schemas), which simply combines local schema instances, stitching builds a combined proxy layer that delegates requests through to underlying service APIs. As of GraphQL Tools v7, stitching is fairly comparable to [Apollo Federation](https://www.apollographql.com/docs/federation/) with automated query planning, merged types, and declarative schema directives.
+
+## Topics
+
+Browse the following documentation topics to learn about stitching libraries, or review the [Schema Stitching Handbook](https://github.com/gmac/schema-stitching-handbook) for working examples of major stitching features.
+
+- [Combining multiple schemas](/docs/stitch-combining-schemas)
+- [Merging types across schemas](/docs/stitch-type-merging)
+- [Schema extensions](/docs/stitch-type-merging)
+- [Stitching directives SDL](/docs/stitch-directives-sdl)
+
+## Basic example
+
+Given two self-contained subschemas, a single "stitched" schema can be built that delegates (or, proxies) relevant portions of a request to each subservice:
+
+```js
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { stitchSchemas } from '@graphql-tools/stitch';
+import { stitchingDirectives } from '@graphql-tools/stitching-directives';
+
+const postsService = makeExecutableSchema({
+  typeDefs: `
+    type Post {
+      id: ID!
+      message: String!
+      author: User
+    }
+
+    type User {
+      id: ID!
+      posts: [Post]
+    }
+
+    type Query {
+      post(id: ID!): Post
+      users(ids: [ID!]!): [User]! @merge(keyField: "id")
+    }
+  `,
+  resolvers: {
+    // ...
+  },
+});
+
+const usersService = makeExecutableSchema({
+  typeDefs: `
+    type User {
+      id: ID!
+      username: String!
+      email: String!
+    }
+
+    type Query {
+      users(ids: [ID!]!): [User]! @merge(keyField: "id") @canonical
+    }
+  `,
+  resolvers: {
+    // ...
+  },
+});
+
+const { stitchingDirectivesTransformer } = stitchingDirectives({
+  // options...
+});
+
+const gatewaySchema = stitchSchemas({
+  subschemaConfigTransforms: [stitchingDirectivesTransformer],
+  subschemas: [
+    { schema: postsSchema, batch: true },
+    { schema: usersSchema, batch: true },
+  ],
+});
+```
+
+Using the stitched proxy schema, data may be requested interchangeably from any service in the same request:
+
+```graphql
+query {
+  users(ids: ["1", "2"]) {
+    username
+    email
+    posts {
+      message
+      author {
+        username
+        email
+      }
+    }
+  }
+}
+```

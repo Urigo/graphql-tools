@@ -3,4 +3,5 @@
 ---
 
 BREAKING CHANGE
+
 - No longer applies `camelCase` naming convention in `buildOperationNodeForField`
