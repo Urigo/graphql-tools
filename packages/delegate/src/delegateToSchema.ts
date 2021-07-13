@@ -256,7 +256,7 @@ function getExecutor<TContext>(delegationContext: DelegationContext<TContext>): 
 
 const defaultExecutorCache = new WeakMap<GraphQLSchema, Executor>();
 
-function createDefaultExecutor(schema: GraphQLSchema): Executor {
+export function createDefaultExecutor(schema: GraphQLSchema): Executor {
   let defaultExecutor = defaultExecutorCache.get(schema);
   if (!defaultExecutor) {
     defaultExecutor = function defaultExecutor({
