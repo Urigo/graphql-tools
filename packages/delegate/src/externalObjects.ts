@@ -76,14 +76,15 @@ export function mergeExternalObjects(
 
   const combinedResult: ExternalObject = Object.assign({}, target, ...results);
 
-  const newFieldSubschemaMap = results.reduce((newFieldSubschemaMap, source) => {
+  const newFieldSubschemaMap = target[FIELD_SUBSCHEMA_MAP_SYMBOL] ?? Object.create(null);
+
+  for (const source of results) {
     const objectSubschema = source[OBJECT_SUBSCHEMA_SYMBOL];
     const fieldSubschemaMap = source[FIELD_SUBSCHEMA_MAP_SYMBOL];
     for (const responseKey in source) {
       newFieldSubschemaMap[responseKey] = fieldSubschemaMap?.[responseKey] ?? objectSubschema;
     }
-    return newFieldSubschemaMap;
-  }, target[FIELD_SUBSCHEMA_MAP_SYMBOL] ?? Object.create(null));
+  }
 
   combinedResult[FIELD_SUBSCHEMA_MAP_SYMBOL] = newFieldSubschemaMap;
   combinedResult[OBJECT_SUBSCHEMA_SYMBOL] = target[OBJECT_SUBSCHEMA_SYMBOL];

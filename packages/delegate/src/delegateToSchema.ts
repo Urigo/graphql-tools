@@ -10,7 +10,6 @@ import {
   DocumentNode,
   GraphQLOutputType,
   ExecutionArgs,
-  print,
 } from 'graphql';
 
 import { ValueOrPromise } from 'value-or-promise';
@@ -97,9 +96,14 @@ function getProcessedRequestCache(subschema: GraphQLSchema | SubschemaConfig) {
 }
 
 function getRequestCacheKey(request: ExecutionRequest, delegationContext: DelegationContext) {
-  return `${print(request.document)}_${request.operationName}_${JSON.stringify(request.variables)}_${
-    delegationContext.fieldName
-  }_${delegationContext.returnType}_${JSON.stringify(delegationContext.args)}`;
+  return JSON.stringify({
+    definition: request.document.definitions,
+    operationName: request.operationName,
+    variables: request.variables,
+    fieldName: delegationContext.fieldName,
+    returnType: delegationContext.returnType.toString(),
+    args: delegationContext.args,
+  });
 }
 
 function getProcessedRequest(

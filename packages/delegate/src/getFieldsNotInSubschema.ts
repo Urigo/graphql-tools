@@ -50,7 +50,7 @@ function collectSubFields(info: GraphQLResolveInfo, typeName: string): Record<st
   return subFieldNodes;
 }
 
-export const getFieldsNotInSubschema = memoizeInfoAnd2Objects(function (
+export const getFieldsNotInSubschema = memoizeInfoAnd2Objects(function getFieldsNotInSubschemaMemoized(
   info: GraphQLResolveInfo,
   subschema: GraphQLSchema | SubschemaConfig<any, any, any, any>,
   mergedTypeInfo: MergedTypeInfo

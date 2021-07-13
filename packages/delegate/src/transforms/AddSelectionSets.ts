@@ -85,7 +85,10 @@ function visitSelectionSet(
   }
 }
 
-const addSelectionsToMap = memoize2(function (map: Map<string, SelectionNode>, selectionSet: SelectionSetNode): void {
+const addSelectionsToMap = memoize2(function addSelectionsToMapMemoized(
+  map: Map<string, SelectionNode>,
+  selectionSet: SelectionSetNode
+): void {
   for (const selection of selectionSet.selections) {
     map.set(print(selection), selection);
   }

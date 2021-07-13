@@ -26,22 +26,27 @@ export class Transformer<TContext = Record<string, any>> {
   }
 
   public transformRequest(originalRequest: ExecutionRequest) {
-    return this.transformations.reduce(
-      (request: ExecutionRequest, transformation: Transformation) =>
-        transformation.transform.transformRequest != null
-          ? transformation.transform.transformRequest(request, this.delegationContext, transformation.context)
-          : request,
-      originalRequest
-    );
+    let request = originalRequest;
+    for (const transformation of this.transformations) {
+      if (transformation.transform.transformRequest) {
+        request = transformation.transform.transformRequest(request, this.delegationContext, transformation.context);
+      }
+    }
+
+    return request;
   }
 
   public transformResult(originalResult: ExecutionResult) {
-    return this.transformations.reduceRight(
-      (result: ExecutionResult, transformation: Transformation) =>
-        transformation.transform.transformResult != null
-          ? transformation.transform.transformResult(result, this.delegationContext, transformation.context)
-          : result,
-      originalResult
-    );
+    let result = originalResult;
+
+    // from rigth to left
+    for (let i = this.transformations.length - 1; i >= 0; i--) {
+      const transformation = this.transformations[i];
+      if (transformation.transform.transformResult) {
+        result = transformation.transform.transformResult(result, this.delegationContext, transformation.context);
+      }
+    }
+
+    return result;
   }
 }

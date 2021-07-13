@@ -16,7 +16,7 @@ import { memoize4, memoize3, memoize2 } from './memoize';
 import { mergeExternalObjects } from './externalObjects';
 import { Subschema } from './Subschema';
 
-const sortSubschemasByProxiability = memoize4(function (
+const sortSubschemasByProxiability = memoize4(function sortSubschemasByProxiabilityMemoized(
   mergedTypeInfo: MergedTypeInfo,
   sourceSubschemaOrSourceSubschemas: Subschema | Array<Subschema>,
   targetSubschemas: Array<Subschema>,
@@ -63,7 +63,7 @@ const sortSubschemasByProxiability = memoize4(function (
   };
 });
 
-const buildDelegationPlan = memoize3(function (
+const buildDelegationPlan = memoize3(function buildDelegationPlanMemoized(
   mergedTypeInfo: MergedTypeInfo,
   fieldNodes: Array<FieldNode>,
   proxiableSubschemas: Array<Subschema>
@@ -140,7 +140,7 @@ const buildDelegationPlan = memoize3(function (
   };
 });
 
-const combineSubschemas = memoize2(function (
+const combineSubschemas = memoize2(function combineSubschemasMemoized(
   subschemaOrSubschemas: Subschema | Array<Subschema>,
   additionalSubschemas: Array<Subschema>
 ): Array<Subschema> {
@@ -210,7 +210,7 @@ export function mergeFields(
     .resolve();
 }
 
-const subschemaTypesContainSelectionSet = memoize3(function (
+const subschemaTypesContainSelectionSet = memoize3(function subschemaTypesContainSelectionSetMemoized(
   mergedTypeInfo: MergedTypeInfo,
   sourceSubschemaOrSourceSubschemas: Subschema | Array<Subschema>,
   selectionSet: SelectionSetNode

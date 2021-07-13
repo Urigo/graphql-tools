@@ -116,10 +116,14 @@ function prefixRequest(prefix: string, request: ExecutionRequest): ExecutionRequ
     return { ...request, document };
   }
 
+  function prefixNode(node: VariableNode | FragmentDefinitionNode | FragmentSpreadNode) {
+    return prefixNodeName(node, prefix);
+  }
+
   document = visit(document, {
-    [Kind.VARIABLE]: (node: VariableNode) => prefixNodeName(node, prefix),
-    [Kind.FRAGMENT_DEFINITION]: (node: FragmentDefinitionNode) => prefixNodeName(node, prefix),
-    [Kind.FRAGMENT_SPREAD]: (node: FragmentSpreadNode) => prefixNodeName(node, prefix),
+    [Kind.VARIABLE]: prefixNode,
+    [Kind.FRAGMENT_DEFINITION]: prefixNode,
+    [Kind.FRAGMENT_SPREAD]: prefixNode,
   });
 
   const prefixedVariables = variableNames.reduce((acc, name) => {
