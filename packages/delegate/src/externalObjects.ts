@@ -31,61 +31,67 @@ export function getUnpathedErrors(object: ExternalObject): Array<GraphQLError> {
   return object[UNPATHED_ERRORS_SYMBOL];
 }
 
-export function mergeExternalObjects(
+export async function mergeExternalObjects(
   schema: GraphQLSchema,
   path: Array<string | number>,
   typeName: string,
   target: ExternalObject,
   sources: Array<ExternalObject>,
   selectionSets: Array<SelectionSetNode>
-): ExternalObject {
+): Promise<ExternalObject> {
   const results: Array<any> = [];
   let errors: Array<GraphQLError> = [];
 
   const type = schema.getType(typeName) as GraphQLObjectType;
-  for (const index in sources) {
-    const source = sources[index];
-    if (source instanceof Error || source === null) {
-      const selectionSet = selectionSets[index];
-      const fieldNodes = collectFields(
-        {
-          schema,
-          variableValues: {},
-          fragments: {},
-        } as ExecutionContext,
-        type,
-        selectionSet,
-        Object.create(null),
-        Object.create(null)
-      );
-      const nullResult = {};
-      for (const responseKey in fieldNodes) {
-        if (source instanceof GraphQLError) {
-          nullResult[responseKey] = relocatedError(source, path.concat([responseKey]));
-        } else if (source instanceof Error) {
-          nullResult[responseKey] = locatedError(source, fieldNodes[responseKey], path.concat([responseKey]));
-        } else {
-          nullResult[responseKey] = null;
-        }
+  await Promise.all(
+    sources.map(async (source, index) => {
+      if (source instanceof Error || source === null) {
+        const selectionSet = selectionSets[index];
+        const fieldNodes = collectFields(
+          {
+            schema,
+            variableValues: {},
+            fragments: {},
+          } as ExecutionContext,
+          type,
+          selectionSet,
+          Object.create(null),
+          Object.create(null)
+        );
+        const nullResult = {};
+        await Promise.all(
+          Object.keys(fieldNodes).map(async responseKey => {
+            if (source instanceof GraphQLError) {
+              nullResult[responseKey] = relocatedError(source, path.concat([responseKey]));
+            } else if (source instanceof Error) {
+              nullResult[responseKey] = locatedError(source, fieldNodes[responseKey], path.concat([responseKey]));
+            } else {
+              nullResult[responseKey] = null;
+            }
+          })
+        );
+        results.push(nullResult);
+      } else {
+        errors = errors.concat(source[UNPATHED_ERRORS_SYMBOL]);
+        results.push(source);
       }
-      results.push(nullResult);
-    } else {
-      errors = errors.concat(source[UNPATHED_ERRORS_SYMBOL]);
-      results.push(source);
-    }
-  }
+    })
+  );
 
   const combinedResult: ExternalObject = Object.assign({}, target, ...results);
 
   const newFieldSubschemaMap = target[FIELD_SUBSCHEMA_MAP_SYMBOL] ?? Object.create(null);
-
-  for (const source of results) {
-    const objectSubschema = source[OBJECT_SUBSCHEMA_SYMBOL];
-    const fieldSubschemaMap = source[FIELD_SUBSCHEMA_MAP_SYMBOL];
-    for (const responseKey in source) {
-      newFieldSubschemaMap[responseKey] = fieldSubschemaMap?.[responseKey] ?? objectSubschema;
-    }
-  }
+  await Promise.all(
+    results.map(async source => {
+      const objectSubschema = source[OBJECT_SUBSCHEMA_SYMBOL];
+      const fieldSubschemaMap = source[FIELD_SUBSCHEMA_MAP_SYMBOL];
+      await Promise.all(
+        Object.keys(source).map(async responseKey => {
+          newFieldSubschemaMap[responseKey] = fieldSubschemaMap?.[responseKey] ?? objectSubschema;
+        })
+      );
+    })
+  );
 
   combinedResult[FIELD_SUBSCHEMA_MAP_SYMBOL] = newFieldSubschemaMap;
   combinedResult[OBJECT_SUBSCHEMA_SYMBOL] = target[OBJECT_SUBSCHEMA_SYMBOL];
