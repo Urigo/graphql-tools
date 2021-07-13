@@ -65,8 +65,8 @@ export interface ExecutionRequest<
   document: DocumentNode;
   operationType: OperationTypeNode;
   variables?: TArgs;
-  extensions?: TExtensions;
   operationName?: string;
+  extensions?: TExtensions;
   // If the request will be executed locally, it may contain a rootValue
   rootValue?: TRootValue;
   // If the request originates within execution of a parent request, it may contain the parent context and info

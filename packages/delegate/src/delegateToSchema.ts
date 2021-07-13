@@ -10,6 +10,7 @@ import {
   DocumentNode,
   GraphQLOutputType,
   ExecutionArgs,
+  print,
 } from 'graphql';
 
 import { ValueOrPromise } from 'value-or-promise';
@@ -38,6 +39,7 @@ import { isSubschemaConfig } from './subschemaConfig';
 import { Subschema } from './Subschema';
 import { createRequestFromInfo, getDelegatingOperation } from './createRequest';
 import { Transformer } from './Transformer';
+import lru, { Lru } from 'tiny-lru';
 
 export function delegateToSchema<TContext = Record<string, any>, TArgs = any>(
   options: IDelegateToSchemaOptions<TContext, TArgs>
@@ -80,6 +82,52 @@ function getDelegationReturnType(
   return rootType.getFields()[fieldName].type;
 }
 
+const DEFAULT_MAX = 1000;
+const DEFAULT_TTL = 3600000;
+
+const processedRequestCacheBySchema = new WeakMap<GraphQLSchema | SubschemaConfig, Lru<ExecutionRequest>>();
+
+function getProcessedRequestCache(subschema: GraphQLSchema | SubschemaConfig) {
+  let processedRequestCache = processedRequestCacheBySchema.get(subschema);
+  if (!processedRequestCache) {
+    processedRequestCache = lru(DEFAULT_MAX, DEFAULT_TTL);
+    processedRequestCacheBySchema.set(subschema, processedRequestCache);
+  }
+  return processedRequestCache;
+}
+
+function getRequestCacheKey(request: ExecutionRequest, delegationContext: DelegationContext) {
+  return `${print(request.document)}_${request.operationName}_${JSON.stringify(request.variables)}_${
+    delegationContext.fieldName
+  }_${delegationContext.returnType}_${JSON.stringify(delegationContext.args)}`;
+}
+
+function getProcessedRequest(
+  request: ExecutionRequest,
+  delegationContext: DelegationContext<any>,
+  transformer: Transformer
+): ExecutionRequest {
+  const cacheKey = getRequestCacheKey(request, delegationContext);
+  const processedRequestCache = getProcessedRequestCache(delegationContext.subschema);
+  let processedRequest = processedRequestCache.get(cacheKey);
+  if (!processedRequest) {
+    processedRequest = transformer.transformRequest(request);
+    processedRequestCache.set(cacheKey, {
+      document: processedRequest.document,
+      operationType: processedRequest.operationType,
+      variables: processedRequest.variables,
+      operationName: processedRequest.operationName,
+    });
+  }
+  return {
+    ...processedRequest,
+    extensions: request.extensions,
+    rootValue: request.rootValue,
+    context: request.context,
+    info: request.info,
+  };
+}
+
 export function delegateRequest<TContext = Record<string, any>, TArgs = any>(
   options: IDelegateRequestOptions<TContext, TArgs>
 ) {
@@ -87,7 +135,7 @@ export function delegateRequest<TContext = Record<string, any>, TArgs = any>(
 
   const transformer = new Transformer<TContext>(delegationContext, options.binding);
 
-  const processedRequest = transformer.transformRequest(options.request);
+  const processedRequest = getProcessedRequest(options.request, delegationContext, transformer);
 
   if (options.validateRequest) {
     validateRequest(delegationContext, processedRequest.document);
