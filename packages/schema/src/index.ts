@@ -5,3 +5,4 @@ export { checkForResolveTypeResolver } from './checkForResolveTypeResolver';
 export { extendResolversFromInterfaces } from './extendResolversFromInterfaces';
 export * from './makeExecutableSchema';
 export * from './types';
+export { buildASTSchemaWithResolvers } from './buildASTSchemaWithResolvers';
