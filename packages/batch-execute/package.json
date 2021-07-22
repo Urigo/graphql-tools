@@ -1,6 +1,6 @@
 {
   "name": "@graphql-tools/batch-execute",
-  "version": "7.1.2",
+  "version": "8.0.0",
   "description": "A set of utils for faster development of GraphQL tools",
   "repository": {
     "type": "git",
@@ -10,8 +10,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -32,7 +32,7 @@
     "input": "./src/index.ts"
   },
   "dependencies": {
-    "@graphql-tools/utils": "^7.7.0",
+    "@graphql-tools/utils": "^8.0.0",
     "dataloader": "2.0.0",
     "tslib": "~2.3.0",
     "value-or-promise": "1.0.10"

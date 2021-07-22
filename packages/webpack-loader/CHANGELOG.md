@@ -1,5 +1,11 @@
 # @graphql-tools/webpack-loader
 
+## 6.5.0
+
+### Minor Changes
+
+- 5a4d198b: feat(webpack-loader): export Options
+
 ## 6.4.0
 
 ### Minor Changes

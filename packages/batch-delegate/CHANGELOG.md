@@ -1,5 +1,45 @@
 # @graphql-tools/batch-delegate
 
+## 8.0.0
+
+### Major Changes
+
+- dae6dc7b: refactor: ExecutionParams type replaced by Request type
+
+  rootValue property is now a part of the Request type.
+
+  When delegating with delegateToSchema, rootValue can be set multiple ways:
+
+  - when using a custom executor, the custom executor can utilize a rootValue in whichever custom way it specifies.
+  - when using the default executor (execute/subscribe from graphql-js):
+    -- rootValue can be passed to delegateToSchema via a named option
+    -- rootValue can be included within a subschemaConfig
+    -- otherwise, rootValue is inferred from the originating schema
+
+  When using wrapSchema/stitchSchemas, a subschemaConfig can specify the createProxyingResolver function which can pass whatever rootValue it wants to delegateToSchema as above.
+
+### Patch Changes
+
+- Updated dependencies [af9a78de]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [aa43054d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+  - @graphql-tools/delegate@8.0.0
+
 ## 7.0.2
 
 ### Patch Changes

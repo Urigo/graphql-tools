@@ -1,6 +1,6 @@
 {
   "name": "@graphql-tools/wrap",
-  "version": "7.0.8",
+  "version": "8.0.0",
   "description": "A set of utils for faster development of GraphQL tools",
   "repository": {
     "type": "git",
@@ -10,8 +10,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -35,9 +35,9 @@
     "is-promise": "4.0.0"
   },
   "dependencies": {
-    "@graphql-tools/delegate": "^7.1.5",
-    "@graphql-tools/schema": "^7.1.5",
-    "@graphql-tools/utils": "^7.8.1",
+    "@graphql-tools/delegate": "^8.0.0",
+    "@graphql-tools/schema": "^8.0.0",
+    "@graphql-tools/utils": "^8.0.0",
     "tslib": "~2.3.0",
     "value-or-promise": "1.0.10"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@graphql-tools/node-require",
-  "version": "6.2.4",
+  "version": "6.2.5",
   "description": "A set of utils for faster development of GraphQL tools",
   "repository": {
     "type": "git",
@@ -10,8 +10,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -32,9 +32,9 @@
     "input": "./src/index.ts"
   },
   "dependencies": {
-    "@graphql-tools/load": "^6.2.4",
-    "@graphql-tools/graphql-file-loader": "^6.2.4",
-    "@graphql-tools/utils": "^7.10.0",
+    "@graphql-tools/load": "^7.0.0",
+    "@graphql-tools/graphql-file-loader": "^7.0.0",
+    "@graphql-tools/utils": "^8.0.0",
     "tslib": "~2.3.0"
   },
   "publishConfig": {

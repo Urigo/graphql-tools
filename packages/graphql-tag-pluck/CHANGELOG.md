@@ -1,5 +1,32 @@
 # @graphql-tools/graphql-tag-pluck
 
+## 7.0.0
+
+### Major Changes
+
+- 34c31de0: BREAKING CHANGE
+  - feat(graphql-tag-pluck): keep locationOffset and return graphql-js Source instead of string
+
+### Patch Changes
+
+- f1d7b3c2: ensure operations with GraphQL magic comment are only parsed once.
+- Updated dependencies [af9a78de]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+
 ## 6.5.1
 
 ### Patch Changes

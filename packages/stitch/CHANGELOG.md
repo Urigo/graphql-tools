@@ -1,5 +1,74 @@
 # @graphql-tools/stitch
 
+## 8.0.0
+
+### Major Changes
+
+- 7d3e3006: BREAKING CHANGE
+  - Legacy Schema Directives and Directive Resolvers have been removed
+  - - You can check the new method for both;
+  - - - https://www.graphql-tools.com/docs/schema-directives
+- dae6dc7b: refactor: ExecutionParams type replaced by Request type
+
+  rootValue property is now a part of the Request type.
+
+  When delegating with delegateToSchema, rootValue can be set multiple ways:
+
+  - when using a custom executor, the custom executor can utilize a rootValue in whichever custom way it specifies.
+  - when using the default executor (execute/subscribe from graphql-js):
+    -- rootValue can be passed to delegateToSchema via a named option
+    -- rootValue can be included within a subschemaConfig
+    -- otherwise, rootValue is inferred from the originating schema
+
+  When using wrapSchema/stitchSchemas, a subschemaConfig can specify the createProxyingResolver function which can pass whatever rootValue it wants to delegateToSchema as above.
+
+- 74581cf3: fix(getDirectives): preserve order around repeatable directives
+
+  BREAKING CHANGE: getDirectives now always return an array of individual DirectiveAnnotation objects consisting of `name` and `args` properties.
+
+  New useful function `getDirective` returns an array of objects representing any args for each use of a single directive (returning the empty object `{}` when a directive is used without arguments).
+
+  Note: The `getDirective` function returns an array even when the specified directive is non-repeatable. This is because one use of this function is to throw an error if more than one directive annotation is used for a non repeatable directive!
+
+  When specifying directives in extensions, one can use either the old or new format.
+
+- c0ca3190: BREAKING CHANGE
+  - Remove Subscriber and use only Executor
+  - - Now `Executor` can receive `AsyncIterable` and subscriptions will also be handled by `Executor`. This is a future-proof change for defer, stream and live queries
+
+### Patch Changes
+
+- Updated dependencies [af9a78de]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [aa43054d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [a31f9593]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+  - @graphql-tools/delegate@8.0.0
+  - @graphql-tools/wrap@8.0.0
+  - @graphql-tools/schema@8.0.0
+  - @graphql-tools/batch-delegate@8.0.0
+  - @graphql-tools/merge@6.2.15
+
 ## 7.5.3
 
 ### Patch Changes

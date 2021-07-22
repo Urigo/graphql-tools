@@ -1,5 +1,77 @@
 # @graphql-tools/url-loader
 
+## 7.0.0
+
+### Major Changes
+
+- af9a78de: BREAKING CHANGE
+
+  - Now each loader handles glob patterns internally and returns an array of `Source` object instead of single `Source`
+
+  - GraphQL Tag Pluck now respects code locations and returns graphql-js `Source` objects for each found code block
+
+  - Thanks to the one above, `CodeFileLoader` now returns different `Source` objects for each found SDL code block.
+
+- 614c08cc: BREAKING CHANGE
+  - Remove `handleSDLAsync` and `handleSDLSync`; use `handleSDL` instead
+  - Remove `useSSEForSubscription` and `useWebSocketLegacyProtocol`; use `subscriptionProtocol` instead
+  - If introspection source is different than endpoint, use `endpoint` for remote execution source
+  - Default HTTP Executor is renamed to `buildHTTPExecutor` with a new signature
+  - `build*Subscriber` methods are renamed to `buildWSLegacyExecutor`, `buildWSExecutor` and `buildSSEExecutor` with new signatures
+  - `getFetch` no longer takes `async` flag
+- dae6dc7b: refactor: ExecutionParams type replaced by Request type
+
+  rootValue property is now a part of the Request type.
+
+  When delegating with delegateToSchema, rootValue can be set multiple ways:
+
+  - when using a custom executor, the custom executor can utilize a rootValue in whichever custom way it specifies.
+  - when using the default executor (execute/subscribe from graphql-js):
+    -- rootValue can be passed to delegateToSchema via a named option
+    -- rootValue can be included within a subschemaConfig
+    -- otherwise, rootValue is inferred from the originating schema
+
+  When using wrapSchema/stitchSchemas, a subschemaConfig can specify the createProxyingResolver function which can pass whatever rootValue it wants to delegateToSchema as above.
+
+- c0ca3190: BREAKING CHANGE
+  - Remove Subscriber and use only Executor
+  - - Now `Executor` can receive `AsyncIterable` and subscriptions will also be handled by `Executor`. This is a future-proof change for defer, stream and live queries
+- 7d3e3006: BREAKING CHANGE
+
+  - No more accept arrays or functions for `headers`
+
+  NEW FEATURES
+
+  - Respect `operationName` and `extensions`
+  - Ability to get headers from `extensions.headers`
+
+### Patch Changes
+
+- a31f9593: enhance(url-loader): avoid doing extra work on loader level
+- fd81e800: fix(url-loader): fix node support for EventSource
+- Updated dependencies [af9a78de]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [aa43054d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+  - @graphql-tools/delegate@8.0.0
+  - @graphql-tools/wrap@8.0.0
+
 ## 6.10.1
 
 ### Patch Changes
