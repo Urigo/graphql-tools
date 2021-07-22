@@ -221,6 +221,19 @@ Internally, `batchDelegateToSchema` wraps a single `delegateToSchema` call in a 
 
 If the query you're delegating to doesn't conform to these expectations, you can provide a custom [valuesFromResults](https://www.graphql-tools.com/docs/api/interfaces/batch_delegate_src.createbatchdelegatefnoptions/#valuesfromresults) function to transform it appropriately.
 
+:::caution
+The `valuesFromResults` function needs to be used with caution, otherwise you might inadvertently break some features.
+Delegation requires special support for handling query aliasing and errors among other things (see [defaultMergedResolver](https://www.graphql-tools.com/docs/api/modules/delegate/#defaultmergedresolver)).
+
+To support these features, `delegateToSchema` attaches special `symbols` to the results after running transforms to bubble up the required metadata.
+Since `valuesFromResults` runs after delegation transforms, this means that if you accidentally delete these symbols (by for example creating new objects), some functionality will not work and will cause some queries to break.
+
+It's recommended to only use `valuesFromResults` if you want to reorder results based on the keys.
+For more complex result transformations, use [delegation transforms](https://www.graphql-tools.com/docs/schema-delegation#transforms-array--transform-). Some common transform examples can be seen in [operational schema wrapping](https://www.graphql-tools.com/docs/schema-wrapping/#operational). The most generic transform for query/result transforms is [TransformQuery](https://www.graphql-tools.com/docs/api/classes/wrap_src.transformquery). For a complex example, see [this test](https://github.com/ardatan/graphql-tools/blob/master/packages/batch-delegate/tests/withTransforms.test.ts).
+
+Also note that the `returnType` must be the type of the result after the transforms have been applied.
+:::
+
 Batch delegation is generally preferable over plain delegation because it eliminates the redundancy of requesting the same field across an array of parent objects. Even so, delegation costs can add up because there is still one subschema request made _per batched field_&mdash;for remote services, this may create many network requests sent to the same service. Consider enabling an additional layer of network-level batching with a package such as [apollo-link-batch-http](https://www.apollographql.com/docs/link/links/batch-http/) to consolidate requests per subschema.
 
 ## Passing gateway arguments
