@@ -1,5 +1,6 @@
 import { ASTNode, parse, DocumentNode, DefinitionNode, print } from 'graphql';
 import { compareNodes } from '@graphql-tools/utils';
+import prettier from 'prettier';
 
 declare global {
   namespace jest {
@@ -7,7 +8,7 @@ declare global {
       /**
        * Normalizes whitespace and performs string comparisons
        */
-      toBeSimilarGqlDoc(expected: string): R;
+      toBeSimilarGqlDoc(expected: string, { skipComments }?: { skipComments: boolean }): R;
     }
   }
 }
@@ -27,35 +28,39 @@ function sortRecursive(a: ASTNode) {
   }
 }
 
-function normalizeDocumentString(docStr: string) {
+function normalizeDocumentString(docStr: string, skipComments: boolean) {
+  if (!skipComments) {
+    return prettier.format(docStr, { parser: 'graphql' });
+  }
+
   const doc = parse(docStr, { noLocation: true }) as DocumentNode & { definitions: DefinitionNode[] };
   sortRecursive(doc);
   return print(doc);
 }
 
 expect.extend({
-  toBeSimilarGqlDoc(received: string, expected: string) {
-    const strippedReceived = normalizeDocumentString(received);
-    const strippedExpected = normalizeDocumentString(expected);
+  toBeSimilarGqlDoc(received: string, expected: string, { skipComments } = { skipComments: true }) {
+    const strippedReceived = normalizeDocumentString(received, skipComments);
+    const strippedExpected = normalizeDocumentString(expected, skipComments);
 
     if (strippedReceived.trim() === strippedExpected.trim()) {
       return {
         message: () =>
           `expected
-       ${received}
-       not to be a string containing (ignoring indents)
-       ${expected}`,
+${received}
+not to be a string containing (ignoring indents)
+${expected}`,
         pass: true,
       };
-    } else {
-      return {
-        message: () =>
-          `expected
-       ${received}
-       to be a string containing (ignoring indents)
-       ${expected}`,
-        pass: false,
-      };
     }
+
+    return {
+      message: () =>
+        `expected
+${received}
+to be a string containing (ignoring indents)
+${expected}`,
+      pass: false,
+    };
   },
 });

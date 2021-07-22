@@ -1,0 +1,6 @@
+#import 'c.graphql'
+
+# eslint-disable-next-line
+query Foo {
+    ...BarFragment
+}
