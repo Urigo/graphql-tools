@@ -1,5 +1,72 @@
 # @graphql-tools/links
 
+## 8.0.0
+
+### Major Changes
+
+- dae6dc7b: refactor: ExecutionParams type replaced by Request type
+
+  rootValue property is now a part of the Request type.
+
+  When delegating with delegateToSchema, rootValue can be set multiple ways:
+
+  - when using a custom executor, the custom executor can utilize a rootValue in whichever custom way it specifies.
+  - when using the default executor (execute/subscribe from graphql-js):
+    -- rootValue can be passed to delegateToSchema via a named option
+    -- rootValue can be included within a subschemaConfig
+    -- otherwise, rootValue is inferred from the originating schema
+
+  When using wrapSchema/stitchSchemas, a subschemaConfig can specify the createProxyingResolver function which can pass whatever rootValue it wants to delegateToSchema as above.
+
+- c42e811d: BREAKING CHANGES;
+
+  - Rename `Request` to `ExecutionRequest`
+  - Drop unnecessary `GraphQLResolveInfo` in `ExecutionRequest`
+  - Add required `operationType: OperationTypeNode` field in `ExecutionRequest`
+  - Add `context` in `createRequest` and `createRequestInfo` instead of `delegateToSchema`
+
+  > It doesn't rely on info.operation.operationType to allow the user to call an operation from different root type.
+  > And it doesn't call getOperationAST again and again to get operation type from the document/operation because we have it in Request and ExecutionParams
+  > https://github.com/ardatan/graphql-tools/pull/3166/files#diff-d4824895ea613dcc1f710c3ac82e952fe0ca12391b671f70d9f2d90d5656fdceR38
+
+  Improvements;
+
+  - Memoize `defaultExecutor` for a single `GraphQLSchema` so allow `getBatchingExecutor` to memoize `batchingExecutor` correctly.
+  - And there is no different `defaultExecutor` is created for `subscription` and other operation types. Only one executor is used.
+
+  > Batch executor is memoized by `executor` reference but `createDefaultExecutor` didn't memoize the default executor so this memoization wasn't working correctly on `batch-execute` side.
+  > https://github.com/ardatan/graphql-tools/blob/remove-info-executor/packages/batch-execute/src/getBatchingExecutor.ts#L9
+
+- c0ca3190: BREAKING CHANGE
+  - Remove Subscriber and use only Executor
+  - - Now `Executor` can receive `AsyncIterable` and subscriptions will also be handled by `Executor`. This is a future-proof change for defer, stream and live queries
+
+### Minor Changes
+
+- 7d3e3006: feat(links): Respect operationName
+
+### Patch Changes
+
+- Updated dependencies [af9a78de]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [aa43054d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+  - @graphql-tools/delegate@8.0.0
+
 ## 7.1.0
 
 ### Minor Changes

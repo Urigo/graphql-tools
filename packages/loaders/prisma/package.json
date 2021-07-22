@@ -1,6 +1,6 @@
 {
   "name": "@graphql-tools/prisma-loader",
-  "version": "6.3.0",
+  "version": "6.3.1",
   "description": "A set of utils for faster development of GraphQL tools",
   "repository": {
     "type": "git",
@@ -11,8 +11,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -30,8 +30,8 @@
     "graphql": "^14.0.0 || ^15.0.0"
   },
   "dependencies": {
-    "@graphql-tools/url-loader": "^6.8.2",
-    "@graphql-tools/utils": "^7.0.0",
+    "@graphql-tools/url-loader": "^7.0.0",
+    "@graphql-tools/utils": "^8.0.0",
     "@types/js-yaml": "^4.0.0",
     "@types/json-stable-stringify": "^1.0.32",
     "@types/jsonwebtoken": "^8.5.0",

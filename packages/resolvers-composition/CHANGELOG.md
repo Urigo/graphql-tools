@@ -1,5 +1,31 @@
 # @graphql-tools/resolvers-composition
 
+## 6.3.0
+
+### Minor Changes
+
+- 1a812645: Added glob pattern support for composeResolver method
+
+### Patch Changes
+
+- 316cc2d3: BugFix: Handle parsing endpoints when there are no mutations #3076
+- Updated dependencies [af9a78de]
+- Updated dependencies [9c26b847]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [dae6dc7b]
+- Updated dependencies [6877b913]
+- Updated dependencies [c42e811d]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [74581cf3]
+- Updated dependencies [c0ca3190]
+- Updated dependencies [982c8f53]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/utils@8.0.0
+
 ## 6.2.8
 
 ### Patch Changes

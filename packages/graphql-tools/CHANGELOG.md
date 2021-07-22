@@ -1,5 +1,22 @@
 # graphql-tools
 
+## 8.0.0
+
+### Major Changes
+
+- 7d3e3006: BREAKING CHANGE
+  - Now it only exports `makeExecutableSchema` from `@graphql-tools/schema`
+  - Please migrate to scoped packages(`@graphql-tools/*`) because this npm package will no longer get updated
+
+### Patch Changes
+
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+- Updated dependencies [7d3e3006]
+  - @graphql-tools/schema@8.0.0
+
 ## 7.0.5
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "graphql-tools",
-  "version": "7.0.5",
+  "version": "8.0.0",
   "description": "Useful tools to create and manipulate GraphQL schemas.",
   "repository": {
     "type": "git",
@@ -10,8 +10,8 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -36,7 +36,7 @@
     "directory": "dist"
   },
   "dependencies": {
-    "@graphql-tools/schema": "^7.0.0",
+    "@graphql-tools/schema": "^8.0.0",
     "tslib": "~2.3.0"
   }
 }

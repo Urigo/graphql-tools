@@ -1,5 +1,100 @@
 # @graphql-tools/utils
 
+## 8.0.0
+
+### Major Changes
+
+- af9a78de: BREAKING CHANGE
+
+  - Now each loader handles glob patterns internally and returns an array of `Source` object instead of single `Source`
+
+  - GraphQL Tag Pluck now respects code locations and returns graphql-js `Source` objects for each found code block
+
+  - Thanks to the one above, `CodeFileLoader` now returns different `Source` objects for each found SDL code block.
+
+- 7d3e3006: BREAKING CHANGE
+  - Remove `fieldToFieldConfig`, `argsToFieldConfigArgument` and `argumentToArgumentConfig`
+  - - You can use `.toConfig` method instead for each.
+- 7d3e3006: BREAKING CHANGE
+  - Legacy Schema Directives and Directive Resolvers have been removed
+  - - You can check the new method for both;
+  - - - https://www.graphql-tools.com/docs/schema-directives
+- dae6dc7b: refactor: ExecutionParams type replaced by Request type
+
+  rootValue property is now a part of the Request type.
+
+  When delegating with delegateToSchema, rootValue can be set multiple ways:
+
+  - when using a custom executor, the custom executor can utilize a rootValue in whichever custom way it specifies.
+  - when using the default executor (execute/subscribe from graphql-js):
+    -- rootValue can be passed to delegateToSchema via a named option
+    -- rootValue can be included within a subschemaConfig
+    -- otherwise, rootValue is inferred from the originating schema
+
+  When using wrapSchema/stitchSchemas, a subschemaConfig can specify the createProxyingResolver function which can pass whatever rootValue it wants to delegateToSchema as above.
+
+- 6877b913: BREAKING CHANGES;
+
+  `mergeDeep` now takes an array of sources instead of set of parameters as input and it takes an additional flag to enable prototype merging
+  Instead of `mergeDeep(...sources)` => `mergeDeep(sources)`
+
+- c42e811d: BREAKING CHANGES;
+
+  - Rename `Request` to `ExecutionRequest`
+  - Drop unnecessary `GraphQLResolveInfo` in `ExecutionRequest`
+  - Add required `operationType: OperationTypeNode` field in `ExecutionRequest`
+  - Add `context` in `createRequest` and `createRequestInfo` instead of `delegateToSchema`
+
+  > It doesn't rely on info.operation.operationType to allow the user to call an operation from different root type.
+  > And it doesn't call getOperationAST again and again to get operation type from the document/operation because we have it in Request and ExecutionParams
+  > https://github.com/ardatan/graphql-tools/pull/3166/files#diff-d4824895ea613dcc1f710c3ac82e952fe0ca12391b671f70d9f2d90d5656fdceR38
+
+  Improvements;
+
+  - Memoize `defaultExecutor` for a single `GraphQLSchema` so allow `getBatchingExecutor` to memoize `batchingExecutor` correctly.
+  - And there is no different `defaultExecutor` is created for `subscription` and other operation types. Only one executor is used.
+
+  > Batch executor is memoized by `executor` reference but `createDefaultExecutor` didn't memoize the default executor so this memoization wasn't working correctly on `batch-execute` side.
+  > https://github.com/ardatan/graphql-tools/blob/remove-info-executor/packages/batch-execute/src/getBatchingExecutor.ts#L9
+
+- 7d3e3006: BREAKING CHANGE
+  - Now it uses the native [`AggregateError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AggregateError) implementation. The major difference is the individual errors are kept under `errors` property instead of the object itself with `Symbol.iterator`.
+  ```js
+  // From;
+  for (const error of aggregateError)
+  // To;
+  for (const error of aggregateError.errors)
+  ```
+- 7d3e3006: BREAKING CHANGE
+  - No longer exports `debugLog` but uses `console.log` directly only if `DEBUG` is available under `process.env`
+- 7d3e3006: BREAKING CHANGE
+  - No longer applies `camelCase` naming convention in `buildOperationNodeForField`
+- 74581cf3: fix(getDirectives): preserve order around repeatable directives
+
+  BREAKING CHANGE: getDirectives now always return an array of individual DirectiveAnnotation objects consisting of `name` and `args` properties.
+
+  New useful function `getDirective` returns an array of objects representing any args for each use of a single directive (returning the empty object `{}` when a directive is used without arguments).
+
+  Note: The `getDirective` function returns an array even when the specified directive is non-repeatable. This is because one use of this function is to throw an error if more than one directive annotation is used for a non repeatable directive!
+
+  When specifying directives in extensions, one can use either the old or new format.
+
+- c0ca3190: BREAKING CHANGE
+  - Remove Subscriber and use only Executor
+  - - Now `Executor` can receive `AsyncIterable` and subscriptions will also be handled by `Executor`. This is a future-proof change for defer, stream and live queries
+- 7d3e3006: BREAKING CHANGE
+  - No longer exports `SchemaVisitor`, `visitSchema` and `VisitSchemaKind`
+  - - Use [`mapSchema`](https://www.graphql-tools.com/docs/schema-directives/#full-mapschema-api) instead
+
+### Minor Changes
+
+- 9c26b847: enhance(loaders): remove optional methods from the Loader interface
+- 7d3e3006: feat(utils): Respect operationName and rootValue in ExecutionParams
+
+### Patch Changes
+
+- 982c8f53: enhance(utils): refactor, cleanup and remove extra work
+
 ## 7.10.0
 
 ### Minor Changes

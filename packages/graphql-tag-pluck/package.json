@@ -1,6 +1,6 @@
 {
   "name": "@graphql-tools/graphql-tag-pluck",
-  "version": "6.5.1",
+  "version": "7.0.0",
   "description": "Pluck graphql-tag template literals",
   "license": "MIT",
   "repository": {
@@ -10,8 +10,8 @@
   },
   "sideEffects": false,
   "main": "dist/index.js",
-   "module": "dist/index.mjs",
- "exports": {
+  "module": "dist/index.mjs",
+  "exports": {
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
@@ -32,7 +32,7 @@
     "@babel/parser": "7.14.8",
     "@babel/traverse": "7.14.8",
     "@babel/types": "7.14.8",
-    "@graphql-tools/utils": "^7.0.0",
+    "@graphql-tools/utils": "^8.0.0",
     "tslib": "~2.3.0"
   },
   "devDependencies": {
