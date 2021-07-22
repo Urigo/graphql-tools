@@ -1,46 +1,21 @@
-import {
-  GraphQLResolveInfo,
-  GraphQLOutputType,
-  GraphQLSchema,
-  GraphQLError,
-  responsePathAsArray,
-  locatedError,
-} from 'graphql';
+import { GraphQLResolveInfo, GraphQLOutputType, GraphQLError, responsePathAsArray, locatedError } from 'graphql';
 
 import { AggregateError, getResponseKeyFromInfo, ExecutionResult, relocatedError } from '@graphql-tools/utils';
 
-import { SubschemaConfig, Transform, DelegationContext } from '../types';
-import { resolveExternalValue } from '../resolveExternalValue';
+import { DelegationContext } from './types';
+import { resolveExternalValue } from './resolveExternalValue';
 
-export default class CheckResultAndHandleErrors implements Transform {
-  public transformResult(
-    originalResult: ExecutionResult,
-    delegationContext: DelegationContext,
-    _transformationContext: Record<string, any>
-  ): ExecutionResult {
-    return checkResultAndHandleErrors(
-      originalResult,
-      delegationContext.context!,
-      delegationContext.info,
-      delegationContext.fieldName,
-      delegationContext.subschema,
-      delegationContext.returnType,
-      delegationContext.skipTypeMerging,
-      delegationContext.onLocatedError
-    );
-  }
-}
+export function checkResultAndHandleErrors(result: ExecutionResult, delegationContext: DelegationContext): any {
+  const {
+    context,
+    info,
+    fieldName: responseKey = getResponseKey(info),
+    subschema,
+    returnType = getReturnType(info),
+    skipTypeMerging,
+    onLocatedError,
+  } = delegationContext;
 
-export function checkResultAndHandleErrors(
-  result: ExecutionResult,
-  context: Record<string, any>,
-  info: GraphQLResolveInfo,
-  responseKey: string = getResponseKeyFromInfo(info),
-  subschema: GraphQLSchema | SubschemaConfig,
-  returnType: GraphQLOutputType = info.returnType,
-  skipTypeMerging?: boolean,
-  onLocatedError?: (originalError: GraphQLError) => GraphQLError
-): any {
   const { data, unpathedErrors } = mergeDataAndErrors(
     result.data == null ? undefined : result.data[responseKey],
     result.errors == null ? [] : result.errors,
@@ -119,4 +94,18 @@ export function mergeDataAndErrors(
   }
 
   return { data, unpathedErrors };
+}
+
+function getResponseKey(info: GraphQLResolveInfo | undefined): string {
+  if (info == null) {
+    throw new Error(`Data cannot be extracted from result without an explicit key or source schema.`);
+  }
+  return getResponseKeyFromInfo(info);
+}
+
+function getReturnType(info: GraphQLResolveInfo | undefined): GraphQLOutputType {
+  if (info == null) {
+    throw new Error(`Return type cannot be inferred without a source schema.`);
+  }
+  return info.returnType;
 }

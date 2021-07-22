@@ -16,7 +16,12 @@ import {
   DocumentNode,
 } from 'graphql';
 
-import { ExecutionRequest, serializeInputValue, updateArgument } from '@graphql-tools/utils';
+import {
+  createVariableNameGenerator,
+  ExecutionRequest,
+  serializeInputValue,
+  updateArgument,
+} from '@graphql-tools/utils';
 import { ICreateRequestFromInfo, ICreateRequest } from './types';
 
 export function getDelegatingOperation(parentType: GraphQLObjectType, schema: GraphQLSchema): OperationTypeNode {
@@ -194,6 +199,8 @@ function updateArgumentsWithDefaults(
   variableDefinitionMap: Record<string, VariableDefinitionNode>,
   variableValues: Record<string, any>
 ): void {
+  const generateVariableName = createVariableNameGenerator(variableDefinitionMap);
+
   const sourceField = sourceParentType.getFields()[sourceFieldName];
   for (const argument of sourceField.args) {
     const argName = argument.name;
@@ -204,11 +211,12 @@ function updateArgumentsWithDefaults(
 
       if (defaultValue !== undefined) {
         updateArgument(
-          argName,
-          sourceArgType,
           argumentNodeMap,
           variableDefinitionMap,
           variableValues,
+          argName,
+          generateVariableName(argName),
+          sourceArgType,
           serializeInputValue(sourceArgType, defaultValue)
         );
       }

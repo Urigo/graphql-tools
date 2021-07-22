@@ -85,7 +85,7 @@ export function delegateRequest<TContext = Record<string, any>, TArgs = any>(
 ) {
   const delegationContext = getDelegationContext(options);
 
-  const transformer = new Transformer<TContext>(delegationContext, options.binding);
+  const transformer = new Transformer<TContext>(delegationContext);
 
   const processedRequest = transformer.transformRequest(options.request);
 

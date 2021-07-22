@@ -11,6 +11,7 @@ import {
   GraphQLList,
   GraphQLType,
   locatedError,
+  GraphQLOutputType,
 } from 'graphql';
 
 import { AggregateError, Maybe } from '@graphql-tools/utils';
@@ -25,9 +26,9 @@ export function resolveExternalValue(
   result: any,
   unpathedErrors: Array<GraphQLError>,
   subschema: GraphQLSchema | SubschemaConfig,
-  context: Record<string, any>,
-  info: GraphQLResolveInfo,
-  returnType = info.returnType,
+  context?: Record<string, any>,
+  info?: GraphQLResolveInfo,
+  returnType = getReturnType(info),
   skipTypeMerging?: boolean
 ): any {
   const type = getNullableType(returnType);
@@ -54,8 +55,8 @@ function resolveExternalObject(
   object: any,
   unpathedErrors: Array<GraphQLError>,
   subschema: GraphQLSchema | SubschemaConfig,
-  context: Record<string, any>,
-  info: GraphQLResolveInfo,
+  context?: Record<string, any>,
+  info?: GraphQLResolveInfo,
   skipTypeMerging?: boolean
 ) {
   // if we have already resolved this object, for example, when the identical object appears twice
@@ -66,8 +67,13 @@ function resolveExternalObject(
 
   annotateExternalObject(object, unpathedErrors, subschema);
 
-  const stitchingInfo: Maybe<StitchingInfo> = info?.schema.extensions?.['stitchingInfo'];
-  if (skipTypeMerging || stitchingInfo == null) {
+  if (skipTypeMerging || info == null) {
+    return object;
+  }
+
+  const stitchingInfo: Maybe<StitchingInfo> = info.schema.extensions?.['stitchingInfo'];
+
+  if (stitchingInfo == null) {
     return object;
   }
 
@@ -118,8 +124,8 @@ function resolveExternalList(
   list: Array<any>,
   unpathedErrors: Array<GraphQLError>,
   subschema: GraphQLSchema | SubschemaConfig,
-  context: Record<string, any>,
-  info: GraphQLResolveInfo,
+  context?: Record<string, any>,
+  info?: GraphQLResolveInfo,
   skipTypeMerging?: boolean
 ) {
   return list.map(listMember =>
@@ -140,8 +146,8 @@ function resolveExternalListMember(
   listMember: any,
   unpathedErrors: Array<GraphQLError>,
   subschema: GraphQLSchema | SubschemaConfig,
-  context: Record<string, any>,
-  info: GraphQLResolveInfo,
+  context?: Record<string, any>,
+  info?: GraphQLResolveInfo,
   skipTypeMerging?: boolean
 ): any {
   if (listMember instanceof Error) {
@@ -188,4 +194,11 @@ function reportUnpathedErrorsViaNull(unpathedErrors: Array<GraphQLError>) {
   }
 
   return null;
+}
+
+function getReturnType(info: GraphQLResolveInfo | undefined): GraphQLOutputType {
+  if (info == null) {
+    throw new Error(`Return type cannot be inferred without a source schema.`);
+  }
+  return info.returnType;
 }

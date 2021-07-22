@@ -20,6 +20,7 @@ import {
   ResultVisitorMap,
   updateArgument,
   transformInputValue,
+  createVariableNameGenerator,
 } from '@graphql-tools/utils';
 
 import { Transform, DelegationContext, SubschemaConfig } from '@graphql-tools/delegate';
@@ -162,6 +163,8 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
   ): FieldNode | undefined {
     const targetField = this._getTypeInfo().getFieldDef();
 
+    const generateVariableName = createVariableNameGenerator(variableDefinitionMap);
+
     if (!targetField.name.startsWith('__')) {
       const argumentNodes = field.arguments;
       if (argumentNodes != null) {
@@ -186,11 +189,12 @@ export default class MapLeafValues implements Transform<MapLeafValuesTransformat
           }
 
           updateArgument(
-            argName,
-            argType,
             argumentNodeMap,
             variableDefinitionMap,
             variableValues,
+            argName,
+            generateVariableName(argName),
+            argType,
             transformInputValue(argType, value, (t, v) => {
               const newValue = this.inputValueTransformer(t.name, v);
               return newValue === undefined ? v : newValue;

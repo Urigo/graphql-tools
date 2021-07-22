@@ -4,10 +4,10 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { ExecutionResult } from '@graphql-tools/utils';
 import { stitchSchemas } from '@graphql-tools/stitch';
 
-import { checkResultAndHandleErrors } from '../src/transforms/CheckResultAndHandleErrors';
+import { checkResultAndHandleErrors } from '../src/checkResultAndHandleErrors';
 import { UNPATHED_ERRORS_SYMBOL } from '../src/symbols';
 import { getUnpathedErrors } from '../src/externalObjects';
-import { delegateToSchema, defaultMergedResolver } from '../src';
+import { delegateToSchema, defaultMergedResolver, DelegationContext } from '../src';
 
 class ErrorWithExtensions extends GraphQLError {
   constructor(message: string, code: string) {
@@ -53,10 +53,10 @@ describe('Errors', () => {
       try {
         checkResultAndHandleErrors(
           result,
-          {},
-          fakeInfo,
-          'responseKey',
-          {} as any,
+          {
+            fieldName: 'responseKey',
+            info: fakeInfo,
+          } as DelegationContext,
         );
       } catch (e) {
         expect(e.message).toEqual('Test error');
@@ -71,10 +71,10 @@ describe('Errors', () => {
       try {
         checkResultAndHandleErrors(
           result,
-          {},
-          fakeInfo,
-          'responseKey',
-          {} as any
+          {
+            fieldName: 'responseKey',
+            info: fakeInfo,
+          } as DelegationContext,
         );
       } catch (e) {
         expect(e.message).toEqual('Test error');
@@ -90,10 +90,10 @@ describe('Errors', () => {
       try {
         checkResultAndHandleErrors(
           result,
-          {},
-          fakeInfo,
-          'responseKey',
-          {} as any
+          {
+            fieldName: 'responseKey',
+            info: fakeInfo,
+          } as DelegationContext,
         );
       } catch (e) {
         expect(e.message).toEqual('Error1\nError2');
