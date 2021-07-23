@@ -37,7 +37,8 @@
     "@graphql-tools/utils": "^7.7.1",
     "dataloader": "2.0.0",
     "tslib": "~2.3.0",
-    "value-or-promise": "1.0.10"
+    "value-or-promise": "1.0.10",
+    "tiny-lru": "7.0.6"
   },
   "publishConfig": {
     "access": "public",

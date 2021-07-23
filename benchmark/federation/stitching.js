@@ -2,6 +2,7 @@ const { stitchSchemas } = require('@graphql-tools/stitch');
 const { federationToStitchingSDL, stitchingDirectives } = require('@graphql-tools/stitching-directives');
 const { stitchingDirectivesTransformer } = stitchingDirectives();
 const { buildSchema, execute, print } = require('graphql');
+const { createDefaultExecutor } = require('@graphql-tools/delegate');
 
 const services = [
   require('./services/accounts'),
@@ -9,17 +10,6 @@ const services = [
   require('./services/products'),
   require('./services/reviews'),
 ];
-
-function createExecutor(schema) {
-  return function serviceExecutor({ document, variables, context }) {
-    return execute({
-      schema,
-      document,
-      variableValues: variables,
-      contextValue: context,
-    });
-  };
-}
 
 async function makeGatewaySchema() {
   return stitchSchemas({
@@ -32,7 +22,7 @@ function fetchFederationSubschema({ schema, typeDefs }) {
   const sdl = federationToStitchingSDL(print(typeDefs));
   return {
     schema: buildSchema(sdl),
-    executor: createExecutor(schema),
+    executor: createDefaultExecutor(schema),
     batch: true
   };
 }
