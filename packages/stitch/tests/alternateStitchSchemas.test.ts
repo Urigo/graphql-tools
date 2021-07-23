@@ -1930,6 +1930,18 @@ describe('onTypeConflict', () => {
     const result2 = await graphql(stitchedSchema, '{ test1 { fieldC } }');
     expect(result2.data).toBeUndefined();
   });
+
+  test('returns info.left and info.right properties that are not equal', () => {
+    stitchSchemas({
+      subschemas: [schema1, schema2],
+      mergeTypes: false,
+      onTypeConflict: (left, _right, info) => {
+        expect(info?.right.subschema !== info?.left.subschema).toBe(true);
+        expect(info?.right.transformedSubschema !== info?.left.transformedSubschema).toBe(true);
+        return left;
+      }
+    });
+  });
 });
 
 describe('basic type merging', () => {

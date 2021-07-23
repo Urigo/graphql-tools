@@ -236,8 +236,8 @@ function onTypeConflictToCandidateSelector<TContext = Record<string, any>>(
           transformedSubschema: prev.transformedSubschema,
         },
         right: {
-          subschema: prev.subschema,
-          transformedSubschema: prev.transformedSubschema,
+          subschema: next.subschema,
+          transformedSubschema: next.transformedSubschema,
         },
       });
       if (prev.type === type) {
